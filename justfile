@@ -23,7 +23,7 @@ clean:
 virtualenv:
     #!/usr/bin/env bash
     # allow users to specify python version in .env
-    PYTHON_VERSION=${PYTHON_VERSION:-python3.9}
+    PYTHON_VERSION=${PYTHON_VERSION:-python3.8}
 
     # create venv and upgrade pip
     test -d $VIRTUAL_ENV || { $PYTHON_VERSION -m venv $VIRTUAL_ENV && $PIP install --upgrade pip; }
@@ -35,9 +35,9 @@ virtualenv:
 # update requirements.prod.txt if requirement.prod.in has changed
 requirements-prod: virtualenv
     #!/usr/bin/env bash
-    # exit if .in file is older than .txt file (-nt = 'newer than', but we negate with || to avoid error exit code)
-    test requirements.prod.in -nt requirements.prod.txt || exit 0
-    $COMPILE --output-file=requirements.prod.txt requirements.prod.in
+    # exit if pyproject.toml file is older than .txt file (-nt = 'newer than', but we negate with || to avoid error exit code)
+    test pyproject.toml -nt requirements.prod.txt || exit 0
+    $COMPILE --output-file=requirements.prod.txt pyproject.toml
 
 
 # update requirements.dev.txt if requirements.dev.in has changed
@@ -97,6 +97,10 @@ check: devenv
     $BIN/black --check .
     $BIN/isort --check-only --diff .
     $BIN/flake8
+    $BIN/mypy
+    $BIN/pyupgrade --py38-plus \
+        $(find pipeline -name "*.py" -type f) \
+        $(find tests -name "*.py" -type f)
 
 
 # fix formatting and import sort ordering

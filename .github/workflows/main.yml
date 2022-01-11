@@ -6,36 +6,42 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, windows-2019]
+        python-version: ["3.8", "3.9", "3.10"]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v2
-      - uses: "actions/setup-python@v2"
+      - name: Set up Python ${{ matrix.python-vesrion }}
+        uses: "actions/setup-python@v2"
         with:
-          python-version: "3.9"
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+          cache-dependency-path: requirements.*.txt
       - uses: extractions/setup-just@v1
       - name: Check formatting, linting and import sorting
         run: just check
 
   test:
     needs: [check]
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, windows-2019]
+        python-version: ["3.8", "3.9", "3.10"]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v2
-      - uses: "actions/setup-python@v2"
+      - name: Set up Python ${{ matrix.python-vesrion }}
+        uses: "actions/setup-python@v2"
         with:
-          python-version: "3.9"
+          python-version: ${{ matrix.python-vesrion }}
+          cache: "pip"
+          cache-dependency-path: requirements.*.txt
       - uses: extractions/setup-just@v1
       - name: Run tests
-#       env:  # Add environment variables required for tests
-        run: |
-          just test
-
-  lint-dockerfile:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: hadolint/hadolint-action@v1.5.0
-        with:
-          failure-threshold: error
+        run: just test
