@@ -1,3 +1,28 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "opensafely-pipeline"
+description = "OpenSAFELY pipeline configuration parsing library"
+version = "1+local"
+readme = "README.md"
+authors = [{name = "OpenSAFELY", email = "tech@opensafely.org"}]
+license = {file = "LICENSE"}
+classifiers = [
+  "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+]
+requires-python = ">=3.8"
+dependencies = [
+  "pydantic",
+  "ruamel.yaml",
+]
+
+[project.urls]
+Home = "https://opensafely.org"
+Documentation = "https://docs.opensafely.org"
+Source = "https://github.com/opensafely-core/pipeline"
+
 [tool.black]
 exclude = '''
 (
@@ -12,7 +37,10 @@ exclude = '''
 
 [tool.coverage.run]
 branch = true
-omit = [".venv/*"]
+omit = [
+  ".venv/*",
+  "pipeline/__main__.py",
+]
 
 [tool.coverage.report]
 fail_under = 100
@@ -20,13 +48,24 @@ skip_covered = true
 
 [tool.coverage.html]
 
+[tool.flit.module]
+name = "pipeline"
+
+[tool.flit.sdist]
+exclude = ["pipeline/__main__.py"]
+
 [tool.isort]
-force_grid_wrap = 0
-include_trailing_comma = true
-line_length = 88
+profile = "black"
 lines_after_imports = 2
-multi_line_output = 3
 skip_glob = [".direnv", "venv", ".venv"]
-use_parentheses = true
+
+[tool.mypy]
+files = "pipeline"
+exclude = "^pipeline/__main__.py$"
+strict = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
+show_error_codes = true
 
 [tool.pytest.ini_options]

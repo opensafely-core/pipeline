@@ -1,18 +1,14 @@
-# pipeline
+# OpenSAFELY Pipeline Parser
 
-This is a template for an OpenSAFELY Core repository.
+This library takes the contents of an OpenSAFELY pipeline configuration file (`project.yaml` or `pipeline.yaml`), validates it, and parses it into a typed structure.
 
-Put your project description here.
+For example:
 
-New repo checklist:
-- [ ] Does the repo require a Dockerfile?
-  If not, delete:
-  - Dockerfile -
-  - .dockerignore
-  - hadolint pre-commit hook from `.pre-commit-config.yaml`
-  - `lint-dockerfile` action from `.github/workflows/main.yml`
-- [ ] Update DEVELOPERS.md with any project-specific requirements and commands
-- [ ] Update commands in `justfile`
+    with open("/path/to/project.yaml") as f:
+        data = load_pipeline(f.read())
+
+
+The returned object is a Pydantic model, `Pipeline`, defined in `pipeline/models.py`.
 
 
 ## Developer docs
