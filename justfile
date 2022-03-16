@@ -58,12 +58,12 @@ prodenv: virtualenv
     touch $VIRTUAL_ENV/.prod
 
 
-# upgrade dev or prod dependencies (all by default, specify package to upgrade single package)
+# upgrade dev or prod dependencies (specify package to upgrade single package, all by default)
 upgrade env package="": virtualenv
     #!/usr/bin/env bash
     opts="--upgrade"
     test -z "{{ package }}" || opts="--upgrade-package {{ package }}"
-    $COMPILE $opts --output-file=requirements.{{ env }}.txt requirements.{{ env }}.in
+    FORCE=true {{ just_executable() }} requirements-{{ env }} $opts
 
 
 # && dependencies are run after the recipe has run. Needs just>=0.9.9. This is
