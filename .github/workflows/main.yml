@@ -40,6 +40,7 @@ jobs:
         run: just test
 
   tag-new-version:
+    needs: [check, test]
     runs-on: ubuntu-latest
 
     outputs:
