@@ -55,3 +55,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: false
           release_branches: main
+          create_annotated_tag: true
