@@ -1,6 +1,6 @@
 import shlex
 from collections import defaultdict
-from typing import Dict, Iterable, List, Optional, Set, Union
+from typing import Any, Dict, Iterable, List, Optional, Set, Union
 
 from pydantic import BaseModel, root_validator, validator
 
@@ -37,6 +37,7 @@ class Command(BaseModel):
 
 
 class Action(BaseModel):
+    config: Optional[Dict[Any, Any]] = None
     run: Command
     needs: List[str] = []
     outputs: Outputs
@@ -55,7 +56,7 @@ class Action(BaseModel):
 
 
 class Pipeline(BaseModel):
-    version: Union[str, float]
+    version: Optional[Union[str, float]] = None
     expectations: Expectations
     actions: Dict[str, Action]
 
