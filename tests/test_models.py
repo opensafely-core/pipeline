@@ -83,6 +83,74 @@ def test_unknown_name_in_needs():
         Pipeline(**data)
 
 
+def test_expectations_before_v3_has_a_default_set():
+    data = {
+        "version": 2,
+        "expectations": {},
+        "actions": {
+            "generate_cohort": {
+                "run": "cohortextractor:latest generate_cohort",
+                "outputs": {"highly_sensitive": {"cohort": "output/input.csv"}},
+            }
+        },
+    }
+
+    config = Pipeline(**data)
+
+    assert config.expectations.population_size == 1000
+
+
+def test_expectations_exists():
+    # our logic for this is custom so ensure it works as expected
+    data = {
+        "version": 3,
+        "actions": {
+            "generate_cohort": {
+                "run": "cohortextractor:latest generate_cohort",
+                "outputs": {"highly_sensitive": {"cohort": "output/input.csv"}},
+            }
+        },
+    }
+
+    msg = "Project must include `expectations` section"
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline(**data)
+
+
+def test_expectations_population_size_exists():
+    data = {
+        "version": 3,
+        "expectations": {},
+        "actions": {
+            "generate_cohort": {
+                "run": "cohortextractor:latest generate_cohort",
+                "outputs": {"highly_sensitive": {"cohort": "output/input.csv"}},
+            }
+        },
+    }
+
+    msg = "Project `expectations` section must include `population_size` section"
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline(**data)
+
+
+def test_expectations_population_size_is_a_number():
+    data = {
+        "version": 3,
+        "expectations": {"population_size": "test"},
+        "actions": {
+            "generate_cohort": {
+                "run": "cohortextractor:latest generate_cohort",
+                "outputs": {"highly_sensitive": {"cohort": "output/input.csv"}},
+            }
+        },
+    }
+
+    msg = "Project expectations population size must be a number"
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline(**data)
+
+
 def test_pipeline_with_missing_or_none_version():
     data = {
         "expectations": {"population_size": 10},

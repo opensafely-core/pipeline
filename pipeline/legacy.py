@@ -60,22 +60,6 @@ def validate_project_and_set_defaults(project):
     feat = get_feature_flags_for_version(project.get("version"))
     seen_runs = []
     seen_output_files = []
-    if feat.EXPECTATIONS_POPULATION:
-        if "expectations" not in project:
-            raise ProjectValidationError("Project must include `expectations` section")
-        if "population_size" not in project["expectations"]:
-            raise ProjectValidationError(
-                "Project `expectations` section must include `population` section",
-            )
-        try:
-            int(project["expectations"]["population_size"])
-        except (TypeError, ValueError):
-            raise ProjectValidationError(
-                "Project expectations population size must be a number",
-            )
-    else:
-        project["expectations"] = {}
-        project["expectations"]["population_size"] = 1000
 
     project_actions = project["actions"]
 

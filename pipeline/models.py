@@ -4,11 +4,20 @@ from typing import Any, Dict, Iterable, List, Optional, Set
 
 from pydantic import BaseModel, root_validator, validator
 
-from .features import LATEST_VERSION
+from .features import LATEST_VERSION, get_feature_flags_for_version
 
 
 class Expectations(BaseModel):
-    population_size: int = 1000
+    population_size: int
+
+    @validator("population_size", pre=True)
+    def validate_population_size(cls, population_size) -> int:
+        try:
+            return int(population_size)
+        except (TypeError, ValueError):
+            raise ValueError(
+                "Project expectations population size must be a number",
+            )
 
 
 class Outputs(BaseModel):
@@ -61,6 +70,34 @@ class Pipeline(BaseModel):
     version: float
     expectations: Expectations
     actions: Dict[str, Action]
+
+    @root_validator(pre=True)
+    def validate_expectations_per_version(cls, values):
+        """Ensure the expectations key exists for version 3 onwards"""
+        try:
+            version = float(values.get("version"))
+        except (TypeError, ValueError):
+            # this is handled in the validate_version_exists and
+            # validate_version_value validators
+            return values
+
+        feat = get_feature_flags_for_version(version)
+
+        if not feat.EXPECTATIONS_POPULATION:
+            # set the default here because pydantic doesn't seem to set it
+            # otherwise
+            values["expectations"] = {"population_size": 1000}
+            return values
+
+        if "expectations" not in values:
+            raise ValueError("Project must include `expectations` section")
+
+        if "population_size" not in values["expectations"]:
+            raise ValueError(
+                "Project `expectations` section must include `population_size` section",
+            )
+
+        return values
 
     @validator("actions")
     def validate_unique_commands(cls, actions: Dict[str, Action]) -> Dict[str, Action]:
