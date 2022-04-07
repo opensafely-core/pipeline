@@ -73,16 +73,6 @@ def validate_project_and_set_defaults(project):
         # Check a `generate_cohort` command only generates a single output
         # Check outputs are permitted
         for privacy_level, output in action_config["outputs"].items():
-            permitted_privacy_levels = [
-                "highly_sensitive",
-                "moderately_sensitive",
-                "minimally_sensitive",
-            ]
-            if privacy_level not in permitted_privacy_levels:
-                raise ProjectValidationError(
-                    f"{privacy_level} is not valid (must be one of {', '.join(permitted_privacy_levels)})",
-                )
-
             for output_id, filename in output.items():
                 try:
                     assert_valid_glob_pattern(filename)

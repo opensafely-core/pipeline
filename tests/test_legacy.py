@@ -621,30 +621,6 @@ def test_validate_project_and_set_defaults_generate_cohort_has_only_one_output()
         validate_project_and_set_defaults(project_dict)
 
 
-def test_validate_project_and_set_defaults_generate_cohort_with_unknown_privacy_level():
-    # TODO: remove this test and the privacy level check when we start removing
-    # bits of legacy.py, the pydantic models already cover the permitted
-    # privacy levels
-    project_dict = {
-        "version": 2,
-        "expectations": {"population_size": 1000},
-        "actions": {
-            "generate_cohort": {
-                "run": {
-                    "run": "cohortextractor:latest generate_cohort",
-                    "name": "cohortextractor",
-                    "version": "latest",
-                    "args": "generate_cohort",
-                },
-                "outputs": {"test": {"cohort": "output/input.csv"}},
-            }
-        },
-    }
-
-    with pytest.raises(ProjectValidationError, match="^test is not valid"):
-        validate_project_and_set_defaults(project_dict)
-
-
 def test_validate_project_and_set_defaults_with_invalid_pattern():
     project_dict = Pipeline(
         **{

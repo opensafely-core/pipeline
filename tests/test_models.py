@@ -29,23 +29,6 @@ def test_duplicated_commands():
         Pipeline(**data)
 
 
-def test_no_outputs_specified():
-    data = {
-        "version": "3",
-        "expectations": {"population_size": 10},
-        "actions": {
-            "action1": {
-                "run": "test",
-                "outputs": {},
-            },
-        },
-    }
-
-    match = "must specify at least one output of: highly_sensitive, moderately_sensitive, minimally_sensitive"
-    with pytest.raises(ValidationError, match=match):
-        Pipeline(**data)
-
-
 def test_success():
     data = {
         "version": "3",
@@ -187,3 +170,34 @@ def test_pipeline_with_non_numeric_version():
     with pytest.raises(ValidationError, match=msg):
         data["version"] = None
         Pipeline(**data)
+
+
+def test_outputs_with_unknown_privacy_level():
+    msg = "must specify at least one output of: highly_sensitive, moderately_sensitive, minimally_sensitive"
+
+    with pytest.raises(ValidationError, match=msg):
+        # no outputs
+        Pipeline(
+            **{
+                "version": 1,
+                "actions": {
+                    "action1": {
+                        "run": "test",
+                        "outputs": {},
+                    },
+                },
+            }
+        )
+
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline(
+            **{
+                "version": 1,
+                "actions": {
+                    "action1": {
+                        "run": "test",
+                        "outputs": {"test": {"cohort": "output/input.csv"}},
+                    }
+                },
+            }
+        )
