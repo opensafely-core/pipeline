@@ -1,8 +1,10 @@
 import shlex
 from collections import defaultdict
-from typing import Any, Dict, Iterable, List, Optional, Set, Union
+from typing import Any, Dict, Iterable, List, Optional, Set
 
 from pydantic import BaseModel, root_validator, validator
+
+from .features import LATEST_VERSION
 
 
 class Expectations(BaseModel):
@@ -56,7 +58,7 @@ class Action(BaseModel):
 
 
 class Pipeline(BaseModel):
-    version: Optional[Union[str, float]] = None
+    version: float
     expectations: Expectations
     actions: Dict[str, Action]
 
@@ -95,3 +97,30 @@ class Pipeline(BaseModel):
             *iter_missing_needs(missing),
         ]
         raise ValueError("\n".join(msg))
+
+    @root_validator(pre=True)
+    def validate_version_exists(cls, values):
+        """
+        Ensure the version key exists.
+
+        This is a re-implementation of pydantic's field validation so we can
+        get a custom error message.  This can be removed when we add a wrapper
+        around the models to generate more UI friendly error messages.
+        """
+        if "version" in values:
+            return values
+
+        raise ValueError(
+            f"Project file must have a `version` attribute specifying which "
+            f"version of the project configuration format it uses (current "
+            f"latest version is {LATEST_VERSION})"
+        )
+
+    @validator("version", pre=True)
+    def validate_version_value(cls, value) -> float:
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            raise ValueError(
+                f"`version` must be a number between 1 and {LATEST_VERSION}"
+            )

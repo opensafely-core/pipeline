@@ -13,7 +13,6 @@ from pipeline.legacy import (
     get_action_specification,
     get_all_actions,
     get_all_output_patterns_from_project_file,
-    get_feature_flags_for_version,
     is_generate_cohort_command,
     parse_and_validate_project_file,
     validate_project_and_set_defaults,
@@ -86,6 +85,7 @@ def test_assert_valid_glob_pattern():
 def test_get_action_specification_databuilder_has_output_flag():
     project_dict = Pipeline(
         **{
+            "version": 3,
             "expectations": {"population_size": 1000},
             "actions": {
                 "generate_dataset": {
@@ -112,6 +112,7 @@ def test_get_action_specification_databuilder_has_output_flag():
 def test_get_action_specification_for_cohortextractor_generate_cohort_action():
     project_dict = Pipeline(
         **{
+            "version": 3,
             "expectations": {"population_size": 1000},
             "actions": {
                 "generate_cohort": {
@@ -136,6 +137,7 @@ def test_get_action_specification_for_cohortextractor_generate_cohort_action():
 def test_get_action_specification_for_databuilder_action(image):
     project_dict = Pipeline(
         **{
+            "version": 3,
             "expectations": {"population_size": 1000},
             "actions": {
                 "generate_cohort_v2": {
@@ -184,6 +186,7 @@ def test_get_action_specification_for_databuilder_action(image):
 def test_get_action_specification_for_databuilder_errors(args, error, image):
     project_dict = Pipeline(
         **{
+            "version": 3,
             "expectations": {"population_size": 1_000},
             "actions": {
                 "generate_cohort_v2": {
@@ -201,6 +204,7 @@ def test_get_action_specification_for_databuilder_errors(args, error, image):
 def test_get_action_specification_multiple_ouputs_with_output_flag():
     project_dict = Pipeline(
         **{
+            "version": 3,
             "expectations": {"population_size": 1000},
             "actions": {
                 "generate_cohort": {
@@ -226,6 +230,7 @@ def test_get_action_specification_multiple_ouputs_with_output_flag():
 def test_get_action_specification_multiple_ouputs_without_output_flag():
     project_dict = Pipeline(
         **{
+            "version": 3,
             "expectations": {"population_size": 1000},
             "actions": {
                 "generate_cohort": {
@@ -251,6 +256,7 @@ def test_get_action_specification_multiple_ouputs_without_output_flag():
 def test_get_action_specification_with_config():
     project_dict = Pipeline(
         **{
+            "version": 3,
             "expectations": {"population_size": 1_000},
             "actions": {
                 "my_action": {
@@ -372,18 +378,6 @@ def test_get_all_output_patterns_from_project_file_with_no_outputs(mocker):
     assert get_all_output_patterns_from_project_file("") == []
 
 
-def test_get_feature_flags_for_version_with_None_version():
-    msg = "^Project file must have a `version` attribute"
-    with pytest.raises(ProjectValidationError, match=msg):
-        get_feature_flags_for_version(None)
-
-
-def test_get_feature_flags_for_version_with_non_numeric_version():
-    msg = "^`version` must be a number between 1 and"
-    with pytest.raises(ProjectValidationError, match=msg):
-        get_feature_flags_for_version("test")
-
-
 @pytest.mark.parametrize(
     "require_version,args,desired_outcome",
     [
@@ -473,7 +467,7 @@ def test_validate_project_and_set_defaults_action_command_is_unique():
     # bits of legacy.py, the pydantic models already cover action commands
     # being unique
     project_dict = {
-        "version": "2",
+        "version": 2,
         "expectations": {"population_size": 1000},
         "actions": {
             "generate_cohort": {
@@ -531,7 +525,7 @@ def test_validate_project_and_set_defaults_action_needs_with_non_comma_delimited
     # bits of legacy.py, the pydantic models already cover the permitted
     # privacy levels
     project_dict = {
-        "version": "2",
+        "version": 2,
         "expectations": {"population_size": 1000},
         "actions": {
             "generate_cohort": {
@@ -575,7 +569,7 @@ def test_validate_project_and_set_defaults_action_needs_with_unknown_action():
     # bits of legacy.py, the pydantic models already cover an unknown action in
     # the needs key
     project_dict = {
-        "version": "2",
+        "version": 2,
         "expectations": {"population_size": 1000},
         "actions": {
             "generate_cohort": {
@@ -610,7 +604,7 @@ def test_validate_project_and_set_defaults_expectations_before_v3_has_a_default_
     # bits of legacy.py, the pydantic models already cover the shape and
     # required value of expections and expectations.population_size
     project_dict = {
-        "version": "2",
+        "version": 2,
         "actions": {
             "generate_cohort": {
                 "run": {
@@ -634,7 +628,7 @@ def test_validate_project_and_set_defaults_expectations_exists():
     # bits of legacy.py, the pydantic models already cover the shape and
     # required value of expections and expectations.population_size
     project_dict = {
-        "version": "3",
+        "version": 3,
         "actions": {
             "generate_cohort": {
                 "run": {
@@ -658,7 +652,7 @@ def test_validate_project_and_set_defaults_expectations_population_size_exists()
     # bits of legacy.py, the pydantic models already cover the shape and
     # required value of expections and expectations.population_size
     project_dict = {
-        "version": "3",
+        "version": 3,
         "expectations": {},
         "actions": {
             "generate_cohort": {
@@ -683,7 +677,7 @@ def test_validate_project_and_set_defaults_expectations_population_size_is_a_num
     # bits of legacy.py, the pydantic models already cover the shape and
     # required value of expections and expectations.population_size
     project_dict = {
-        "version": "3",
+        "version": 3,
         "expectations": {"population_size": "test"},
         "actions": {
             "generate_cohort": {
@@ -730,7 +724,7 @@ def test_validate_project_and_set_defaults_generate_cohort_with_unknown_privacy_
     # bits of legacy.py, the pydantic models already cover the permitted
     # privacy levels
     project_dict = {
-        "version": "2",
+        "version": 2,
         "expectations": {"population_size": 1000},
         "actions": {
             "generate_cohort": {

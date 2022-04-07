@@ -81,3 +81,41 @@ def test_unknown_name_in_needs():
     match = "One or more actions is referencing unknown actions in its needs list"
     with pytest.raises(ValidationError, match=match):
         Pipeline(**data)
+
+
+def test_pipeline_with_missing_or_none_version():
+    data = {
+        "expectations": {"population_size": 10},
+        "actions": {
+            "action1": {
+                "run": "test",
+                "outputs": {"highly_sensitive": {"cohort": "output.csv"}},
+            },
+        },
+    }
+
+    msg = "Project file must have a `version` attribute"
+
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline(**data)
+
+
+def test_pipeline_with_non_numeric_version():
+    data = {
+        "actions": {
+            "action1": {
+                "run": "test",
+                "outputs": {"highly_sensitive": {"cohort": "output.csv"}},
+            },
+        },
+    }
+
+    msg = "`version` must be a number between 1 and"
+
+    with pytest.raises(ValidationError, match=msg):
+        data["version"] = "test"
+        Pipeline(**data)
+
+    with pytest.raises(ValidationError, match=msg):
+        data["version"] = None
+        Pipeline(**data)

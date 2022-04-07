@@ -3,17 +3,14 @@ import json
 import posixpath
 import shlex
 from pathlib import PurePosixPath, PureWindowsPath
-from types import SimpleNamespace
 
 from .exceptions import YAMLError
+from .features import get_feature_flags_for_version
 from .main import load_pipeline
 
 
 # The magic action name which means "run every action"
 RUN_ALL_COMMAND = "run_all"
-
-# The version of `project.yaml` where each feature was introduced
-FEATURE_FLAGS_BY_VERSION = {"UNIQUE_OUTPUT_PATH": 2, "EXPECTATIONS_POPULATION": 3}
 
 
 class ProjectValidationError(Exception):
@@ -298,39 +295,6 @@ def get_output_dirs(output_spec):
         filenames.extend(group.values())
     dirs = {PurePosixPath(filename).parent for filename in filenames}
     return list(dirs)
-
-
-def get_feature_flags_for_version(version):
-    latest_version = max(FEATURE_FLAGS_BY_VERSION.values())
-    if version is None:
-        raise ProjectValidationError(
-            f"Project file must have a `version` attribute specifying which "
-            f"version of the project configuration format it uses (current "
-            f"latest version is {latest_version})"
-        )
-    try:
-        version = float(version)
-    except (TypeError, ValueError):
-        raise ProjectValidationError(
-            f"`version` must be a number between 1 and {latest_version}"
-        )
-    feat = SimpleNamespace()
-    matched_any = False
-    for k, v in FEATURE_FLAGS_BY_VERSION.items():
-        if v <= version:
-            setattr(feat, k, True)
-            matched_any = True
-        else:
-            setattr(feat, k, False)
-
-    # TODO: this block is unreachable since v <= version will fire for any
-    # version over > 1, so we can remove this later
-    if version > 1 and not matched_any:  # pragma: no cover
-        raise ProjectValidationError(
-            f"`version` must be a number between 1 and {latest_version}"
-        )
-
-    return feat
 
 
 def assert_valid_glob_pattern(pattern):
