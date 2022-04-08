@@ -99,6 +99,39 @@ class Pipeline(BaseModel):
 
         return values
 
+    @root_validator()
+    def validate_outputs_per_version(cls, values):
+        """
+        Ensure outputs are unique for version 2 onwards
+
+        We validate this on Pipeline so we can get the version
+        """
+
+        # we're not using pre=True in the validator so we can rely on the
+        # version and action keys being the correct type but we have to handle
+        # them not existing
+        if not (version := values.get("version")):
+            return values  # handle missing version
+
+        if (actions := values.get("actions")) is None:
+            return values  # hand no actions
+
+        feat = get_feature_flags_for_version(version)
+        if not feat.UNIQUE_OUTPUT_PATH:
+            return values
+
+        # find duplicate paths defined in the outputs section
+        seen_files = []
+        for config in actions.values():
+            for output in config.outputs.dict(exclude_unset=True).values():
+                for filename in output.values():
+                    if filename in seen_files:
+                        raise ValueError(f"Output path {filename} is not unique")
+
+                    seen_files.append(filename)
+
+        return values
+
     @validator("actions")
     def validate_unique_commands(cls, actions: Dict[str, Action]) -> Dict[str, Action]:
         seen: Dict[Command, List[str]] = defaultdict(list)

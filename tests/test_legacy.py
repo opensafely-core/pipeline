@@ -638,27 +638,3 @@ def test_validate_project_and_set_defaults_with_invalid_pattern():
     msg = "^Output path test\\?foo is not permitted:"
     with pytest.raises(ProjectValidationError, match=msg):
         validate_project_and_set_defaults(project_dict)
-
-
-def test_validate_project_and_set_defaults_with_duplicate_output_files():
-    project_dict = Pipeline(
-        **{
-            "version": "3",
-            "expectations": {"population_size": 1000},
-            "actions": {
-                "generate_cohort": {
-                    "run": "cohortextractor:latest generate_cohort",
-                    "outputs": {
-                        "highly_sensitive": {
-                            "cohort": "output/input.csv",
-                            "test": "output/input.csv",
-                        }
-                    },
-                },
-            },
-        }
-    ).dict(exclude_unset=True)
-
-    msg = "^Output path output/input.csv is not unique"
-    with pytest.raises(ProjectValidationError, match=msg):
-        validate_project_and_set_defaults(project_dict)

@@ -172,6 +172,51 @@ def test_pipeline_with_non_numeric_version():
         Pipeline(**data)
 
 
+def test_outputs_files_are_unique():
+    data = {
+        "version": 2,
+        "actions": {
+            "generate_cohort": {
+                "run": "cohortextractor:latest generate_cohort",
+                "outputs": {
+                    "highly_sensitive": {
+                        "cohort": "output/input.csv",
+                        "test": "output/input.csv",
+                    }
+                },
+            },
+        },
+    }
+
+    msg = "Output path output/input.csv is not unique"
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline(**data)
+
+
+def test_outputs_duplicate_files_in_v1():
+    data = {
+        "version": 1,
+        "actions": {
+            "generate_cohort": {
+                "run": "cohortextractor:latest generate_cohort",
+                "outputs": {
+                    "highly_sensitive": {
+                        "cohort": "output/input.csv",
+                        "test": "output/input.csv",
+                    }
+                },
+            },
+        },
+    }
+
+    generate_cohort = Pipeline(**data).actions["generate_cohort"]
+
+    cohort = generate_cohort.outputs.highly_sensitive["cohort"]
+    test = generate_cohort.outputs.highly_sensitive["test"]
+
+    assert cohort == test
+
+
 def test_outputs_with_unknown_privacy_level():
     msg = "must specify at least one output of: highly_sensitive, moderately_sensitive, minimally_sensitive"
 

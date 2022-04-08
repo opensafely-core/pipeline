@@ -5,7 +5,6 @@ import shlex
 from pathlib import PurePosixPath, PureWindowsPath
 
 from .exceptions import YAMLError
-from .features import get_feature_flags_for_version
 from .main import load_pipeline
 
 
@@ -57,9 +56,7 @@ def parse_and_validate_project_file(project_file):
 # Copied almost verbatim from the original job-runner
 def validate_project_and_set_defaults(project):
     """Check that a dictionary of project actions is valid, and set any defaults"""
-    feat = get_feature_flags_for_version(project.get("version"))
     seen_runs = []
-    seen_output_files = []
 
     project_actions = project["actions"]
 
@@ -80,12 +77,6 @@ def validate_project_and_set_defaults(project):
                     raise ProjectValidationError(
                         f"Output path {filename} is not permitted: {e}"
                     )
-
-                if feat.UNIQUE_OUTPUT_PATH and filename in seen_output_files:
-                    raise ProjectValidationError(
-                        f"Output path {filename} is not unique"
-                    )
-                seen_output_files.append(filename)
 
         command, *args = shlex.split(action_config["run"]["run"])
         name, _, version = command.partition(":")
