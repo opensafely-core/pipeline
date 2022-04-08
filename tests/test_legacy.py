@@ -462,30 +462,6 @@ def test_validate_project_and_set_defaults_action_has_a_version():
         validate_project_and_set_defaults(project_dict)
 
 
-def test_validate_project_and_set_defaults_action_needs_success():
-    project_dict = Pipeline(
-        **{
-            "version": "3",
-            "expectations": {"population_size": 1_000},
-            "actions": {
-                "generate_cohort": {
-                    "run": "cohortextractor:latest generate_cohort",
-                    "outputs": {"highly_sensitive": {"cohort": "output/input.csv"}},
-                },
-                "do_analysis": {
-                    "run": "python:latest foo.py",
-                    "outputs": {"highly_sensitive": {"cohort2": "output/input2.csv"}},
-                    "needs": ["generate_cohort"],
-                },
-            },
-        }
-    ).dict(exclude_unset=True)
-
-    config = validate_project_and_set_defaults(project_dict)
-
-    assert config["actions"]["do_analysis"]["needs"] == ["generate_cohort"]
-
-
 def test_validate_project_and_set_defaults_generate_cohort_has_only_one_output():
     project_dict = Pipeline(
         **{

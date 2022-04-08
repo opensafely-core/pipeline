@@ -21,25 +21,6 @@ def test_success():
     Pipeline(**data)
 
 
-def test_pipeline_with_unknown_action_in_needs():
-    data = {
-        "version": 1,
-        "actions": {
-            "action1": {
-                "run": "test",
-                "needs": ["action2"],
-                "outputs": {
-                    "moderately_sensitive": {"cohort": "output.csv"},
-                },
-            },
-        },
-    }
-
-    match = "One or more actions is referencing unknown actions in its needs list"
-    with pytest.raises(ValidationError, match=match):
-        Pipeline(**data)
-
-
 def test_expectations_before_v3_has_a_default_set():
     data = {
         "version": 2,
@@ -108,6 +89,27 @@ def test_expectations_population_size_is_a_number():
         Pipeline(**data)
 
 
+def test_pipeline_needs_success():
+    data = {
+        "version": 1,
+        "actions": {
+            "generate_cohort": {
+                "run": "cohortextractor:latest generate_cohort",
+                "outputs": {"highly_sensitive": {"cohort": "output/input.csv"}},
+            },
+            "do_analysis": {
+                "run": "python:latest foo.py",
+                "outputs": {"highly_sensitive": {"cohort2": "output/input2.csv"}},
+                "needs": ["generate_cohort"],
+            },
+        },
+    }
+
+    config = Pipeline(**data)
+
+    assert config.actions["do_analysis"].needs == ["generate_cohort"]
+
+
 def test_pipeline_needs_with_non_comma_delimited_actions():
     data = {
         "version": 1,
@@ -130,6 +132,25 @@ def test_pipeline_needs_with_non_comma_delimited_actions():
 
     msg = "`needs` actions should be separated with commas. The following actions need fixing:"
     with pytest.raises(ValidationError, match=msg):
+        Pipeline(**data)
+
+
+def test_pipeline_needs_with_unknown_action():
+    data = {
+        "version": 1,
+        "actions": {
+            "action1": {
+                "run": "test",
+                "needs": ["action2"],
+                "outputs": {
+                    "moderately_sensitive": {"cohort": "output.csv"},
+                },
+            },
+        },
+    }
+
+    match = "One or more actions is referencing unknown actions in its needs list"
+    with pytest.raises(ValidationError, match=match):
         Pipeline(**data)
 
 
