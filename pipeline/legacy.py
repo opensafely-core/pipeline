@@ -83,13 +83,6 @@ def validate_project_and_set_defaults(project):
                 f"{name} must have a version specified (e.g. {name}:0.5.2)",
             )
 
-        for dependency in action_config.get("needs", []):
-            if " " in dependency:
-                raise ProjectValidationError(
-                    f"`needs` actions in '{action_id}' should be separated"
-                    f" with commas:\n{', '.join(dependency.split())}"
-                )
-
     return project
 
 

@@ -146,6 +146,33 @@ class Pipeline(BaseModel):
         return actions
 
     @validator("actions")
+    def validate_needs_are_comma_delimited(
+        cls, actions: Dict[str, Action]
+    ) -> Dict[str, Action]:
+        space_delimited = {}
+        for name, action in actions.items():
+            # find needs definitions with spaces in them
+            incorrect = [dep for dep in action.needs if " " in dep]
+            if incorrect:
+                space_delimited[name] = incorrect
+
+        if not space_delimited:
+            return actions
+
+        def iter_incorrect_needs(space_delimited):
+            for name, needs in space_delimited.items():
+                yield f"Action: {name}"
+                for need in needs:
+                    yield f" - {need}"
+
+        msg = [
+            "`needs` actions should be separated with commas. The following actions need fixing:",
+            *iter_incorrect_needs(space_delimited),
+        ]
+
+        raise ValueError("\n".join(msg))
+
+    @validator("actions")
     def validate_needs_exist(cls, actions: Dict[str, Action]) -> Dict[str, Action]:
         missing = {}
         for name, action in actions.items():

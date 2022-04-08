@@ -108,6 +108,31 @@ def test_expectations_population_size_is_a_number():
         Pipeline(**data)
 
 
+def test_pipeline_needs_with_non_comma_delimited_actions():
+    data = {
+        "version": 1,
+        "actions": {
+            "generate_cohort": {
+                "run": "cohortextractor:latest generate_cohort",
+                "outputs": {"moderately_sensitive": {"cohort": "output/input.csv"}},
+            },
+            "do_analysis": {
+                "run": "python:latest foo.py",
+                "outputs": {"moderately_sensitive": {"cohort2": "output/input2.csv"}},
+            },
+            "do_further_analysis": {
+                "run": "python:latest foo2.py",
+                "needs": ["generate_cohort do_analysis"],
+                "outputs": {"moderately_sensitive": {"cohort3": "output/input3.csv"}},
+            },
+        },
+    }
+
+    msg = "`needs` actions should be separated with commas. The following actions need fixing:"
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline(**data)
+
+
 def test_pipeline_with_duplicated_action_run_commands():
     data = {
         "version": 1,

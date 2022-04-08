@@ -486,50 +486,6 @@ def test_validate_project_and_set_defaults_action_needs_success():
     assert config["actions"]["do_analysis"]["needs"] == ["generate_cohort"]
 
 
-def test_validate_project_and_set_defaults_action_needs_with_non_comma_delimited_actions():
-    # TODO: remove this test and the privacy level check when we start removing
-    # bits of legacy.py, the pydantic models already cover the permitted
-    # privacy levels
-    project_dict = {
-        "version": 2,
-        "expectations": {"population_size": 1000},
-        "actions": {
-            "generate_cohort": {
-                "run": {
-                    "run": "cohortextractor:latest generate_cohort",
-                    "name": "cohortextractor",
-                    "version": "latest",
-                    "args": "generate_cohort",
-                },
-                "outputs": {"moderately_sensitive": {"cohort": "output/input.csv"}},
-            },
-            "do_analysis": {
-                "run": {
-                    "run": "python:latest foo.py",
-                    "name": "foo.py",
-                    "version": "latest",
-                    "args": "",
-                },
-                "outputs": {"moderately_sensitive": {"cohort2": "output/input2.csv"}},
-            },
-            "do_further_analysis": {
-                "run": {
-                    "run": "python:latest foo2.py",
-                    "name": "foo2.py",
-                    "version": "latest",
-                    "args": "",
-                },
-                "needs": ["generate_cohort do_analysis"],
-                "outputs": {"moderately_sensitive": {"cohort3": "output/input3.csv"}},
-            },
-        },
-    }
-
-    msg = "^`needs` actions in 'do_further_analysis' should be separated with commas"
-    with pytest.raises(ProjectValidationError, match=msg):
-        validate_project_and_set_defaults(project_dict)
-
-
 def test_validate_project_and_set_defaults_generate_cohort_has_only_one_output():
     project_dict = Pipeline(
         **{
