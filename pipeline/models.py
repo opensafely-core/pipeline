@@ -5,6 +5,7 @@ from typing import Any, Dict, Iterable, List, Optional, Set
 from pydantic import BaseModel, root_validator, validator
 
 from .exceptions import InvalidPatternError
+from .extractors import is_extraction_command
 from .features import LATEST_VERSION, get_feature_flags_for_version
 from .validation import assert_valid_glob_pattern
 
@@ -121,6 +122,19 @@ class Pipeline(BaseModel):
             raise ValueError(
                 "Project `expectations` section must include `population_size` section",
             )
+
+        return values
+
+    @root_validator(pre=True)
+    def validate_extraction_command_has_only_one_output(cls, values):
+        for action_id, config in values["actions"].items():
+            args = shlex.split(config["run"])
+            num_outputs = len(config["outputs"])
+            if is_extraction_command(args) and num_outputs != 1:
+                raise ValueError(
+                    "A `generate_cohort` action must have exactly one output; "
+                    f"{action_id} had {num_outputs}"
+                )
 
         return values
 

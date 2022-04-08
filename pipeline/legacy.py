@@ -4,6 +4,7 @@ import shlex
 from pathlib import PurePosixPath
 
 from .exceptions import YAMLError
+from .extractors import is_extraction_command
 from .main import load_pipeline
 
 
@@ -44,23 +45,7 @@ def parse_and_validate_project_file(project_file):
     except YAMLError as e:
         raise ProjectValidationError(*e.args)
 
-    project = config.dict(exclude_unset=True)
-    return validate_project_and_set_defaults(project)
-
-
-# Copied almost verbatim from the original job-runner
-def validate_project_and_set_defaults(project):
-    """Check that a dictionary of project actions is valid, and set any defaults"""
-    project_actions = project["actions"]
-
-    for action_id, action_config in project_actions.items():
-        if is_generate_cohort_command(shlex.split(action_config["run"]["run"])):
-            if len(action_config["outputs"]) != 1:
-                raise ProjectValidationError(
-                    f"A `generate_cohort` action must have exactly one output; {action_id} had {len(action_config['outputs'])}",
-                )
-
-    return project
+    return config.dict(exclude_unset=True)
 
 
 def get_action_specification(project, action_id, using_dummy_data_backend=False):
@@ -87,7 +72,7 @@ def get_action_specification(project, action_id, using_dummy_data_backend=False)
     run_args = shlex.split(run_command)
 
     # Special case handling for the `cohortextractor generate_cohort` command
-    if is_generate_cohort_command(run_args, require_version=1):
+    if is_extraction_command(run_args, require_version=1):
         # Set the size of the dummy data population, if that's what we're
         # generating.  Possibly this should be moved to the study definition
         # anyway, which would make this unnecessary.
@@ -117,7 +102,7 @@ def get_action_specification(project, action_id, using_dummy_data_backend=False)
         else:
             run_command += f" --output-dir={output_dirs[0]}"
 
-    elif is_generate_cohort_command(run_args, require_version=2):
+    elif is_extraction_command(run_args, require_version=2):
         # cohortextractor Version 2 expects all command line arguments to be
         # specified in the run command
         if using_dummy_data_backend and "--dummy-data-file" not in run_command:
@@ -139,7 +124,7 @@ def get_action_specification(project, action_id, using_dummy_data_backend=False)
             )
 
     # TODO: we can probably remove this fork since the v1&2 forks cover it
-    elif is_generate_cohort_command(run_args):  # pragma: no cover
+    elif is_extraction_command(run_args):  # pragma: no cover
         raise RuntimeError("Unhandled cohortextractor version")
 
     return ActionSpecifiction(
@@ -158,31 +143,6 @@ def add_config_to_run_command(run_command, config):
     """
     config_as_json = json.dumps(config).replace("'", r"\u0027")
     return f"{run_command} --config '{config_as_json}'"
-
-
-def is_generate_cohort_command(args, require_version=None):
-    """
-    The `cohortextractor generate_cohort` command gets special treatment in
-    various places (e.g. it's the only command which gets access to the
-    database) so it's helpful to have a single function for identifying it
-    """
-    assert not isinstance(args, str)
-    version_found = None
-    if len(args) > 1 and args[1] in ("generate_cohort", "generate_dataset"):
-        if args[0].startswith("cohortextractor:"):
-            version_found = 1
-        # databuilder is a rebranded cohortextractor-v2.
-        # Retain cohortextractor-v2 for backwards compatibility for now.
-        elif args[0].startswith(("cohortextractor-v2:", "databuilder:")):
-            version_found = 2
-
-    # If we're not looking for a specific version then return True if any
-    # version found
-    if require_version is None:
-        return version_found is not None
-    # Otherwise return True only if specified version found
-    else:
-        return version_found == require_version
 
 
 def args_include(args, target_arg):

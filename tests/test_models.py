@@ -39,6 +39,44 @@ def test_action_has_a_version():
         Pipeline(**data)
 
 
+def test_action_extraction_command_with_multiple_outputs():
+    data = {
+        "version": 1,
+        "actions": {
+            "generate_cohort": {
+                "run": "cohortextractor:latest generate_cohort",
+                "outputs": {
+                    "highly_sensitive": {"cohort": "output/input.csv"},
+                    "moderately_sensitive": {"cohort2": "output/input2.csv"},
+                },
+            }
+        },
+    }
+
+    msg = "A `generate_cohort` action must have exactly one output"
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline(**data)
+
+
+def test_action_extraction_command_with_one_outputs():
+    data = {
+        "version": 1,
+        "actions": {
+            "generate_cohort": {
+                "run": "cohortextractor:latest generate_cohort",
+                "outputs": {
+                    "highly_sensitive": {"cohort": "output/input.csv"},
+                },
+            }
+        },
+    }
+
+    config = Pipeline(**data)
+
+    outputs = config.actions["generate_cohort"].outputs.dict(exclude_unset=True)
+    assert len(outputs.values()) == 1
+
+
 def test_expectations_before_v3_has_a_default_set():
     data = {
         "version": 2,

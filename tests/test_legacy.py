@@ -11,9 +11,7 @@ from pipeline.legacy import (
     get_action_specification,
     get_all_actions,
     get_all_output_patterns_from_project_file,
-    is_generate_cohort_command,
     parse_and_validate_project_file,
-    validate_project_and_set_defaults,
 )
 from pipeline.models import Pipeline
 
@@ -355,40 +353,6 @@ def test_get_all_output_patterns_from_project_file_with_no_outputs(mocker):
     assert get_all_output_patterns_from_project_file("") == []
 
 
-@pytest.mark.parametrize(
-    "require_version,args,desired_outcome",
-    [
-        (1, ["cohortextractor:latest", "generate_cohort"], True),
-        (1, ["cohortextractor-v2:latest", "generate_cohort"], False),
-        (1, ["databuilder:latest", "generate_dataset"], False),
-        (2, ["cohortextractor:latest", "generate_cohort"], False),
-        (2, ["cohortextractor-v2:latest", "generate_cohort"], True),
-        (2, ["databuilder:latest", "generate_dataset"], True),
-    ],
-)
-def test_is_generate_cohort_command_with_version(
-    args, require_version, desired_outcome
-):
-    output = is_generate_cohort_command(args, require_version=require_version)
-
-    assert output == desired_outcome
-
-
-@pytest.mark.parametrize(
-    "args,desired_outcome",
-    [
-        (["cohortextractor:latest", "generate_cohort"], True),
-        (["cohortextractor-v2:latest", "generate_cohort"], True),
-        (["databuilder:latest", "generate_dataset"], True),
-        (["test"], False),
-        (["test", "generate_cohort"], False),
-        (["test", "generate_dataset"], False),
-    ],
-)
-def test_is_generate_cohort_command_without_version(args, desired_outcome):
-    assert is_generate_cohort_command(args) == desired_outcome
-
-
 def test_parse_and_validate_project_file_with_action():
     project_file = """
     version: '3.0'
@@ -416,44 +380,3 @@ def test_parse_and_validate_project_file_with_duplicate_keys():
     msg = 'found duplicate key "duplicate" with value "2"'
     with pytest.raises(ProjectValidationError, match=msg):
         parse_and_validate_project_file(project_file)
-
-
-def test_validate_project_and_set_defaults_generate_cohort_has_only_one_output():
-    project_dict = Pipeline(
-        **{
-            "version": "2",
-            "expectations": {"population_size": 1_000},
-            "actions": {
-                "generate_cohort": {
-                    "run": "cohortextractor:latest generate_cohort",
-                    "outputs": {
-                        "highly_sensitive": {"cohort": "output/input.csv"},
-                        "moderately_sensitive": {"cohort2": "output/input2.csv"},
-                    },
-                }
-            },
-        }
-    ).dict(exclude_unset=True)
-
-    msg = "^A `generate_cohort` action must have exactly one output"
-    with pytest.raises(ProjectValidationError, match=msg):
-        validate_project_and_set_defaults(project_dict)
-
-    project_dict = Pipeline(
-        **{
-            "version": "2",
-            "expectations": {"population_size": 1_000},
-            "actions": {
-                "generate_cohort": {
-                    "run": "cohortextractor:latest generate_cohort",
-                    "outputs": {
-                        "highly_sensitive": {"cohort": "output/input.csv"},
-                    },
-                }
-            },
-        }
-    ).dict(exclude_unset=True)
-
-    project = validate_project_and_set_defaults(project_dict)
-
-    assert len(project["actions"]["generate_cohort"]["outputs"].values()) == 1
