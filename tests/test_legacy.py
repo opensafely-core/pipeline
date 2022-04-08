@@ -530,41 +530,6 @@ def test_validate_project_and_set_defaults_action_needs_with_non_comma_delimited
         validate_project_and_set_defaults(project_dict)
 
 
-def test_validate_project_and_set_defaults_action_needs_with_unknown_action():
-    # TODO: remove this test and the privacy level check when we start removing
-    # bits of legacy.py, the pydantic models already cover an unknown action in
-    # the needs key
-    project_dict = {
-        "version": 2,
-        "expectations": {"population_size": 1000},
-        "actions": {
-            "generate_cohort": {
-                "run": {
-                    "run": "cohortextractor:latest generate_cohort",
-                    "name": "cohortextractor",
-                    "version": "latest",
-                    "args": "generate_cohort",
-                },
-                "outputs": {"moderately_sensitive": {"cohort": "output/input.csv"}},
-            },
-            "do_analysis": {
-                "run": {
-                    "run": "python:latest foo.py",
-                    "name": "foo.py",
-                    "version": "latest",
-                    "args": "",
-                },
-                "needs": ["unknown"],
-                "outputs": {"moderately_sensitive": {"cohort2": "output/input2.csv"}},
-            },
-        },
-    }
-
-    msg = "^Action 'do_analysis' lists unknown action 'unknown' in its `needs` config$"
-    with pytest.raises(ProjectValidationError, match=msg):
-        validate_project_and_set_defaults(project_dict)
-
-
 def test_validate_project_and_set_defaults_generate_cohort_has_only_one_output():
     project_dict = Pipeline(
         **{

@@ -84,15 +84,10 @@ def validate_project_and_set_defaults(project):
             )
 
         for dependency in action_config.get("needs", []):
-            if dependency not in project_actions:
-                if " " in dependency:
-                    raise ProjectValidationError(
-                        f"`needs` actions in '{action_id}' should be separated"
-                        f" with commas:\n{', '.join(dependency.split())}"
-                    )
+            if " " in dependency:
                 raise ProjectValidationError(
-                    f"Action '{action_id}' lists unknown action '{dependency}'"
-                    f" in its `needs` config"
+                    f"`needs` actions in '{action_id}' should be separated"
+                    f" with commas:\n{', '.join(dependency.split())}"
                 )
 
     return project

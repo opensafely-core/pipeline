@@ -21,10 +21,9 @@ def test_success():
     Pipeline(**data)
 
 
-def test_unknown_name_in_needs():
+def test_pipeline_with_unknown_action_in_needs():
     data = {
-        "version": "3",
-        "expectations": {"population_size": 10},
+        "version": 1,
         "actions": {
             "action1": {
                 "run": "test",
