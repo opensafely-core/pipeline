@@ -10,7 +10,7 @@ def test_success():
         "expectations": {"population_size": 10},
         "actions": {
             "action1": {
-                "run": "test",
+                "run": "test:latest",
                 "outputs": {
                     "moderately_sensitive": {"cohort": "output.csv"},
                 },
@@ -19,6 +19,24 @@ def test_success():
     }
 
     Pipeline(**data)
+
+
+def test_action_has_a_version():
+    data = {
+        "version": 1,
+        "actions": {
+            "generate_cohort": {
+                "run": "test foo",
+                "outputs": {
+                    "highly_sensitive": {"cohort": "output/input.csv"},
+                },
+            }
+        },
+    }
+
+    msg = "test must have a version specified"
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline(**data)
 
 
 def test_expectations_before_v3_has_a_default_set():
@@ -140,7 +158,7 @@ def test_pipeline_needs_with_unknown_action():
         "version": 1,
         "actions": {
             "action1": {
-                "run": "test",
+                "run": "test:latest",
                 "needs": ["action2"],
                 "outputs": {
                     "moderately_sensitive": {"cohort": "output.csv"},
@@ -159,13 +177,13 @@ def test_pipeline_with_duplicated_action_run_commands():
         "version": 1,
         "actions": {
             "action1": {
-                "run": "test",
+                "run": "test:lastest",
                 "outputs": {
                     "moderately_sensitive": {"cohort": "output.csv"},
                 },
             },
             "action2": {
-                "run": "test",
+                "run": "test:lastest",
                 "outputs": {
                     "moderately_sensitive": {"cohort": "output.csv"},
                 },

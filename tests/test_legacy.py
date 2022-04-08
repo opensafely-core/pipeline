@@ -441,27 +441,6 @@ def test_parse_and_validate_project_file_with_duplicate_keys():
         parse_and_validate_project_file(project_file)
 
 
-def test_validate_project_and_set_defaults_action_has_a_version():
-    project_dict = Pipeline(
-        **{
-            "version": "2",
-            "expectations": {"population_size": 1_000},
-            "actions": {
-                "generate_cohort": {
-                    "run": "cohortextractor generate_cohort",
-                    "outputs": {
-                        "highly_sensitive": {"cohort": "output/input.csv"},
-                    },
-                }
-            },
-        }
-    ).dict(exclude_unset=True)
-
-    msg = "^cohortextractor must have a version specified"
-    with pytest.raises(ProjectValidationError, match=msg):
-        validate_project_and_set_defaults(project_dict)
-
-
 def test_validate_project_and_set_defaults_generate_cohort_has_only_one_output():
     project_dict = Pipeline(
         **{

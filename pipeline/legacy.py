@@ -76,13 +76,6 @@ def validate_project_and_set_defaults(project):
                         f"Output path {filename} is not permitted: {e}"
                     )
 
-        command, *args = shlex.split(action_config["run"]["run"])
-        name, _, version = command.partition(":")
-        if not version:
-            raise ProjectValidationError(
-                f"{name} must have a version specified (e.g. {name}:0.5.2)",
-            )
-
     return project
 
 

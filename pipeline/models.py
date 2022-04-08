@@ -58,6 +58,12 @@ class Action(BaseModel):
         parts = shlex.split(run)
         name, _, version = parts[0].partition(":")
         args = " ".join(parts[1:])
+
+        if not version:
+            raise ValueError(
+                f"{name} must have a version specified (e.g. {name}:0.5.2)",
+            )
+
         return Command(
             run=run,
             name=name,
