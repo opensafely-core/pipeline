@@ -1,6 +1,5 @@
 import dataclasses
 import shlex
-from pathlib import PurePosixPath
 
 from .exceptions import YAMLError
 from .extractors import is_extraction_command
@@ -79,25 +78,6 @@ def get_action_specification(project, action_id, using_dummy_data_backend=False)
             else:
                 size = int(project["expectations"]["population_size"])
                 run_command += f" --expectations-population={size}"
-        # Automatically configure the cohortextractor to produce output in the
-        # directory the `outputs` spec is expecting. Longer term I'd like to
-        # just make it an error if the directories don't match, rather than
-        # silently fixing it. (We can use the project versioning system to
-        # ensure this doesn't break existing studies.)
-        output_dirs = get_output_dirs(action_spec["outputs"])
-        if len(output_dirs) != 1:
-            # If we detect multiple output directories but the command
-            # explicitly specifies an output directory then we assume the user
-            # knows what they're doing and don't attempt to modify the output
-            # directory or throw an error
-            if not args_include(run_args, "--output-dir"):
-                raise ProjectValidationError(
-                    f"generate_cohort command should produce output in only one "
-                    f"directory, found {len(output_dirs)}:\n"
-                    + "\n".join([f" - {d}/" for d in output_dirs])
-                )
-        else:
-            run_command += f" --output-dir={output_dirs[0]}"
 
     elif is_extraction_command(run_args, require_version=2):
         # cohortextractor Version 2 expects all command line arguments to be
@@ -131,10 +111,6 @@ def get_action_specification(project, action_id, using_dummy_data_backend=False)
     )
 
 
-def args_include(args, target_arg):
-    return any(arg == target_arg or arg.startswith(f"{target_arg}=") for arg in args)
-
-
 def get_all_actions(project):
     # We ignore any manually defined run_all action (in later project versions
     # this will be an error). We use a list comprehension rather than set
@@ -149,15 +125,3 @@ def get_all_output_patterns_from_project_file(project_file):
         for patterns in action["outputs"].values():
             all_patterns.update(patterns.values())
     return list(all_patterns)
-
-
-def get_output_dirs(output_spec):
-    """
-    Given the set of output files specified by an action, return a list of the
-    unique directory names of those outputs
-    """
-    filenames = []
-    for group in output_spec.values():
-        filenames.extend(group.values())
-    dirs = {PurePosixPath(filename).parent for filename in filenames}
-    return list(dirs)

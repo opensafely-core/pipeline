@@ -8,6 +8,7 @@ from pydantic import BaseModel, root_validator, validator
 from .exceptions import InvalidPatternError
 from .extractors import is_extraction_command
 from .features import LATEST_VERSION, get_feature_flags_for_version
+from .outputs import get_output_dirs
 from .validation import assert_valid_glob_pattern
 
 
@@ -95,6 +96,39 @@ class Action(BaseModel):
         # it to the command with the --config flag.
         config_as_json = json.dumps(values["config"]).replace("'", r"\u0027")
         values["run"] = f"{values['run']} --config '{config_as_json}'"
+
+        return values
+
+    @root_validator(pre=True)
+    def add_output_dir_flag(cls, values):
+        run_args = shlex.split(values["run"])
+        is_cohort_extractor = is_extraction_command(run_args, require_version=1)
+
+        if not is_cohort_extractor:
+            return values
+
+        output_dirs = get_output_dirs(values["outputs"])
+
+        if len(output_dirs) == 1:
+            # Automatically configure the cohortextractor to produce output in the
+            # directory the `outputs` spec is expecting.
+            values["run"] += f" --output-dir={output_dirs[0]}"
+            return values
+
+        # If we detect multiple output directories but the command explicitly
+        # specifies an output directory then we assume the user knows what
+        # they're doing and don't attempt to modify the output directory or
+        # throw an error
+        flag = "--output-dir"
+        has_output_dir = any(
+            arg == flag or arg.startswith(f"{flag}=") for arg in run_args
+        )
+        if not has_output_dir:
+            raise ValueError(
+                f"generate_cohort command should produce output in only one "
+                f"directory, found {len(output_dirs)}:\n"
+                + "\n".join([f" - {d}/" for d in output_dirs])
+            )
 
         return values
 

@@ -6,20 +6,12 @@ import pytest
 from pipeline.legacy import (
     ProjectValidationError,
     UnknownActionError,
-    args_include,
     get_action_specification,
     get_all_actions,
     get_all_output_patterns_from_project_file,
     parse_and_validate_project_file,
 )
 from pipeline.models import Pipeline
-
-
-def test_args_include():
-    assert not args_include(["foo=test"], "test")
-    assert not args_include([], "test")
-
-    assert args_include(["test=test", "test", "foo", "bar"], "test")
 
 
 def test_get_action_specification_databuilder_has_output_flag():
@@ -69,7 +61,7 @@ def test_get_action_specification_for_cohortextractor_generate_cohort_action():
 
     assert (
         action_spec.run
-        == """cohortextractor:latest generate_cohort --expectations-population=1000 --output-dir=output"""
+        == """cohortextractor:latest generate_cohort --output-dir=output --expectations-population=1000"""
     )
 
 
@@ -141,58 +133,6 @@ def test_get_action_specification_for_databuilder_errors(args, error, image):
         get_action_specification(project_dict, action_id, using_dummy_data_backend=True)
 
 
-def test_get_action_specification_multiple_ouputs_with_output_flag():
-    project_dict = Pipeline(
-        **{
-            "version": 3,
-            "expectations": {"population_size": 1000},
-            "actions": {
-                "generate_cohort": {
-                    "run": "cohortextractor:latest generate_cohort --output-dir=output",
-                    "outputs": {
-                        "moderately_sensitive": {
-                            "cohort": "output/input.csv",
-                            "other": "other/graph.png",
-                        }
-                    },
-                }
-            },
-        }
-    ).dict(exclude_unset=True)
-
-    action_spec = get_action_specification(project_dict, "generate_cohort")
-
-    assert (
-        action_spec.run == "cohortextractor:latest generate_cohort --output-dir=output"
-    )
-
-
-def test_get_action_specification_multiple_ouputs_without_output_flag():
-    project_dict = Pipeline(
-        **{
-            "version": 3,
-            "expectations": {"population_size": 1000},
-            "actions": {
-                "generate_cohort": {
-                    "run": "cohortextractor:latest generate_cohort",
-                    "outputs": {
-                        "moderately_sensitive": {
-                            "cohort": "output/input.csv",
-                            "other": "other/graph.png",
-                        }
-                    },
-                }
-            },
-        }
-    ).dict(exclude_unset=True)
-
-    msg = (
-        "^generate_cohort command should produce output in only one directory, found 2:"
-    )
-    with pytest.raises(ProjectValidationError, match=msg):
-        get_action_specification(project_dict, "generate_cohort")
-
-
 def test_get_action_specification_with_config():
     project_dict = Pipeline(
         **{
@@ -235,7 +175,7 @@ def test_get_action_specification_with_dummy_data_file_flag():
         "actions": {
             "generate_cohort": {
                 "run": {
-                    "run": "cohortextractor:latest generate_cohort",
+                    "run": "cohortextractor:latest generate_cohort --output-dir=output",
                     "name": "cohortextractor",
                     "version": "latest",
                     "args": "generate_cohort",
@@ -254,7 +194,31 @@ def test_get_action_specification_with_dummy_data_file_flag():
 
     assert (
         action_spec.run
-        == "cohortextractor:latest generate_cohort --dummy-data-file=test --output-dir=output"
+        == "cohortextractor:latest generate_cohort --output-dir=output --dummy-data-file=test"
+    )
+
+
+def test_get_action_specification_without_dummy_data_file_flag():
+    project_dict = {
+        "expectations": {"population_size": 1000},
+        "actions": {
+            "generate_cohort": {
+                "run": {
+                    "run": "cohortextractor:latest generate_cohort --output-dir=output",
+                    "name": "cohortextractor",
+                    "version": "latest",
+                    "args": "generate_cohort",
+                },
+                "outputs": {"moderately_sensitive": {"cohort": "output/input.csv"}},
+                "dummy_data_file": "test",
+            }
+        },
+    }
+
+    action_spec = get_action_specification(project_dict, "generate_cohort")
+
+    assert (
+        action_spec.run == "cohortextractor:latest generate_cohort --output-dir=output"
     )
 
 

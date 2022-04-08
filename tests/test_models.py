@@ -39,6 +39,50 @@ def test_action_has_a_version():
         Pipeline(**data)
 
 
+def test_action_cohortextractor_multiple_outputs_with_output_flag():
+    data = {
+        "version": 1,
+        "actions": {
+            "generate_cohort": {
+                "run": "cohortextractor:latest generate_cohort --output-dir=output",
+                "outputs": {
+                    "moderately_sensitive": {
+                        "cohort": "output/input.csv",
+                        "other": "other/graph.png",
+                    }
+                },
+            }
+        },
+    }
+
+    run_command = Pipeline(**data).actions["generate_cohort"].run.run
+
+    assert run_command == "cohortextractor:latest generate_cohort --output-dir=output"
+
+
+def test_action_cohortextractor_multiple_ouputs_without_output_flag():
+    data = {
+        "version": 1,
+        "actions": {
+            "generate_cohort": {
+                "run": "cohortextractor:latest generate_cohort",
+                "outputs": {
+                    "moderately_sensitive": {
+                        "cohort": "output/input.csv",
+                        "other": "other/graph.png",
+                    }
+                },
+            }
+        },
+    }
+
+    msg = (
+        "generate_cohort command should produce output in only one directory, found 2:"
+    )
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline(**data)
+
+
 def test_action_extraction_command_with_multiple_outputs():
     data = {
         "version": 1,
