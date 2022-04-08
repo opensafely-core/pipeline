@@ -77,6 +77,29 @@ def test_action_extraction_command_with_one_outputs():
     assert len(outputs.values()) == 1
 
 
+def test_action_with_config():
+    data = {
+        "version": 1,
+        "actions": {
+            "my_action": {
+                "run": "python:latest python analysis/my_action.py",
+                "config": {"my_key": "my_value"},
+                "outputs": {
+                    "moderately_sensitive": {"my_figure": "output/my_figure.png"}
+                },
+            }
+        },
+    }
+
+    my_action = Pipeline(**data).actions["my_action"]
+
+    assert my_action.config == {"my_key": "my_value"}
+    assert (
+        my_action.run.run
+        == """python:latest python analysis/my_action.py --config '{"my_key": "my_value"}'"""
+    )
+
+
 def test_expectations_before_v3_has_a_default_set():
     data = {
         "version": 2,

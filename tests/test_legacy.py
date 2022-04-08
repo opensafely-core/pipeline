@@ -6,7 +6,6 @@ import pytest
 from pipeline.legacy import (
     ProjectValidationError,
     UnknownActionError,
-    add_config_to_run_command,
     args_include,
     get_action_specification,
     get_all_actions,
@@ -14,40 +13,6 @@ from pipeline.legacy import (
     parse_and_validate_project_file,
 )
 from pipeline.models import Pipeline
-
-
-def test_add_config_to_run_command_with_option():
-    command = add_config_to_run_command(
-        "python:latest python analysis/my_action.py --option value",
-        {"option": "value"},
-    )
-
-    assert (
-        command
-        == """python:latest python analysis/my_action.py --option value --config '{"option": "value"}'"""
-    )
-
-
-def test_add_config_to_run_command_with_argument():
-    command = add_config_to_run_command(
-        "python:latest python action/__main__.py output/input.csv",
-        {"option": "value"},
-    )
-
-    assert (
-        command
-        == """python:latest python action/__main__.py output/input.csv --config '{"option": "value"}'"""
-    )
-
-    # Does argparse accept options after arguments?
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--config")  # option
-    parser.add_argument("input_files", nargs="*")  # argument
-
-    # If parser were in __main__.py, then parser.parse_args would receive sys.argv
-    # by default. sys.argv[0] is the script name (either with or without a path,
-    # depending on the OS) so we slice obs_run_command to mimic this.
-    parser.parse_args(shlex.split(command)[2:])
 
 
 def test_args_include():
@@ -235,8 +200,8 @@ def test_get_action_specification_with_config():
             "expectations": {"population_size": 1_000},
             "actions": {
                 "my_action": {
-                    "run": "python:latest python analysis/my_action.py",
-                    "config": {"my_key": "my_value"},
+                    "run": "python:latest python action/__main__.py output/input.csv",
+                    "config": {"option": "value"},
                     "outputs": {
                         "moderately_sensitive": {"my_figure": "output/my_figure.png"}
                     },
@@ -249,8 +214,18 @@ def test_get_action_specification_with_config():
 
     assert (
         action_spec.run
-        == """python:latest python analysis/my_action.py --config '{"my_key": "my_value"}'"""
+        == """python:latest python action/__main__.py output/input.csv --config '{"option": "value"}'"""
     )
+
+    # Does argparse accept options after arguments?
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config")  # option
+    parser.add_argument("input_files", nargs="*")  # argument
+
+    # If parser were in __main__.py, then parser.parse_args would receive sys.argv
+    # by default. sys.argv[0] is the script name (either with or without a path,
+    # depending on the OS) so we slice obs_run_command to mimic this.
+    parser.parse_args(shlex.split(action_spec.run)[2:])
 
 
 def test_get_action_specification_with_dummy_data_file_flag():

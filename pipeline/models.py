@@ -1,3 +1,4 @@
+import json
 import shlex
 from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Optional, Set
@@ -72,6 +73,30 @@ class Action(BaseModel):
     run: Command
     needs: List[str] = []
     outputs: Outputs
+
+    @root_validator(pre=True)
+    def add_config_to_run(cls, values):
+        """
+        Add --config flag to command.
+
+        For commands that require complex config, users can supply a config key
+        in project.yaml.  We serialize this as JSON, and pass it to the command
+        with the --config flag.
+
+        We run this with pre=True so the raw input's run key is mutated before
+        parse_run_string runs.
+        """
+
+        if "config" not in values:
+            return values
+
+        # For commands that require complex config, users can supply a
+        # config key in project.yaml.  We serialize this as JSON, and pass
+        # it to the command with the --config flag.
+        config_as_json = json.dumps(values["config"]).replace("'", r"\u0027")
+        values["run"] = f"{values['run']} --config '{config_as_json}'"
+
+        return values
 
     @validator("run", pre=True)
     def parse_run_string(cls, run: str) -> Command:
