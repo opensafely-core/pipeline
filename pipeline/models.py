@@ -187,13 +187,30 @@ class Pipeline(BaseModel):
     @root_validator(pre=True)
     def validate_extraction_command_has_only_one_output(cls, values):
         for action_id, config in values["actions"].items():
-            args = shlex.split(config["run"])
+            run_args = shlex.split(config["run"])
+
+            if not is_extraction_command(run_args):
+                continue
+
+            # any extraction command must only have one output
             num_outputs = len(config["outputs"])
-            if is_extraction_command(args) and num_outputs != 1:
+            if num_outputs != 1:
                 raise ValueError(
                     "A `generate_cohort` action must have exactly one output; "
                     f"{action_id} had {num_outputs}"
                 )
+
+            if is_extraction_command(run_args, require_version=2):
+                # we've confirmed above that there is only one file so no need
+                # to check again here
+                output_files = [
+                    output_file
+                    for output in config["outputs"].values()
+                    for output_file in output.values()
+                ]
+                output_file = next(iter(output_files))
+                if output_file not in config["run"]:
+                    raise ValueError("--output in run command and outputs must match")
 
         return values
 

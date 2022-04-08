@@ -87,19 +87,6 @@ def get_action_specification(project, action_id, using_dummy_data_backend=False)
                 "--dummy-data-file is required for a local run"
             )
 
-        # There is one and only one output file in the outputs spec (verified
-        # in validate_project_and_set_defaults())
-        output_files = [
-            output_file
-            for output in action_spec["outputs"].values()
-            for output_file in output.values()
-        ]
-        output_file = next(iter(output_files))
-        if output_file not in run_command:
-            raise ProjectValidationError(
-                "--output in run command and outputs must match"
-            )
-
     # TODO: we can probably remove this fork since the v1&2 forks cover it
     elif is_extraction_command(run_args):  # pragma: no cover
         raise RuntimeError("Unhandled cohortextractor version")

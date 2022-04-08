@@ -429,3 +429,20 @@ def test_outputs_with_invalid_pattern():
     msg = "Output path test\\?foo is not permitted:"
     with pytest.raises(ValidationError, match=msg):
         Pipeline(**data)
+
+
+@pytest.mark.parametrize("image", ["cohortextractor-v2", "databuilder"])
+def test_pipeline_databuilder_specifies_output(image):
+    data = {
+        "version": 1,
+        "actions": {
+            "generate_cohort_v2": {
+                "run": f"{image}:latest generate_cohort --output=output/cohort1.csv",
+                "outputs": {"highly_sensitive": {"cohort": "output/cohort.csv"}},
+            }
+        },
+    }
+
+    msg = "--output in run command and outputs must match"
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline(**data)

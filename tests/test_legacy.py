@@ -90,47 +90,28 @@ def test_get_action_specification_for_databuilder_action(image):
     )
 
 
-@pytest.mark.parametrize(
-    "args,error,image",
-    [
-        (
-            "--output=output/cohort1.csv --dummy-data-file dummy.csv",
-            "--output in run command and outputs must match",
-            "cohortextractor-v2",
-        ),
-        (
-            "--output=output/cohort1.csv",
-            "--dummy-data-file is required for a local run",
-            "cohortextractor-v2",
-        ),
-        (
-            "--output=output/cohort1.csv --dummy-data-file dummy.csv",
-            "--output in run command and outputs must match",
-            "databuilder",
-        ),
-        (
-            "--output=output/cohort1.csv",
-            "--dummy-data-file is required for a local run",
-            "databuilder",
-        ),
-    ],
-)
-def test_get_action_specification_for_databuilder_errors(args, error, image):
+@pytest.mark.parametrize("image", ["cohortextractor-v2", "databuilder"])
+def test_get_action_specification_for_databuilder_errors(image):
     project_dict = Pipeline(
         **{
             "version": 3,
             "expectations": {"population_size": 1_000},
             "actions": {
                 "generate_cohort_v2": {
-                    "run": f"{image}:latest generate_cohort {args}",
+                    "run": f"{image}:latest generate_cohort --output=output/cohort.csv",
                     "outputs": {"highly_sensitive": {"cohort": "output/cohort.csv"}},
                 }
             },
         }
     ).dict(exclude_unset=True)
-    action_id = "generate_cohort_v2"
-    with pytest.raises(ProjectValidationError, match=error):
-        get_action_specification(project_dict, action_id, using_dummy_data_backend=True)
+
+    msg = "--dummy-data-file is required for a local run"
+    with pytest.raises(ProjectValidationError, match=msg):
+        get_action_specification(
+            project_dict,
+            "generate_cohort_v2",
+            using_dummy_data_backend=True,
+        )
 
 
 def test_get_action_specification_with_config():
