@@ -8,7 +8,7 @@ from pydantic import BaseModel, root_validator, validator
 from .exceptions import InvalidPatternError
 from .extractors import is_extraction_command
 from .features import LATEST_VERSION, get_feature_flags_for_version
-from .outputs import get_output_dirs
+from .outputs import get_first_output_file, get_output_dirs
 from .validation import assert_valid_glob_pattern
 
 
@@ -203,13 +203,8 @@ class Pipeline(BaseModel):
             if is_extraction_command(run_args, require_version=2):
                 # we've confirmed above that there is only one file so no need
                 # to check again here
-                output_files = [
-                    output_file
-                    for output in config["outputs"].values()
-                    for output_file in output.values()
-                ]
-                output_file = next(iter(output_files))
-                if output_file not in config["run"]:
+                first_output_file = get_first_output_file(config["outputs"])
+                if first_output_file not in config["run"]:
                     raise ValueError("--output in run command and outputs must match")
 
         return values
