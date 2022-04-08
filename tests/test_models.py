@@ -308,3 +308,19 @@ def test_outputs_with_unknown_privacy_level():
                 },
             }
         )
+
+
+def test_outputs_with_invalid_pattern():
+    data = {
+        "version": 1,
+        "actions": {
+            "generate_cohort": {
+                "run": "cohortextractor:latest generate_cohort",
+                "outputs": {"highly_sensitive": {"test": "test?foo"}},
+            },
+        },
+    }
+
+    msg = "Output path test\\?foo is not permitted:"
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline(**data)

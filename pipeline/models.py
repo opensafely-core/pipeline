@@ -4,7 +4,9 @@ from typing import Any, Dict, Iterable, List, Optional, Set
 
 from pydantic import BaseModel, root_validator, validator
 
+from .exceptions import InvalidPatternError
 from .features import LATEST_VERSION, get_feature_flags_for_version
+from .validation import assert_valid_glob_pattern
 
 
 class Expectations(BaseModel):
@@ -31,6 +33,23 @@ class Outputs(BaseModel):
             raise ValueError(
                 f"must specify at least one output of: {', '.join(outputs)}"
             )
+
+        return outputs
+
+    @root_validator(pre=True)
+    def validate_output_filenames_are_valid(
+        cls, outputs: Dict[str, str]
+    ) -> Dict[str, str]:
+        # we use pre=True here so that we only get the outputs specified in the
+        # input data.  With Optional[…] wrapped fields pydantic will set None
+        # for us and that just makes the logic a little fiddler with no
+        # benefit.
+        for privacy_level, output in outputs.items():
+            for output_id, filename in output.items():
+                try:
+                    assert_valid_glob_pattern(filename)
+                except InvalidPatternError as e:
+                    raise ValueError(f"Output path {filename} is not permitted: {e}")
 
         return outputs
 

@@ -4,12 +4,10 @@ import shlex
 import pytest
 
 from pipeline.legacy import (
-    InvalidPatternError,
     ProjectValidationError,
     UnknownActionError,
     add_config_to_run_command,
     args_include,
-    assert_valid_glob_pattern,
     get_action_specification,
     get_all_actions,
     get_all_output_patterns_from_project_file,
@@ -59,27 +57,6 @@ def test_args_include():
     assert not args_include([], "test")
 
     assert args_include(["test=test", "test", "foo", "bar"], "test")
-
-
-def test_assert_valid_glob_pattern():
-    assert_valid_glob_pattern("foo/bar/*.txt")
-    assert_valid_glob_pattern("foo")
-    bad_patterns = [
-        "/abs/path",
-        "ends/in/slash/",
-        "not//canonical",
-        "path/../traversal",
-        "c:/windows/absolute",
-        "recursive/**/glob.pattern",
-        "questionmark?",
-        "/[square]brackets",
-        "\\ftest",
-        "metadata",
-        "metadata/test",
-    ]
-    for pattern in bad_patterns:
-        with pytest.raises(InvalidPatternError):
-            assert_valid_glob_pattern(pattern)
 
 
 def test_get_action_specification_databuilder_has_output_flag():
@@ -462,21 +439,21 @@ def test_validate_project_and_set_defaults_generate_cohort_has_only_one_output()
     with pytest.raises(ProjectValidationError, match=msg):
         validate_project_and_set_defaults(project_dict)
 
-
-def test_validate_project_and_set_defaults_with_invalid_pattern():
     project_dict = Pipeline(
         **{
-            "version": "3",
-            "expectations": {"population_size": 1000},
+            "version": "2",
+            "expectations": {"population_size": 1_000},
             "actions": {
                 "generate_cohort": {
                     "run": "cohortextractor:latest generate_cohort",
-                    "outputs": {"highly_sensitive": {"test": "test?foo"}},
-                },
+                    "outputs": {
+                        "highly_sensitive": {"cohort": "output/input.csv"},
+                    },
+                }
             },
         }
     ).dict(exclude_unset=True)
 
-    msg = "^Output path test\\?foo is not permitted:"
-    with pytest.raises(ProjectValidationError, match=msg):
-        validate_project_and_set_defaults(project_dict)
+    project = validate_project_and_set_defaults(project_dict)
+
+    assert len(project["actions"]["generate_cohort"]["outputs"].values()) == 1
