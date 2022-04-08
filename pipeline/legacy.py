@@ -56,8 +56,6 @@ def parse_and_validate_project_file(project_file):
 # Copied almost verbatim from the original job-runner
 def validate_project_and_set_defaults(project):
     """Check that a dictionary of project actions is valid, and set any defaults"""
-    seen_runs = []
-
     project_actions = project["actions"]
 
     for action_id, action_config in project_actions.items():
@@ -84,14 +82,6 @@ def validate_project_and_set_defaults(project):
             raise ProjectValidationError(
                 f"{name} must have a version specified (e.g. {name}:0.5.2)",
             )
-        # Check the run command + args signature appears only once in
-        # a project
-        run_signature = f"{name}_{args}"
-        if run_signature in seen_runs:
-            raise ProjectValidationError(
-                f"{name} {' '.join(args)} appears more than once"
-            )
-        seen_runs.append(run_signature)
 
         for dependency in action_config.get("needs", []):
             if dependency not in project_actions:

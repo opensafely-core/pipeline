@@ -4,31 +4,6 @@ from pydantic import ValidationError
 from pipeline.models import Pipeline
 
 
-def test_duplicated_commands():
-    data = {
-        "version": "3",
-        "expectations": {"population_size": 10},
-        "actions": {
-            "action1": {
-                "run": "test",
-                "outputs": {
-                    "moderately_sensitive": {"cohort": "output.csv"},
-                },
-            },
-            "action2": {
-                "run": "test",
-                "outputs": {
-                    "moderately_sensitive": {"cohort": "output.csv"},
-                },
-            },
-        },
-    }
-
-    match = "Action action2 has the same 'run' command as other actions: action1"
-    with pytest.raises(ValidationError, match=match):
-        Pipeline(**data)
-
-
 def test_success():
     data = {
         "version": "3",
@@ -131,6 +106,30 @@ def test_expectations_population_size_is_a_number():
 
     msg = "Project expectations population size must be a number"
     with pytest.raises(ValidationError, match=msg):
+        Pipeline(**data)
+
+
+def test_pipeline_with_duplicated_action_run_commands():
+    data = {
+        "version": 1,
+        "actions": {
+            "action1": {
+                "run": "test",
+                "outputs": {
+                    "moderately_sensitive": {"cohort": "output.csv"},
+                },
+            },
+            "action2": {
+                "run": "test",
+                "outputs": {
+                    "moderately_sensitive": {"cohort": "output.csv"},
+                },
+            },
+        },
+    }
+
+    match = "Action action2 has the same 'run' command as other actions: action1"
+    with pytest.raises(ValidationError, match=match):
         Pipeline(**data)
 
 

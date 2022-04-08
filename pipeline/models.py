@@ -135,8 +135,8 @@ class Pipeline(BaseModel):
     @validator("actions")
     def validate_unique_commands(cls, actions: Dict[str, Action]) -> Dict[str, Action]:
         seen: Dict[Command, List[str]] = defaultdict(list)
-        for name, action in actions.items():
-            run = action.run
+        for name, config in actions.items():
+            run = config.run
             if run in seen:
                 raise ValueError(
                     f"Action {name} has the same 'run' command as other actions: {' ,'.join(seen[run])}"

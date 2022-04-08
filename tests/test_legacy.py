@@ -462,40 +462,6 @@ def test_validate_project_and_set_defaults_action_has_a_version():
         validate_project_and_set_defaults(project_dict)
 
 
-def test_validate_project_and_set_defaults_action_command_is_unique():
-    # TODO: remove this test and the privacy level check when we start removing
-    # bits of legacy.py, the pydantic models already cover action commands
-    # being unique
-    project_dict = {
-        "version": 2,
-        "expectations": {"population_size": 1000},
-        "actions": {
-            "generate_cohort": {
-                "run": {
-                    "run": "cohortextractor:latest generate_cohort",
-                    "name": "cohortextractor",
-                    "version": "latest",
-                    "args": "generate_cohort",
-                },
-                "outputs": {"moderately_sensitive": {"cohort": "output/input.csv"}},
-            },
-            "generate_cohort2": {
-                "run": {
-                    "run": "cohortextractor:latest generate_cohort",
-                    "name": "cohortextractor",
-                    "version": "latest",
-                    "args": "generate_cohort",
-                },
-                "outputs": {"moderately_sensitive": {"cohort2": "output/input2.csv"}},
-            },
-        },
-    }
-
-    msg = "^cohortextractor generate_cohort appears more than once"
-    with pytest.raises(ProjectValidationError, match=msg):
-        validate_project_and_set_defaults(project_dict)
-
-
 def test_validate_project_and_set_defaults_action_needs_success():
     project_dict = Pipeline(
         **{
