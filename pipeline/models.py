@@ -6,6 +6,7 @@ from typing import Any, Dict, Iterable, List, Optional, Set
 
 from pydantic import BaseModel, root_validator, validator
 
+from .constants import RUN_ALL_COMMAND
 from .exceptions import InvalidPatternError
 from .extractors import is_extraction_command
 from .features import LATEST_VERSION, get_feature_flags_for_version
@@ -157,6 +158,17 @@ class Pipeline(BaseModel):
     version: float
     expectations: Expectations
     actions: Dict[str, Action]
+
+    @property
+    def all_actions(self):
+        """
+        Get all actions for this Pipeline instance
+
+        We ignore any manually defined run_all action (in later project
+        versions this will be an error). We use a list comprehension rather
+        than set operators as previously so we preserve the original order.
+        """
+        return [action for action in self.actions.keys() if action != RUN_ALL_COMMAND]
 
     @root_validator(pre=True)
     def validate_expectations_per_version(cls, values):

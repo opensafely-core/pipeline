@@ -1,6 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
+from pipeline import load_pipeline
 from pipeline.models import Pipeline
 
 
@@ -210,6 +211,22 @@ def test_expectations_population_size_is_a_number():
     msg = "Project expectations population size must be a number"
     with pytest.raises(ValidationError, match=msg):
         Pipeline(**data)
+
+
+def test_pipeline_all_actions(test_file):
+    # load the pipeline fixture for simplicity here
+    config = load_pipeline(test_file)
+
+    assert config.all_actions == [
+        "generate_cohort",
+        "generate_cohort_with_dummy_data",
+        "prepare_data_m",
+        "prepare_data_f",
+        "prepare_data_with_quote_in_filename",
+        "analyse_data",
+        "test_reusable_action",
+        "test_cancellation",
+    ]
 
 
 def test_pipeline_needs_success():

@@ -6,10 +6,6 @@ from .extractors import is_extraction_command
 from .main import load_pipeline
 
 
-# The magic action name which means "run every action"
-RUN_ALL_COMMAND = "run_all"
-
-
 class ProjectValidationError(Exception):
     pass
 
@@ -96,13 +92,6 @@ def get_action_specification(config, action_id, using_dummy_data_backend=False):
         needs=action_spec.needs,
         outputs=action_spec.outputs.dict(exclude_unset=True),
     )
-
-
-def get_all_actions(project):
-    # We ignore any manually defined run_all action (in later project versions
-    # this will be an error). We use a list comprehension rather than set
-    # operators as previously so we preserve the original order.
-    return [action for action in project["actions"].keys() if action != RUN_ALL_COMMAND]
 
 
 def get_all_output_patterns_from_project_file(project_file):

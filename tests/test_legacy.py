@@ -7,7 +7,6 @@ from pipeline.legacy import (
     ProjectValidationError,
     UnknownActionError,
     get_action_specification,
-    get_all_actions,
     get_all_output_patterns_from_project_file,
     parse_and_validate_project_file,
 )
@@ -224,19 +223,6 @@ def test_get_action_specification_with_unknown_action():
     msg = "Action 'unknown_action' not found in project.yaml"
     with pytest.raises(UnknownActionError, match=msg):
         get_action_specification(config, "unknown_action")
-
-
-def test_get_all_actions():
-    config = {
-        "actions": {
-            "first": {},
-            "second": {},
-            "run_all": {},
-        }
-    }
-    assert get_all_actions(config) == ["first", "second"]
-
-    assert get_all_actions({"actions": {}}) == []
 
 
 def test_get_all_output_patterns_from_project_file_success(mocker):
