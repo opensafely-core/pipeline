@@ -2,7 +2,7 @@ import json
 import pathlib
 import shlex
 from collections import defaultdict
-from typing import Any, Dict, Iterable, List, Optional, Set
+from typing import Any, Dict, Iterable, List, Optional, Set, TypedDict
 
 from pydantic import BaseModel, root_validator, validator
 
@@ -11,6 +11,7 @@ from .exceptions import InvalidPatternError
 from .extractors import is_extraction_command
 from .features import LATEST_VERSION, get_feature_flags_for_version
 from .outputs import get_first_output_file, get_output_dirs
+from .types import RawAction, RawOutputs, RawPipeline
 from .validation import assert_valid_glob_pattern
 
 
@@ -18,7 +19,7 @@ class Expectations(BaseModel):
     population_size: int
 
     @validator("population_size", pre=True)
-    def validate_population_size(cls, population_size) -> int:
+    def validate_population_size(cls, population_size: str) -> int:
         try:
             return int(population_size)
         except (TypeError, ValueError):
@@ -42,9 +43,7 @@ class Outputs(BaseModel):
         return outputs
 
     @root_validator(pre=True)
-    def validate_output_filenames_are_valid(
-        cls, outputs: Dict[str, str]
-    ) -> Dict[str, str]:
+    def validate_output_filenames_are_valid(cls, outputs: RawOutputs) -> RawOutputs:
         # we use pre=True here so that we only get the outputs specified in the
         # input data.  With Optional[…] wrapped fields pydantic will set None
         # for us and that just makes the logic a little fiddler with no
@@ -79,7 +78,7 @@ class Action(BaseModel):
     dummy_data_file: Optional[pathlib.Path]
 
     @root_validator(pre=True)
-    def add_config_to_run(cls, values):
+    def add_config_to_run(cls, values: RawAction) -> RawAction:
         """
         Add --config flag to command.
 
@@ -103,7 +102,11 @@ class Action(BaseModel):
         return values
 
     @root_validator(pre=True)
-    def add_output_dir_flag(cls, values):
+    def add_output_dir_flag(cls, values: RawAction) -> RawAction:
+        if values["run"] == "":  # pragma: no cover
+            # key is present but empty
+            raise ValueError("run must have a value")
+
         run_args = shlex.split(values["run"])
         is_cohort_extractor = is_extraction_command(run_args, require_version=1)
 
@@ -154,13 +157,29 @@ class Action(BaseModel):
         )
 
 
+class PartiallyValidatedPipeline(TypedDict):
+    """
+    A custom type to type-check the values in "post" root validators
+
+    A root_validator with pre=False (or no kwargs) runs after the values have
+    been ingested already, and the `values` arg is a dictionary of model types.
+
+    Note: This is defined here so we don't have to deal with forward reference
+    types.
+    """
+
+    version: float
+    expectations: Expectations
+    actions: Dict[str, Action]
+
+
 class Pipeline(BaseModel):
     version: float
     expectations: Expectations
     actions: Dict[str, Action]
 
     @property
-    def all_actions(self):
+    def all_actions(self) -> List[str]:
         """
         Get all actions for this Pipeline instance
 
@@ -171,11 +190,11 @@ class Pipeline(BaseModel):
         return [action for action in self.actions.keys() if action != RUN_ALL_COMMAND]
 
     @root_validator(pre=True)
-    def validate_expectations_per_version(cls, values):
+    def validate_expectations_per_version(cls, values: RawPipeline) -> RawPipeline:
         """Ensure the expectations key exists for version 3 onwards"""
         try:
-            version = float(values.get("version"))
-        except (TypeError, ValueError):
+            version = float(values["version"])
+        except (KeyError, TypeError, ValueError):
             # this is handled in the validate_version_exists and
             # validate_version_value validators
             return values
@@ -199,7 +218,9 @@ class Pipeline(BaseModel):
         return values
 
     @root_validator(pre=True)
-    def validate_extraction_command_has_only_one_output(cls, values):
+    def validate_extraction_command_has_only_one_output(
+        cls, values: RawPipeline
+    ) -> RawPipeline:
         for action_id, config in values["actions"].items():
             if config["run"] == "":
                 # key is present but empty
@@ -230,7 +251,9 @@ class Pipeline(BaseModel):
         return values
 
     @root_validator()
-    def validate_outputs_per_version(cls, values):
+    def validate_outputs_per_version(
+        cls, values: PartiallyValidatedPipeline
+    ) -> PartiallyValidatedPipeline:
         """
         Ensure outputs are unique for version 2 onwards
 
@@ -289,7 +312,9 @@ class Pipeline(BaseModel):
         if not space_delimited:
             return actions
 
-        def iter_incorrect_needs(space_delimited):
+        def iter_incorrect_needs(
+            space_delimited: Dict[str, List[str]]
+        ) -> Iterable[str]:
             for name, needs in space_delimited.items():
                 yield f"Action: {name}"
                 for need in needs:
@@ -326,7 +351,7 @@ class Pipeline(BaseModel):
         raise ValueError("\n".join(msg))
 
     @root_validator(pre=True)
-    def validate_version_exists(cls, values):
+    def validate_version_exists(cls, values: RawPipeline) -> RawPipeline:
         """
         Ensure the version key exists.
 
@@ -344,7 +369,7 @@ class Pipeline(BaseModel):
         )
 
     @validator("version", pre=True)
-    def validate_version_value(cls, value) -> float:
+    def validate_version_value(cls, value: str) -> float:
         try:
             return float(value)
         except (TypeError, ValueError):

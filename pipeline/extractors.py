@@ -1,11 +1,13 @@
-def is_extraction_command(args, require_version=None):
+from __future__ import annotations
+
+
+def is_extraction_command(args: list[str], require_version: int | None = None) -> bool:
     # TODO: convert args to a Command instance
     """
     The `cohortextractor generate_cohort` command gets special treatment in
     various places (e.g. it's the only command which gets access to the
     database) so it's helpful to have a single function for identifying it
     """
-    assert not isinstance(args, str)
     version_found = None
     if len(args) > 1 and args[1] in ("generate_cohort", "generate_dataset"):
         if args[0].startswith("cohortextractor:"):

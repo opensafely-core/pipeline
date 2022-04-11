@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import dataclasses
 import shlex
 
 from .exceptions import ProjectValidationError
 from .extractors import is_extraction_command
 from .main import load_pipeline
+from .models import Pipeline
 
 
 class UnknownActionError(ProjectValidationError):
@@ -14,11 +17,13 @@ class UnknownActionError(ProjectValidationError):
 @dataclasses.dataclass
 class ActionSpecifiction:
     run: str
-    needs: list
-    outputs: dict
+    needs: list[str]
+    outputs: dict[str, dict[str, str]]
 
 
-def get_action_specification(config, action_id, using_dummy_data_backend=False):
+def get_action_specification(
+    config: Pipeline, action_id: str, using_dummy_data_backend: bool = False
+) -> ActionSpecifiction:
     """Get a specification for the action from the project.
 
     Args:
@@ -70,7 +75,7 @@ def get_action_specification(config, action_id, using_dummy_data_backend=False):
     )
 
 
-def get_all_output_patterns_from_project_file(project_file):
+def get_all_output_patterns_from_project_file(project_file: str) -> list[str]:
     config = load_pipeline(project_file)
     all_patterns = set()
     for action in config.actions.values():

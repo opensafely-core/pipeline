@@ -9,6 +9,29 @@ def test_load_pipeline_with_file(test_file):
     assert isinstance(data, Pipeline)
 
 
+def test_load_pipeline_with_path(mocker, tmp_path):
+    data = {
+        "version": 1,
+        "actions": {
+            "first": {
+                "run": "python:latest python foo.py",
+                "outputs": {"highly_sensitive": {"cohort": "output/cohort.csv"}},
+            }
+        },
+    }
+    mock = mocker.patch(
+        "pipeline.main.parse_yaml_file",
+        auto_spec=True,
+        return_value=data,
+    )
+
+    path = tmp_path / "project.yaml"
+
+    load_pipeline(path)
+
+    mock.assert_called_with(path, filename=None)
+
+
 def test_load_pipeline_with_string(test_file):
     data = load_pipeline(test_file.read())
     assert isinstance(data, Pipeline)

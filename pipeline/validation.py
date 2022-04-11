@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import posixpath
 from pathlib import PurePosixPath, PureWindowsPath
 
 from .exceptions import InvalidPatternError
 
 
-def assert_valid_glob_pattern(pattern):
+def assert_valid_glob_pattern(pattern: str) -> None:
     """
     These patterns get converted into regular expressions and matched
     with a `find` command so there shouldn't be any possibility of a path
