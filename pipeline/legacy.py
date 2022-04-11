@@ -46,11 +46,11 @@ def parse_and_validate_project_file(project_file):
     return config.dict(exclude_unset=True)
 
 
-def get_action_specification(project, action_id, using_dummy_data_backend=False):
+def get_action_specification(config, action_id, using_dummy_data_backend=False):
     """Get a specification for the action from the project.
 
     Args:
-        project: A dict representing the project.
+        config: A Pipeline model representing the pipeline configuration.
         action_id: The string ID of the action.
 
     Returns:
@@ -61,10 +61,10 @@ def get_action_specification(project, action_id, using_dummy_data_backend=False)
         ProjectValidationError: The project was not valid.
     """
     try:
-        action_spec = project["actions"][action_id]
+        action_spec = config.actions[action_id]
     except KeyError:
         raise UnknownActionError(f"Action '{action_id}' not found in project.yaml")
-    run_command = action_spec["run"]["run"]
+    run_command = action_spec.run.run
     run_args = shlex.split(run_command)
 
     # Special case handling for the `cohortextractor generate_cohort` command
@@ -73,10 +73,10 @@ def get_action_specification(project, action_id, using_dummy_data_backend=False)
         # generating.  Possibly this should be moved to the study definition
         # anyway, which would make this unnecessary.
         if using_dummy_data_backend:
-            if "dummy_data_file" in action_spec:
-                run_command += f" --dummy-data-file={action_spec['dummy_data_file']}"
+            if action_spec.dummy_data_file is not None:
+                run_command += f" --dummy-data-file={action_spec.dummy_data_file}"
             else:
-                size = int(project["expectations"]["population_size"])
+                size = config.expectations.population_size
                 run_command += f" --expectations-population={size}"
 
     elif is_extraction_command(run_args, require_version=2):
@@ -93,8 +93,8 @@ def get_action_specification(project, action_id, using_dummy_data_backend=False)
 
     return ActionSpecifiction(
         run=run_command,
-        needs=action_spec.get("needs", []),
-        outputs=action_spec["outputs"],
+        needs=action_spec.needs,
+        outputs=action_spec.outputs.dict(exclude_unset=True),
     )
 
 

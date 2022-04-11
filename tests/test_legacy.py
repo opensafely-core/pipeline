@@ -15,7 +15,7 @@ from pipeline.models import Pipeline
 
 
 def test_get_action_specification_databuilder_has_output_flag():
-    project_dict = Pipeline(
+    config = Pipeline(
         **{
             "version": 3,
             "expectations": {"population_size": 1000},
@@ -31,9 +31,9 @@ def test_get_action_specification_databuilder_has_output_flag():
                 },
             },
         }
-    ).dict(exclude_unset=True)
+    )
 
-    action_spec = get_action_specification(project_dict, "generate_dataset")
+    action_spec = get_action_specification(config, "generate_dataset")
 
     assert (
         action_spec.run
@@ -42,7 +42,7 @@ def test_get_action_specification_databuilder_has_output_flag():
 
 
 def test_get_action_specification_for_cohortextractor_generate_cohort_action():
-    project_dict = Pipeline(
+    config = Pipeline(
         **{
             "version": 3,
             "expectations": {"population_size": 1000},
@@ -53,10 +53,10 @@ def test_get_action_specification_for_cohortextractor_generate_cohort_action():
                 }
             },
         }
-    ).dict(exclude_unset=True)
+    )
 
     action_spec = get_action_specification(
-        project_dict, "generate_cohort", using_dummy_data_backend=True
+        config, "generate_cohort", using_dummy_data_backend=True
     )
 
     assert (
@@ -67,7 +67,7 @@ def test_get_action_specification_for_cohortextractor_generate_cohort_action():
 
 @pytest.mark.parametrize("image", ["cohortextractor-v2", "databuilder"])
 def test_get_action_specification_for_databuilder_action(image):
-    project_dict = Pipeline(
+    config = Pipeline(
         **{
             "version": 3,
             "expectations": {"population_size": 1000},
@@ -78,10 +78,10 @@ def test_get_action_specification_for_databuilder_action(image):
                 }
             },
         }
-    ).dict(exclude_unset=True)
+    )
 
     action_spec = get_action_specification(
-        project_dict, "generate_cohort_v2", using_dummy_data_backend=True
+        config, "generate_cohort_v2", using_dummy_data_backend=True
     )
 
     assert (
@@ -92,7 +92,7 @@ def test_get_action_specification_for_databuilder_action(image):
 
 @pytest.mark.parametrize("image", ["cohortextractor-v2", "databuilder"])
 def test_get_action_specification_for_databuilder_errors(image):
-    project_dict = Pipeline(
+    config = Pipeline(
         **{
             "version": 3,
             "expectations": {"population_size": 1_000},
@@ -103,19 +103,19 @@ def test_get_action_specification_for_databuilder_errors(image):
                 }
             },
         }
-    ).dict(exclude_unset=True)
+    )
 
     msg = "--dummy-data-file is required for a local run"
     with pytest.raises(ProjectValidationError, match=msg):
         get_action_specification(
-            project_dict,
+            config,
             "generate_cohort_v2",
             using_dummy_data_backend=True,
         )
 
 
 def test_get_action_specification_with_config():
-    project_dict = Pipeline(
+    config = Pipeline(
         **{
             "version": 3,
             "expectations": {"population_size": 1_000},
@@ -129,9 +129,9 @@ def test_get_action_specification_with_config():
                 }
             },
         }
-    ).dict(exclude_unset=True)
+    )
 
-    action_spec = get_action_specification(project_dict, "my_action")
+    action_spec = get_action_specification(config, "my_action")
 
     assert (
         action_spec.run
@@ -149,65 +149,81 @@ def test_get_action_specification_with_config():
     parser.parse_args(shlex.split(action_spec.run)[2:])
 
 
-def test_get_action_specification_with_dummy_data_file_flag():
-    # TODO: support Action.dummy_data_file: Path in model
-    project_dict = {
-        "expectations": {"population_size": 1000},
-        "actions": {
-            "generate_cohort": {
-                "run": {
-                    "run": "cohortextractor:latest generate_cohort --output-dir=output",
-                    "name": "cohortextractor",
-                    "version": "latest",
-                    "args": "generate_cohort",
-                },
-                "outputs": {"moderately_sensitive": {"cohort": "output/input.csv"}},
-                "dummy_data_file": "test",
-            }
-        },
-    }
+def test_get_action_specification_with_dummy_data_file_flag(tmp_path):
+    dummy_data_file = tmp_path / "test.csv"
+    with dummy_data_file.open("w") as f:
+        f.write("test")
+
+    config = Pipeline(
+        **{
+            "version": 1,
+            "actions": {
+                "generate_cohort": {
+                    "run": "cohortextractor:latest generate_cohort",
+                    "outputs": {"moderately_sensitive": {"cohort": "output/input.csv"}},
+                    "dummy_data_file": dummy_data_file,
+                }
+            },
+        }
+    )
 
     action_spec = get_action_specification(
-        project_dict,
+        config,
         "generate_cohort",
         using_dummy_data_backend=True,
     )
 
-    assert (
-        action_spec.run
-        == "cohortextractor:latest generate_cohort --output-dir=output --dummy-data-file=test"
+    expected = " ".join(
+        [
+            "cohortextractor:latest",
+            "generate_cohort",
+            "--output-dir=output",
+            f"--dummy-data-file={dummy_data_file}",
+        ]
+    )
+    assert action_spec.run == expected
+
+
+def test_get_action_specification_without_dummy_data_file_flag(tmp_path):
+    dummy_data_file = tmp_path / "test.csv"
+    with dummy_data_file.open("w") as f:
+        f.write("test")
+
+    config = Pipeline(
+        **{
+            "version": 1,
+            "actions": {
+                "generate_cohort": {
+                    "run": "cohortextractor:latest generate_cohort",
+                    "outputs": {"moderately_sensitive": {"cohort": "output/input.csv"}},
+                    "dummy_data_file": dummy_data_file,
+                }
+            },
+        }
     )
 
+    action_spec = get_action_specification(config, "generate_cohort")
 
-def test_get_action_specification_without_dummy_data_file_flag():
-    project_dict = {
-        "expectations": {"population_size": 1000},
-        "actions": {
-            "generate_cohort": {
-                "run": {
-                    "run": "cohortextractor:latest generate_cohort --output-dir=output",
-                    "name": "cohortextractor",
-                    "version": "latest",
-                    "args": "generate_cohort",
-                },
-                "outputs": {"moderately_sensitive": {"cohort": "output/input.csv"}},
-                "dummy_data_file": "test",
-            }
-        },
-    }
-
-    action_spec = get_action_specification(project_dict, "generate_cohort")
-
-    assert (
-        action_spec.run == "cohortextractor:latest generate_cohort --output-dir=output"
-    )
+    expected = "cohortextractor:latest generate_cohort --output-dir=output"
+    assert action_spec.run == expected
 
 
 def test_get_action_specification_with_unknown_action():
-    project_dict = {"actions": {"known_action": {}}}
+    config = Pipeline(
+        **{
+            "version": 1,
+            "actions": {
+                "known_action": {
+                    "run": "python:latest python test.py",
+                    "outputs": {"moderately_sensitive": {"cohort": "output/input.csv"}},
+                }
+            },
+        }
+    )
 
-    with pytest.raises(UnknownActionError):
-        get_action_specification(project_dict, "unknown_action")
+    msg = "Action 'unknown_action' not found in project.yaml"
+    with pytest.raises(UnknownActionError, match=msg):
+        get_action_specification(config, "unknown_action")
 
 
 def test_get_all_actions():

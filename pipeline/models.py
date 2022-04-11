@@ -1,4 +1,5 @@
 import json
+import pathlib
 import shlex
 from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Optional, Set
@@ -74,6 +75,7 @@ class Action(BaseModel):
     run: Command
     needs: List[str] = []
     outputs: Outputs
+    dummy_data_file: Optional[pathlib.Path]
 
     @root_validator(pre=True)
     def add_config_to_run(cls, values):
