@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .exceptions import ProjectValidationError, YAMLError
 from .loading import parse_yaml_file
 from .models import Pipeline
 
@@ -15,7 +16,10 @@ def load_pipeline(pipeline_config: str, filename: str | None = None) -> Pipeline
     configs, which is useful in user facing contexts.
     """
     # parse
-    parsed_data = parse_yaml_file(pipeline_config, filename=filename)
+    try:
+        parsed_data = parse_yaml_file(pipeline_config, filename=filename)
+    except YAMLError as e:
+        raise ProjectValidationError(*e.args)
 
     # validate
     return Pipeline(**parsed_data)

@@ -1,13 +1,9 @@
 import dataclasses
 import shlex
 
-from .exceptions import YAMLError
+from .exceptions import ProjectValidationError, YAMLError
 from .extractors import is_extraction_command
 from .main import load_pipeline
-
-
-class ProjectValidationError(Exception):
-    pass
 
 
 class UnknownActionError(ProjectValidationError):

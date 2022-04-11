@@ -3,8 +3,8 @@ import shlex
 
 import pytest
 
+from pipeline.exceptions import ProjectValidationError
 from pipeline.legacy import (
-    ProjectValidationError,
     UnknownActionError,
     get_action_specification,
     get_all_output_patterns_from_project_file,

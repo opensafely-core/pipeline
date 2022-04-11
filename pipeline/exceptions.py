@@ -1,4 +1,8 @@
-class InvalidPatternError(Exception):
+class ProjectValidationError(Exception):
+    pass
+
+
+class InvalidPatternError(ProjectValidationError):
     pass
 
 
