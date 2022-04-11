@@ -1,7 +1,7 @@
 import dataclasses
 import shlex
 
-from .exceptions import ProjectValidationError, YAMLError
+from .exceptions import ProjectValidationError
 from .extractors import is_extraction_command
 from .main import load_pipeline
 
@@ -16,26 +16,6 @@ class ActionSpecifiction:
     run: str
     needs: list
     outputs: dict
-
-
-def parse_and_validate_project_file(project_file):
-    """Parse and validate the project file.
-
-    Args:
-        project_file: The contents of the project file as an immutable array of bytes.
-
-    Returns:
-        A dict representing the project.
-
-    Raises:
-        ProjectValidationError: The project could not be parsed, or was not valid
-    """
-    try:
-        config = load_pipeline(project_file, filename="project.yaml")
-    except YAMLError as e:
-        raise ProjectValidationError(*e.args)
-
-    return config.dict(exclude_unset=True)
 
 
 def get_action_specification(config, action_id, using_dummy_data_backend=False):
@@ -91,9 +71,9 @@ def get_action_specification(config, action_id, using_dummy_data_backend=False):
 
 
 def get_all_output_patterns_from_project_file(project_file):
-    project = parse_and_validate_project_file(project_file)
+    config = load_pipeline(project_file)
     all_patterns = set()
-    for action in project["actions"].values():
-        for patterns in action["outputs"].values():
+    for action in config.actions.values():
+        for patterns in action.outputs.dict(exclude_unset=True).values():
             all_patterns.update(patterns.values())
     return list(all_patterns)

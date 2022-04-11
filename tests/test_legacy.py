@@ -8,7 +8,6 @@ from pipeline.legacy import (
     UnknownActionError,
     get_action_specification,
     get_all_output_patterns_from_project_file,
-    parse_and_validate_project_file,
 )
 from pipeline.models import Pipeline
 
@@ -225,80 +224,24 @@ def test_get_action_specification_with_unknown_action():
         get_action_specification(config, "unknown_action")
 
 
-def test_get_all_output_patterns_from_project_file_success(mocker):
-    config = {
-        "version": 3,
-        "expectations": {"population_size": 1000},
-        "actions": {
-            "first": {
-                "outputs": {
-                    "moderately_sensitive": {
-                        "cohort": "output/input.csv",
-                        "other": "output/graph_*.png",
-                    },
-                },
-            },
-            "second": {
-                "outputs": {
-                    "moderately_sensitive": {
-                        "second": "output/*.csv",
-                    },
-                },
-            },
-        },
-    }
-
-    mocker.patch(
-        "pipeline.legacy.parse_and_validate_project_file",
-        auto_spec=True,
-        return_value=config,
-    )
-
-    patterns = get_all_output_patterns_from_project_file("test")
-
-    assert set(patterns) == {"output/input.csv", "output/graph_*.png", "output/*.csv"}
-
-
-def test_get_all_output_patterns_from_project_file_with_no_outputs(mocker):
-    config = {
-        "version": 3,
-        "expectations": {"population_size": 1000},
-        "actions": {"first": {"outputs": {}}},
-    }
-
-    mocker.patch(
-        "pipeline.legacy.parse_and_validate_project_file",
-        auto_spec=True,
-        return_value=config,
-    )
-
-    assert get_all_output_patterns_from_project_file("") == []
-
-
-def test_parse_and_validate_project_file_with_action():
-    project_file = """
-    version: '3.0'
-    expectations:
-      population_size: 1000
+def test_get_all_output_patterns_from_project_file_success():
+    config = """
+    version: 1
     actions:
-      my_action:
-        run: python:latest python analysis/my_action.py
+      first:
+        run: python:latest python analyse1.py
         outputs:
           moderately_sensitive:
-            my_figure: output/my_figure.png
+            cohort: output/input.csv
+            other: output/graph_*.png
+
+      second:
+        run: python:latest python analyse2.py
+        outputs:
+          moderately_sensitive:
+            second: output/*.csv
     """
-    config = parse_and_validate_project_file(project_file)
 
-    command = config["actions"]["my_action"]["run"]["run"]
-    assert command == "python:latest python analysis/my_action.py"
+    patterns = get_all_output_patterns_from_project_file(config)
 
-
-def test_parse_and_validate_project_file_with_duplicate_keys():
-    project_file = """
-        top_level:
-            duplicate: 1
-            duplicate: 2
-    """
-    msg = 'found duplicate key "duplicate" with value "2"'
-    with pytest.raises(ProjectValidationError, match=msg):
-        parse_and_validate_project_file(project_file)
+    assert set(patterns) == {"output/input.csv", "output/graph_*.png", "output/*.csv"}
