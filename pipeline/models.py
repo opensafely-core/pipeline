@@ -201,6 +201,12 @@ class Pipeline(BaseModel):
     @root_validator(pre=True)
     def validate_extraction_command_has_only_one_output(cls, values):
         for action_id, config in values["actions"].items():
+            if config["run"] == "":
+                # key is present but empty
+                raise ValueError(
+                    f"run must have a value, {action_id} has an empty run key"
+                )
+
             run_args = shlex.split(config["run"])
 
             if not is_extraction_command(run_args):

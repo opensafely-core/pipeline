@@ -318,6 +318,24 @@ def test_pipeline_with_duplicated_action_run_commands():
         Pipeline(**data)
 
 
+def test_pipeline_with_empty_run_command():
+    data = {
+        "version": 1,
+        "actions": {
+            "action1": {
+                "run": "",
+                "outputs": {
+                    "moderately_sensitive": {"cohort": "output.csv"},
+                },
+            },
+        },
+    }
+
+    match = "run must have a value, action1 has an empty run key"
+    with pytest.raises(ValidationError, match=match):
+        Pipeline(**data)
+
+
 def test_pipeline_with_missing_or_none_version():
     data = {
         "expectations": {"population_size": 10},
