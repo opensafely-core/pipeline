@@ -122,29 +122,6 @@ def test_action_extraction_command_with_one_outputs():
     assert len(outputs.values()) == 1
 
 
-def test_action_with_config():
-    data = {
-        "version": 1,
-        "actions": {
-            "my_action": {
-                "run": "python:latest python analysis/my_action.py",
-                "config": {"my_key": "my_value"},
-                "outputs": {
-                    "moderately_sensitive": {"my_figure": "output/my_figure.png"}
-                },
-            }
-        },
-    }
-
-    my_action = Pipeline(**data).actions["my_action"]
-
-    assert my_action.config == {"my_key": "my_value"}
-    assert (
-        my_action.run.run
-        == """python:latest python analysis/my_action.py --config '{"my_key": "my_value"}'"""
-    )
-
-
 def test_expectations_before_v3_has_a_default_set():
     data = {
         "version": 2,
@@ -467,7 +444,7 @@ def test_outputs_with_invalid_pattern():
 
 
 @pytest.mark.parametrize("image", ["cohortextractor-v2", "databuilder"])
-def test_pipeline_databuilder_specifies_output(image):
+def test_pipeline_databuilder_specifies_different_output(image):
     data = {
         "version": 1,
         "actions": {
@@ -481,3 +458,18 @@ def test_pipeline_databuilder_specifies_output(image):
     msg = "--output in run command and outputs must match"
     with pytest.raises(ValidationError, match=msg):
         Pipeline(**data)
+
+
+@pytest.mark.parametrize("image", ["cohortextractor-v2", "databuilder"])
+def test_pipeline_databuilder_specifies_same_output(image):
+    data = {
+        "version": 1,
+        "actions": {
+            "generate_cohort_v2": {
+                "run": f"{image}:latest generate_cohort --output=output/cohort.csv",
+                "outputs": {"highly_sensitive": {"cohort": "output/cohort.csv"}},
+            }
+        },
+    }
+
+    Pipeline(**data)

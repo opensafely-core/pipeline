@@ -1,5 +1,3 @@
-import json
-import pathlib
 import shlex
 from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Optional, Set, TypedDict
@@ -75,34 +73,9 @@ class Action(BaseModel):
     run: Command
     needs: List[str] = []
     outputs: Outputs
-    dummy_data_file: Optional[pathlib.Path]
 
     @root_validator(pre=True)
-    def add_config_to_run(cls, values: RawAction) -> RawAction:
-        """
-        Add --config flag to command.
-
-        For commands that require complex config, users can supply a config key
-        in project.yaml.  We serialize this as JSON, and pass it to the command
-        with the --config flag.
-
-        We run this with pre=True so the raw input's run key is mutated before
-        parse_run_string runs.
-        """
-
-        if "config" not in values:
-            return values
-
-        # For commands that require complex config, users can supply a
-        # config key in project.yaml.  We serialize this as JSON, and pass
-        # it to the command with the --config flag.
-        config_as_json = json.dumps(values["config"]).replace("'", r"\u0027")
-        values["run"] = f"{values['run']} --config '{config_as_json}'"
-
-        return values
-
-    @root_validator(pre=True)
-    def add_output_dir_flag(cls, values: RawAction) -> RawAction:
+    def validate_output_dir_flag(cls, values: RawAction) -> RawAction:
         if values["run"] == "":  # pragma: no cover
             # key is present but empty
             raise ValueError("run must have a value")
@@ -114,11 +87,7 @@ class Action(BaseModel):
             return values
 
         output_dirs = get_output_dirs(values["outputs"])
-
         if len(output_dirs) == 1:
-            # Automatically configure the cohortextractor to produce output in the
-            # directory the `outputs` spec is expecting.
-            values["run"] += f" --output-dir={output_dirs[0]}"
             return values
 
         # If we detect multiple output directories but the command explicitly
@@ -137,24 +106,6 @@ class Action(BaseModel):
             )
 
         return values
-
-    @validator("run", pre=True)
-    def parse_run_string(cls, run: str) -> Command:
-        parts = shlex.split(run)
-        name, _, version = parts[0].partition(":")
-        args = " ".join(parts[1:])
-
-        if not version:
-            raise ValueError(
-                f"{name} must have a version specified (e.g. {name}:0.5.2)",
-            )
-
-        return Command(
-            run=run,
-            name=name,
-            version=version,
-            args=args,
-        )
 
 
 class PartiallyValidatedPipeline(TypedDict):
