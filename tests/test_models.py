@@ -56,7 +56,7 @@ def test_action_cohortextractor_multiple_outputs_with_output_flag():
         },
     }
 
-    run_command = Pipeline(**data).actions["generate_cohort"].run.run
+    run_command = Pipeline(**data).actions["generate_cohort"].run.raw
 
     assert run_command == "cohortextractor:latest generate_cohort --output-dir=output"
 
@@ -120,6 +120,28 @@ def test_action_extraction_command_with_one_outputs():
 
     outputs = config.actions["generate_cohort"].outputs.dict(exclude_unset=True)
     assert len(outputs.values()) == 1
+
+
+def test_command_properties():
+    data = {
+        "version": 1,
+        "actions": {
+            "generate_cohort": {
+                "run": "cohortextractor:latest generate_cohort another_arg",
+                "outputs": {"highly_sensitive": {"cohort": "output/input.csv"}},
+            }
+        },
+    }
+
+    action = Pipeline(**data).actions["generate_cohort"]
+    assert action.run.args == "generate_cohort another_arg"
+    assert action.run.name == "cohortextractor"
+    assert action.run.parts == [
+        "cohortextractor:latest",
+        "generate_cohort",
+        "another_arg",
+    ]
+    assert action.run.version == "latest"
 
 
 def test_expectations_before_v3_has_a_default_set():

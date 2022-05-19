@@ -57,15 +57,30 @@ class Outputs(BaseModel):
 
 
 class Command(BaseModel):
-    run: str  # original string
-    name: str
-    version: str
-    args: str
+    raw: str  # original string
 
     class Config:
         # this makes Command hashable, which for some reason due to the
         # Action.parse_run_string works, pydantic requires.
         frozen = True
+
+    @property
+    def args(self) -> str:
+        return " ".join(self.parts[1:])
+
+    @property
+    def name(self) -> str:
+        # parts[0] with version split off
+        return self.parts[0].split(":")[0]
+
+    @property
+    def parts(self) -> List[str]:
+        return shlex.split(self.raw)
+
+    @property
+    def version(self) -> str:
+        # parts[0] with name split off
+        return self.parts[0].split(":")[1]
 
 
 class Action(BaseModel):
@@ -73,6 +88,18 @@ class Action(BaseModel):
     run: Command
     needs: List[str] = []
     outputs: Outputs
+
+    @validator("run", pre=True)
+    def parse_run_string(cls, run: str) -> Command:
+        parts = shlex.split(run)
+
+        name, _, version = parts[0].partition(":")
+        if not version:
+            raise ValueError(
+                f"{name} must have a version specified (e.g. {name}:0.5.2)",
+            )
+
+        return Command(raw=run)
 
     @root_validator(pre=True)
     def validate_output_dir_flag(cls, values: RawAction) -> RawAction:
