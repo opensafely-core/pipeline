@@ -84,12 +84,19 @@ def test_action_cohortextractor_multiple_ouputs_without_output_flag():
         Pipeline(**data)
 
 
-def test_action_extraction_command_with_multiple_outputs():
+@pytest.mark.parametrize(
+    "image,command",
+    [
+        ("cohortextractor", "generate_cohort"),
+        ("databuilder", "generate_dataset"),
+    ],
+)
+def test_action_extraction_command_with_multiple_outputs(image, command):
     data = {
         "version": 1,
         "actions": {
             "generate_cohort": {
-                "run": "cohortextractor:latest generate_cohort",
+                "run": f"{image}:latest {command}",
                 "outputs": {
                     "highly_sensitive": {"cohort": "output/input.csv"},
                     "moderately_sensitive": {"cohort2": "output/input2.csv"},
@@ -98,7 +105,7 @@ def test_action_extraction_command_with_multiple_outputs():
         },
     }
 
-    msg = "A `generate_cohort` action must have exactly one output"
+    msg = f"A `{command}` action must have exactly one output"
     with pytest.raises(ValidationError, match=msg):
         Pipeline(**data)
 
@@ -465,13 +472,19 @@ def test_outputs_with_invalid_pattern():
         Pipeline(**data)
 
 
-@pytest.mark.parametrize("image", ["cohortextractor-v2", "databuilder"])
-def test_pipeline_databuilder_specifies_different_output(image):
+@pytest.mark.parametrize(
+    "command",
+    [
+        "cohortextractor-v2:latest generate_cohort",
+        "databuilder:latest generate_dataset",
+    ],
+)
+def test_pipeline_databuilder_specifies_different_output(command):
     data = {
         "version": 1,
         "actions": {
             "generate_cohort_v2": {
-                "run": f"{image}:latest generate_cohort --output=output/cohort1.csv",
+                "run": f"{command} --output=output/cohort1.csv",
                 "outputs": {"highly_sensitive": {"cohort": "output/cohort.csv"}},
             }
         },
@@ -482,13 +495,19 @@ def test_pipeline_databuilder_specifies_different_output(image):
         Pipeline(**data)
 
 
-@pytest.mark.parametrize("image", ["cohortextractor-v2", "databuilder"])
-def test_pipeline_databuilder_specifies_same_output(image):
+@pytest.mark.parametrize(
+    "command",
+    [
+        "cohortextractor-v2:latest generate_cohort",
+        "databuilder:latest generate_dataset",
+    ],
+)
+def test_pipeline_databuilder_specifies_same_output(command):
     data = {
         "version": 1,
         "actions": {
             "generate_cohort_v2": {
-                "run": f"{image}:latest generate_cohort --output=output/cohort.csv",
+                "run": f"{command} --output=output/cohort.csv",
                 "outputs": {"highly_sensitive": {"cohort": "output/cohort.csv"}},
             }
         },

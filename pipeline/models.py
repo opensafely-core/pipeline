@@ -6,11 +6,13 @@ from pydantic import BaseModel, root_validator, validator
 
 from .constants import RUN_ALL_COMMAND
 from .exceptions import InvalidPatternError
-from .extractors import is_extraction_command
 from .features import LATEST_VERSION, get_feature_flags_for_version
-from .outputs import get_first_output_file, get_output_dirs
-from .types import RawAction, RawOutputs, RawPipeline
-from .validation import assert_valid_glob_pattern
+from .types import RawOutputs, RawPipeline
+from .validation import (
+    assert_valid_glob_pattern,
+    validate_cohortextractor_outputs,
+    validate_databuilder_outputs,
+)
 
 
 class Expectations(BaseModel):
@@ -101,39 +103,6 @@ class Action(BaseModel):
 
         return Command(raw=run)
 
-    @root_validator(pre=True)
-    def validate_output_dir_flag(cls, values: RawAction) -> RawAction:
-        if values["run"] == "":  # pragma: no cover
-            # key is present but empty
-            raise ValueError("run must have a value")
-
-        run_args = shlex.split(values["run"])
-        is_cohort_extractor = is_extraction_command(run_args, require_version=1)
-
-        if not is_cohort_extractor:
-            return values
-
-        output_dirs = get_output_dirs(values["outputs"])
-        if len(output_dirs) == 1:
-            return values
-
-        # If we detect multiple output directories but the command explicitly
-        # specifies an output directory then we assume the user knows what
-        # they're doing and don't attempt to modify the output directory or
-        # throw an error
-        flag = "--output-dir"
-        has_output_dir = any(
-            arg == flag or arg.startswith(f"{flag}=") for arg in run_args
-        )
-        if not has_output_dir:
-            raise ValueError(
-                f"generate_cohort command should produce output in only one "
-                f"directory, found {len(output_dirs)}:\n"
-                + "\n".join([f" - {d}/" for d in output_dirs])
-            )
-
-        return values
-
 
 class PartiallyValidatedPipeline(TypedDict):
     """
@@ -168,6 +137,26 @@ class Pipeline(BaseModel):
         return [action for action in self.actions.keys() if action != RUN_ALL_COMMAND]
 
     @root_validator(pre=True)
+    def validate_actions(cls, values: RawPipeline) -> RawPipeline:
+        for action_id, config in values["actions"].items():
+            if config["run"] == "":
+                # key is present but empty
+                raise ValueError(
+                    f"run must have a value, {action_id} has an empty run key"
+                )
+
+        validators = {
+            "cohortextractor:latest generate_cohort": validate_cohortextractor_outputs,
+            "cohortextractor-v2:latest generate_cohort": validate_databuilder_outputs,
+            "databuilder:latest generate_dataset": validate_databuilder_outputs,
+        }
+        for cmd, validator_func in validators.items():
+            if config["run"].startswith(cmd):
+                validator_func(action_id, config)
+
+        return values
+
+    @root_validator(pre=True)
     def validate_expectations_per_version(cls, values: RawPipeline) -> RawPipeline:
         """Ensure the expectations key exists for version 3 onwards"""
         try:
@@ -192,39 +181,6 @@ class Pipeline(BaseModel):
             raise ValueError(
                 "Project `expectations` section must include `population_size` section",
             )
-
-        return values
-
-    @root_validator(pre=True)
-    def validate_extraction_command_has_only_one_output(
-        cls, values: RawPipeline
-    ) -> RawPipeline:
-        for action_id, config in values["actions"].items():
-            if config["run"] == "":
-                # key is present but empty
-                raise ValueError(
-                    f"run must have a value, {action_id} has an empty run key"
-                )
-
-            run_args = shlex.split(config["run"])
-
-            if not is_extraction_command(run_args):
-                continue
-
-            # any extraction command must only have one output
-            num_outputs = len(config["outputs"])
-            if num_outputs != 1:
-                raise ValueError(
-                    "A `generate_cohort` action must have exactly one output; "
-                    f"{action_id} had {num_outputs}"
-                )
-
-            if is_extraction_command(run_args, require_version=2):
-                # we've confirmed above that there is only one file so no need
-                # to check again here
-                first_output_file = get_first_output_file(config["outputs"])
-                if first_output_file not in config["run"]:
-                    raise ValueError("--output in run command and outputs must match")
 
         return values
 
