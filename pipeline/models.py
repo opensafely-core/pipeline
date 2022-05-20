@@ -33,6 +33,9 @@ class Outputs(BaseModel):
     moderately_sensitive: Optional[Dict[str, str]]
     minimally_sensitive: Optional[Dict[str, str]]
 
+    def __len__(self) -> int:
+        return len(self.dict(exclude_unset=True))
+
     @root_validator()
     def at_least_one_output(cls, outputs: Dict[str, str]) -> Dict[str, str]:
         if not any(outputs.values()):
@@ -136,23 +139,20 @@ class Pipeline(BaseModel):
         """
         return [action for action in self.actions.keys() if action != RUN_ALL_COMMAND]
 
-    @root_validator(pre=True)
-    def validate_actions(cls, values: RawPipeline) -> RawPipeline:
-        for action_id, config in values["actions"].items():
-            if config["run"] == "":
-                # key is present but empty
-                raise ValueError(
-                    f"run must have a value, {action_id} has an empty run key"
-                )
-
+    @root_validator()
+    def validate_actions(
+        cls, values: PartiallyValidatedPipeline
+    ) -> PartiallyValidatedPipeline:
+        # TODO: move to Action when we move name onto it
         validators = {
             "cohortextractor:latest generate_cohort": validate_cohortextractor_outputs,
             "cohortextractor-v2:latest generate_cohort": validate_databuilder_outputs,
             "databuilder:latest generate_dataset": validate_databuilder_outputs,
         }
-        for cmd, validator_func in validators.items():
-            if config["run"].startswith(cmd):
-                validator_func(action_id, config)
+        for action_id, config in values.get("actions", {}).items():
+            for cmd, validator_func in validators.items():
+                if config.run.raw.startswith(cmd):
+                    validator_func(action_id, config)
 
         return values
 
@@ -216,6 +216,18 @@ class Pipeline(BaseModel):
                         raise ValueError(f"Output path {filename} is not unique")
 
                     seen_files.append(filename)
+
+        return values
+
+    @root_validator(pre=True)
+    def validate_actions_run(cls, values: RawPipeline) -> RawPipeline:
+        # TODO: move to Action when we move name onto it
+        for action_id, config in values.get("actions", {}).items():
+            if config["run"] == "":
+                # key is present but empty
+                raise ValueError(
+                    f"run must have a value, {action_id} has an empty run key"
+                )
 
         return values
 

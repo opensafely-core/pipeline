@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import posixpath
-import shlex
 from pathlib import PurePosixPath, PureWindowsPath
+from typing import TYPE_CHECKING
 
 from .exceptions import InvalidPatternError
 from .outputs import get_first_output_file, get_output_dirs
-from .types import RawAction
+
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .models import Action
 
 
 def assert_valid_glob_pattern(pattern: str) -> None:
@@ -50,7 +53,7 @@ def assert_valid_glob_pattern(pattern: str) -> None:
         raise InvalidPatternError("is an absolute path")
 
 
-def validate_cohortextractor_outputs(action_id: str, action: RawAction) -> None:
+def validate_cohortextractor_outputs(action_id: str, action: Action) -> None:
     """
     Check cohortextractor's output config is valid for this command
 
@@ -58,27 +61,25 @@ def validate_cohortextractor_outputs(action_id: str, action: RawAction) -> None:
     to look up other fields (eg run).
     """
     # ensure we only have output level defined.
-    num_output_levels = len(action["outputs"])
+    num_output_levels = len(action.outputs)
     if num_output_levels != 1:
         raise ValueError(
             "A `generate_cohort` action must have exactly one output; "
             f"{action_id} had {num_output_levels}"
         )
 
-    output_dirs = get_output_dirs(action["outputs"])
+    output_dirs = get_output_dirs(action.outputs)
     if len(output_dirs) == 1:
         return
-
-    # the calling function for this validator, Pipeline.validate_actions, has
-    # already checked the run key is valid for us.
-    run_args = shlex.split(action["run"])
 
     # If we detect multiple output directories but the command explicitly
     # specifies an output directory then we assume the user knows what
     # they're doing and don't attempt to modify the output directory or
     # throw an error
     flag = "--output-dir"
-    has_output_dir = any(arg == flag or arg.startswith(f"{flag}=") for arg in run_args)
+    has_output_dir = any(
+        arg == flag or arg.startswith(f"{flag}=") for arg in action.run.parts
+    )
     if not has_output_dir:
         raise ValueError(
             f"generate_cohort command should produce output in only one "
@@ -87,7 +88,7 @@ def validate_cohortextractor_outputs(action_id: str, action: RawAction) -> None:
         )
 
 
-def validate_databuilder_outputs(action_id: str, action: RawAction) -> None:
+def validate_databuilder_outputs(action_id: str, action: Action) -> None:
     """
     Check databuilder's output config is valid for this command
 
@@ -95,13 +96,13 @@ def validate_databuilder_outputs(action_id: str, action: RawAction) -> None:
     to look up other fields (eg run).
     """
     # TODO: should this be checking output _paths_ instead of levels?
-    num_output_levels = len(action["outputs"])
+    num_output_levels = len(action.outputs)
     if num_output_levels != 1:
         raise ValueError(
             "A `generate_dataset` action must have exactly one output; "
             f"{action_id} had {num_output_levels}"
         )
 
-    first_output_file = get_first_output_file(action["outputs"])
-    if first_output_file not in action["run"]:
+    first_output_file = get_first_output_file(action.outputs)
+    if first_output_file not in action.run.raw:
         raise ValueError("--output in run command and outputs must match")
