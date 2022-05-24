@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, Union
 
 from ruamel.yaml.error import (
@@ -54,7 +55,7 @@ def make_yaml_error_more_helpful(
     return exc
 
 
-def parse_yaml_file(data: str, filename: str | None = None) -> dict[str, Any]:
+def parse_yaml_file(data: str | Path, filename: str | None = None) -> dict[str, Any]:
     try:
         return PARSER.load(data)  # type: ignore[no-any-return]
     # ruamel doesn't have a nice exception hierarchy so we have to catch these
