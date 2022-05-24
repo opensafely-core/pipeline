@@ -7,6 +7,7 @@ dictionary data.
 """
 from __future__ import annotations
 
+import pathlib
 from typing import Any, Dict, TypedDict
 
 
@@ -18,6 +19,7 @@ class RawAction(TypedDict):
     run: str
     needs: list[str] | None
     outputs: RawOutputs
+    dummy_data_file: pathlib.Path | None
 
 
 class RawExpectations(TypedDict):
