@@ -92,6 +92,37 @@ test *ARGS: devenv
     $BIN/python -m pytest --cov=pipeline --cov=tests --cov-report html --cov-report term-missing:skip-covered {{ ARGS }}
 
 
+package-build: virtualenv
+    rm -rf dist
+
+    $PIP install build
+    $BIN/python -m build
+
+
+package-test type: package-build
+    #!/usr/bin/env bash
+    VENV="test-{{ type }}"
+    distribution_suffix="{{ if type == "wheel" { "whl" } else { "tar.gz" } }}"
+
+    # build a fresh venv
+    python -m venv $VENV
+
+    # clean up after ourselves, even if there are errors
+    trap 'rm -rf $VENV' EXIT
+
+    # ensure a modern pip
+    $VENV/bin/pip install pip --upgrade
+
+    # install the wheel distribution
+    $VENV/bin/pip install dist/*."$distribution_suffix"
+
+    # Minimal check that it has actually built correctly
+    $VENV/bin/python -c "import pipeline"
+
+    # check we haven't packaged tests with it
+    unzip -Z -1 dist/*.whl | grep -vq "^tests/"
+
+
 # runs the format (black), sort (isort) and lint (flake8) check but does not change any files
 check: devenv
     $BIN/black --check .
