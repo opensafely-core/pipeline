@@ -472,20 +472,13 @@ def test_outputs_with_invalid_pattern():
         Pipeline(**data)
 
 
-@pytest.mark.parametrize(
-    "command",
-    [
-        "cohortextractor-v2:latest generate_cohort",
-        "databuilder:latest generate_dataset",
-    ],
-)
-def test_pipeline_databuilder_specifies_different_output(command):
+def test_pipeline_databuilder_specifies_different_output():
     data = {
         "version": 1,
         "actions": {
-            "generate_cohort_v2": {
-                "run": f"{command} --output=output/cohort1.csv",
-                "outputs": {"highly_sensitive": {"cohort": "output/cohort.csv"}},
+            "generate_dataset": {
+                "run": "databuilder:latest generate_dataset --output=output/dataset1.csv",
+                "outputs": {"highly_sensitive": {"dataset": "output/dataset.csv"}},
             }
         },
     }
@@ -495,20 +488,13 @@ def test_pipeline_databuilder_specifies_different_output(command):
         Pipeline(**data)
 
 
-@pytest.mark.parametrize(
-    "command",
-    [
-        "cohortextractor-v2:latest generate_cohort",
-        "databuilder:latest generate_dataset",
-    ],
-)
-def test_pipeline_databuilder_specifies_same_output(command):
+def test_pipeline_databuilder_specifies_same_output():
     data = {
         "version": 1,
         "actions": {
-            "generate_cohort_v2": {
-                "run": f"{command} --output=output/cohort.csv",
-                "outputs": {"highly_sensitive": {"cohort": "output/cohort.csv"}},
+            "generate_dataset": {
+                "run": "databuilder:latest generate_dataset --output=output/dataset.csv",
+                "outputs": {"highly_sensitive": {"dataset": "output/dataset.csv"}},
             }
         },
     }
