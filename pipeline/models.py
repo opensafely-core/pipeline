@@ -18,7 +18,6 @@ from .validation import (
 
 
 cohortextractor_pat = re.compile(r"cohortextractor:\S+ generate_cohort")
-cohortextractor_v2_pat = re.compile(r"cohortextractor-v2:\S+ generate_cohort")
 databuilder_pat = re.compile(r"databuilder:\S+ generate_dataset")
 
 
@@ -154,7 +153,6 @@ class Pipeline(BaseModel):
         # TODO: move to Action when we move name onto it
         validators = {
             cohortextractor_pat: validate_cohortextractor_outputs,
-            cohortextractor_v2_pat: validate_databuilder_outputs,
             databuilder_pat: validate_databuilder_outputs,
         }
         for action_id, config in values.get("actions", {}).items():
