@@ -88,7 +88,7 @@ def test_action_cohortextractor_multiple_ouputs_without_output_flag():
     "image,command",
     [
         ("cohortextractor", "generate_cohort"),
-        ("databuilder", "generate_dataset"),
+        ("databuilder", "generate-dataset"),
     ],
 )
 def test_action_extraction_command_with_multiple_outputs(image, command):
@@ -472,12 +472,26 @@ def test_outputs_with_invalid_pattern():
         Pipeline(**data)
 
 
+def test_pipeline_databuilder_specifies_same_output():
+    data = {
+        "version": 1,
+        "actions": {
+            "generate-dataset": {
+                "run": "databuilder:latest generate-dataset --output=output/dataset.csv",
+                "outputs": {"highly_sensitive": {"dataset": "output/dataset.csv"}},
+            }
+        },
+    }
+
+    Pipeline(**data)
+
+
 def test_pipeline_databuilder_specifies_different_output():
     data = {
         "version": 1,
         "actions": {
-            "generate_dataset": {
-                "run": "databuilder:latest generate_dataset --output=output/dataset1.csv",
+            "generate-dataset": {
+                "run": "databuilder:latest generate-dataset --output=output/dataset1.csv",
                 "outputs": {"highly_sensitive": {"dataset": "output/dataset.csv"}},
             }
         },
@@ -488,15 +502,18 @@ def test_pipeline_databuilder_specifies_different_output():
         Pipeline(**data)
 
 
-def test_pipeline_databuilder_specifies_same_output():
+def test_pipeline_databuilder_recognizes_old_action_spelling():
+    # The action name is used to select the validator, so the only way to know that it's been recognized is
+    # to give it an invalid input and check that validation fails.
     data = {
         "version": 1,
         "actions": {
-            "generate_dataset": {
-                "run": "databuilder:latest generate_dataset --output=output/dataset.csv",
+            "old-spelling": {
+                "run": "databuilder:latest generate_dataset --output=output/dataset1.csv",
                 "outputs": {"highly_sensitive": {"dataset": "output/dataset.csv"}},
             }
         },
     }
 
-    Pipeline(**data)
+    with pytest.raises(ValidationError):
+        Pipeline(**data)
