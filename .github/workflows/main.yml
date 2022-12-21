@@ -15,9 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-vesrion }}
-        uses: "actions/setup-python@v3"
+        uses: "actions/setup-python@v4"
         with:
           python-version: ${{ matrix.python-version }}
+          cache: "pip"
+          cache-dependency-path: requirements.*.txt
       - uses: extractions/setup-just@v1
       - name: Check formatting, linting and import sorting
         run: just check
@@ -32,9 +34,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-vesrion }}
-        uses: "actions/setup-python@v3"
+        uses: "actions/setup-python@v4"
         with:
           python-version: ${{ matrix.python-vesrion }}
+          cache: "pip"
+          cache-dependency-path: requirements.*.txt
       - uses: extractions/setup-just@v1
       - name: Run tests
         run: just test
@@ -52,9 +56,11 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Python ${{ matrix.python-vesrion }}
-        uses: "actions/setup-python@v3"
+        uses: "actions/setup-python@v4"
         with:
           python-version: ${{ matrix.python-version }}
+          cache: "pip"
+          cache-dependency-path: requirements.*.txt
       - uses: extractions/setup-just@v1
 
       - name: Check the wheel installs and runs
