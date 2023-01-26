@@ -8,54 +8,50 @@ jobs:
   check:
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-vesrion }}
-        uses: "actions/setup-python@v3"
+      - uses: "opensafely-core/setup-action@v1"
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: extractions/setup-just@v1
+          install-just: true
       - name: Check formatting, linting and import sorting
         run: just check
 
   test:
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-vesrion }}
-        uses: "actions/setup-python@v3"
+      - uses: "opensafely-core/setup-action@v1"
         with:
-          python-version: ${{ matrix.python-vesrion }}
-      - uses: extractions/setup-just@v1
+          python-version: ${{ matrix.python-version }}
+          install-just: true
       - name: Run tests
         run: just test
 
   test-package-build:
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     name: Test we can build a Python package
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Set up Python ${{ matrix.python-vesrion }}
-        uses: "actions/setup-python@v3"
+      - uses: "opensafely-core/setup-action@v1"
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: extractions/setup-just@v1
+          install-just: true
 
       - name: Check the wheel installs and runs
         run: just package-test wheel
@@ -65,7 +61,7 @@ jobs:
 
   tag-new-version:
     needs: [check, test, test-package-build]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     if: github.ref == 'refs/heads/main'
 
