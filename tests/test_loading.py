@@ -1,5 +1,5 @@
 import pytest
-from ruamel.yaml.error import YAMLStreamError
+from ruyaml.error import YAMLStreamError
 
 from pipeline import YAMLError
 from pipeline.loading import parse_yaml_file
