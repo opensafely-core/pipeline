@@ -1,3 +1,4 @@
+import pydantic
 import pytest
 
 from pipeline import ProjectValidationError, load_pipeline
@@ -53,3 +54,17 @@ def test_load_pipeline_with_yaml_error_raises_projectvalidationerror():
     msg = 'found duplicate key "duplicate" with value "2"'
     with pytest.raises(ProjectValidationError, match=msg):
         load_pipeline(config)
+
+
+def test_load_pipeline_with_project_error_raises_projectvalidationerror():
+    """
+    Test load_pipeline() raises the expected exception
+    """
+    config = """
+        version: asdf
+    """
+
+    with pytest.raises(ProjectValidationError, match="Invalid project") as exc:
+        load_pipeline(config)
+
+    assert isinstance(exc.value.__cause__, pydantic.ValidationError)
