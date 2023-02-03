@@ -14,7 +14,7 @@ classifiers = [
 requires-python = ">=3.8"
 dependencies = [
   "pydantic",
-  "ruamel.yaml",
+  "ruyaml",
 ]
 dynamic = ["version"]
 
