@@ -89,6 +89,7 @@ def test_action_cohortextractor_multiple_ouputs_without_output_flag():
     [
         ("cohortextractor", "generate_cohort"),
         ("databuilder", "generate-dataset"),
+        ("ehrql", "generate-dataset"),
     ],
 )
 def test_action_extraction_command_with_multiple_outputs(image, command):
@@ -472,12 +473,13 @@ def test_outputs_with_invalid_pattern():
         Pipeline(**data)
 
 
-def test_pipeline_databuilder_specifies_same_output():
+@pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v0")])
+def test_pipeline_databuilder_specifies_same_output(image, tag):
     data = {
         "version": 1,
         "actions": {
             "generate-dataset": {
-                "run": "databuilder:latest generate-dataset --output=output/dataset.csv",
+                "run": f"{image}:{tag} generate-dataset --output=output/dataset.csv",
                 "outputs": {"highly_sensitive": {"dataset": "output/dataset.csv"}},
             }
         },
@@ -486,12 +488,13 @@ def test_pipeline_databuilder_specifies_same_output():
     Pipeline(**data)
 
 
-def test_pipeline_databuilder_specifies_different_output():
+@pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v0")])
+def test_pipeline_databuilder_specifies_different_output(image, tag):
     data = {
         "version": 1,
         "actions": {
             "generate-dataset": {
-                "run": "databuilder:latest generate-dataset --output=output/dataset1.csv",
+                "run": f"{image}:{tag} generate-dataset --output=output/dataset1.csv",
                 "outputs": {"highly_sensitive": {"dataset": "output/dataset.csv"}},
             }
         },
