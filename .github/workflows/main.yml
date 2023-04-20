@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
+      - uses: actions/checkout@v3
       - uses: "opensafely-core/setup-action@v1"
         with:
           python-version: ${{ matrix.python-version }}
