@@ -3,6 +3,7 @@
 # pip-compile --generate-hashes --output-file=requirements.dev.txt requirements.dev.in
 
 black
+coverage
 devtools
 flake8
 flake8-builtins
@@ -13,6 +14,5 @@ mypy
 pip-tools
 pre-commit
 pytest
-pytest-cov
 pytest-mock
 pyupgrade
