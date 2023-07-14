@@ -4,7 +4,7 @@ import shlex
 from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Optional, Set, TypedDict
 
-from pydantic import BaseModel, model_validator, validator
+from pydantic import BaseModel, field_validator, model_validator
 
 from .constants import RUN_ALL_COMMAND
 from .exceptions import InvalidPatternError
@@ -24,7 +24,7 @@ databuilder_pat = re.compile(r"databuilder|ehrql:\S+ generate[-_]dataset")
 class Expectations(BaseModel):
     population_size: int
 
-    @validator("population_size", pre=True)
+    @field_validator("population_size", mode="before")
     def validate_population_size(cls, population_size: str) -> int:
         try:
             return int(population_size)
@@ -101,7 +101,7 @@ class Action(BaseModel):
     outputs: Outputs
     dummy_data_file: Optional[pathlib.Path]
 
-    @validator("run", pre=True)
+    @field_validator("run", mode="before")
     def parse_run_string(cls, run: str) -> Command:
         parts = shlex.split(run)
 
@@ -238,7 +238,7 @@ class Pipeline(BaseModel):
 
         return values
 
-    @validator("actions")
+    @field_validator("actions")
     def validate_unique_commands(cls, actions: Dict[str, Action]) -> Dict[str, Action]:
         seen: Dict[Command, List[str]] = defaultdict(list)
         for name, config in actions.items():
@@ -251,7 +251,7 @@ class Pipeline(BaseModel):
 
         return actions
 
-    @validator("actions")
+    @field_validator("actions")
     def validate_needs_are_comma_delimited(
         cls, actions: Dict[str, Action]
     ) -> Dict[str, Action]:
@@ -280,7 +280,7 @@ class Pipeline(BaseModel):
 
         raise ValueError("\n".join(msg))
 
-    @validator("actions")
+    @field_validator("actions")
     def validate_needs_exist(cls, actions: Dict[str, Action]) -> Dict[str, Action]:
         missing = {}
         for name, action in actions.items():
@@ -321,7 +321,7 @@ class Pipeline(BaseModel):
             f"latest version is {LATEST_VERSION})"
         )
 
-    @validator("version", pre=True)
+    @field_validator("version", mode="before")
     def validate_version_value(cls, value: str) -> float:
         try:
             return float(value)
