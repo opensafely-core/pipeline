@@ -5,14 +5,9 @@
 black
 coverage
 devtools
-flake8
-flake8-builtins
-flake8-implicit-str-concat
-flake8-no-pep420
-isort
 mypy
 pip-tools
 pre-commit
 pytest
 pytest-mock
-pyupgrade
+ruff

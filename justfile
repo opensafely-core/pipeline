@@ -124,15 +124,11 @@ package-test type: package-build
     unzip -Z -1 dist/*.whl | grep -vq "^tests/"
 
 
-# runs the format (black), sort (isort) and lint (flake8) check but does not change any files
+# run the various dev checks but does not change any files
 check: devenv
     $BIN/black --check .
-    $BIN/isort --check-only --diff .
-    $BIN/flake8
+    $BIN/ruff check .
     $BIN/mypy
-    $BIN/pyupgrade --py38-plus \
-        $(find pipeline -name "*.py" -type f) \
-        $(find tests -name "*.py" -type f)
 
 
 # fix formatting and import sort ordering
