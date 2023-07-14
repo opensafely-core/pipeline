@@ -54,6 +54,7 @@ warn_unreachable = true
 show_error_codes = true
 
 [tool.pytest.ini_options]
+addopts = "--tb=native"
 
 [tool.setuptools.packages.find]
 include = ["pipeline*"]
