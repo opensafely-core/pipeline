@@ -4,7 +4,7 @@ import shlex
 from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Optional, Set, TypedDict
 
-from pydantic import BaseModel, root_validator, validator
+from pydantic import BaseModel, model_validator, validator
 
 from .constants import RUN_ALL_COMMAND
 from .exceptions import InvalidPatternError
@@ -42,7 +42,7 @@ class Outputs(BaseModel):
     def __len__(self) -> int:
         return len(self.dict(exclude_unset=True))
 
-    @root_validator()
+    @model_validator(mode="after")
     def at_least_one_output(cls, outputs: Dict[str, str]) -> Dict[str, str]:
         if not any(outputs.values()):
             raise ValueError(
@@ -51,9 +51,9 @@ class Outputs(BaseModel):
 
         return outputs
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def validate_output_filenames_are_valid(cls, outputs: RawOutputs) -> RawOutputs:
-        # we use pre=True here so that we only get the outputs specified in the
+        # we use mode="before" here so that we only get the outputs specified in the
         # input data.  With Optional[…] wrapped fields pydantic will set None
         # for us and that just makes the logic a little fiddler with no
         # benefit.
@@ -116,10 +116,11 @@ class Action(BaseModel):
 
 class PartiallyValidatedPipeline(TypedDict):
     """
-    A custom type to type-check the values in "post" root validators
+    A custom type to type-check the values in "after" model validators
 
-    A root_validator with pre=False (or no kwargs) runs after the values have
-    been ingested already, and the `values` arg is a dictionary of model types.
+    A model_validator with mode="before" (or no kwargs) runs after the values
+    have been ingested already, and the `values` arg is a dictionary of model
+    types.
 
     Note: This is defined here so we don't have to deal with forward reference
     types.
@@ -146,7 +147,7 @@ class Pipeline(BaseModel):
         """
         return [action for action in self.actions.keys() if action != RUN_ALL_COMMAND]
 
-    @root_validator()
+    @model_validator(mode="after")
     def validate_actions(
         cls, values: PartiallyValidatedPipeline
     ) -> PartiallyValidatedPipeline:
@@ -162,7 +163,7 @@ class Pipeline(BaseModel):
 
         return values
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def validate_expectations_per_version(cls, values: RawPipeline) -> RawPipeline:
         """Ensure the expectations key exists for version 3 onwards"""
         try:
@@ -190,7 +191,7 @@ class Pipeline(BaseModel):
 
         return values
 
-    @root_validator()
+    @model_validator(mode="after")
     def validate_outputs_per_version(
         cls, values: PartiallyValidatedPipeline
     ) -> PartiallyValidatedPipeline:
@@ -225,7 +226,7 @@ class Pipeline(BaseModel):
 
         return values
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def validate_actions_run(cls, values: RawPipeline) -> RawPipeline:
         # TODO: move to Action when we move name onto it
         for action_id, config in values.get("actions", {}).items():
@@ -302,7 +303,7 @@ class Pipeline(BaseModel):
         ]
         raise ValueError("\n".join(msg))
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def validate_version_exists(cls, values: RawPipeline) -> RawPipeline:
         """
         Ensure the version key exists.
