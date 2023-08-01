@@ -25,16 +25,23 @@ Source = "https://github.com/opensafely-core/pipeline"
 
 [tool.coverage.run]
 branch = true
+dynamic_context = "test_function"
 omit = [
   ".venv/*",
   "pipeline/__main__.py",
 ]
+source = [
+  "pipeline",
+  "tests",
+]
 
 [tool.coverage.report]
 fail_under = 100
+show_missing = true
 skip_covered = true
 
 [tool.coverage.html]
+show_contexts = true
 
 [tool.isort]
 profile = "black"
@@ -54,6 +61,38 @@ warn_unreachable = true
 show_error_codes = true
 
 [tool.pytest.ini_options]
+addopts = "--tb=native"
+
+[tool.ruff]
+line-length = 88
+exclude = [
+  "*.egg-info",
+  ".direnv",
+  ".git",
+  ".github",
+  ".ipynb_checkpoints",
+  ".pytest_cache",
+  ".venv",
+  "__pycache__",
+  "dist",
+  "htmlcov",
+  "venv",
+]
+extend-select = [
+  "A",  # flake8-builtins
+  "I",  # isort
+  "INP",  # flake8-no-pep420
+  "ISC",  # flake8-implicit-str-concat
+  "UP",  # pyupgrade
+  "W",  # pycodestyle warning
+]
+extend-ignore = [
+  "E501",
+  "E731",
+]
+
+[tool.ruff.isort]
+lines-after-imports = 2
 
 [tool.setuptools.packages.find]
 include = ["pipeline*"]

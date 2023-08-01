@@ -86,10 +86,11 @@ install-precommit:
     test -f $BASE_DIR/.git/hooks/pre-commit || $BIN/pre-commit install
 
 
-# *ARGS is variadic, 0 or more. This allows us to do `just test -k match`, for example.
+# *args is variadic, 0 or more. This allows us to do `just test -k match`, for example.
 # Run the tests
-test *ARGS: devenv
-    $BIN/python -m pytest --cov=pipeline --cov=tests --cov-report html --cov-report term-missing:skip-covered {{ ARGS }}
+test *args: devenv
+    $BIN/coverage run --module pytest {{ args }}
+    $BIN/coverage report || $BIN/coverage html
 
 
 package-build: virtualenv
@@ -123,16 +124,17 @@ package-test type: package-build
     unzip -Z -1 dist/*.whl | grep -vq "^tests/"
 
 
-# runs the format (black), sort (isort) and lint (flake8) check but does not change any files
-check: devenv
-    $BIN/black --check .
-    $BIN/isort --check-only --diff .
-    $BIN/flake8
-    $BIN/mypy
-    $BIN/pyupgrade --py38-plus \
-        $(find pipeline -name "*.py" -type f) \
-        $(find tests -name "*.py" -type f)
+black *args=".": devenv
+    $BIN/black --check {{ args }}
 
+ruff *args=".": devenv
+    $BIN/ruff check {{ args }}
+
+mypy: devenv
+    $BIN/mypy
+
+# run the various dev checks but does not change any files
+check: black ruff mypy
 
 # fix formatting and import sort ordering
 fix: devenv
