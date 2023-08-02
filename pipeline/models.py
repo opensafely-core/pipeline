@@ -2,7 +2,7 @@ import pathlib
 import re
 import shlex
 from collections import defaultdict
-from typing import Any, Dict, Iterable, List, Optional, Set, TypedDict
+from typing import Any, Dict, Iterable, List, Optional, Set
 
 from pydantic import BaseModel, field_validator, model_validator
 
@@ -43,13 +43,12 @@ class Outputs(BaseModel):
         return len(self.dict(exclude_unset=True))
 
     @model_validator(mode="after")
-    def at_least_one_output(cls, outputs: Dict[str, str]) -> Dict[str, str]:
-        if not any(outputs.values()):
-            raise ValueError(
-                f"must specify at least one output of: {', '.join(outputs)}"
-            )
+    def at_least_one_output(self) -> "Outputs":
+        if not self.model_fields_set:
+            fields = ", ".join(self.model_fields.keys())
+            raise ValueError(f"must specify at least one output of: {fields}")
 
-        return outputs
+        return self
 
     @model_validator(mode="before")
     def validate_output_filenames_are_valid(cls, outputs: RawOutputs) -> RawOutputs:
@@ -114,23 +113,6 @@ class Action(BaseModel):
         return Command(raw=run)
 
 
-class PartiallyValidatedPipeline(TypedDict):
-    """
-    A custom type to type-check the values in "after" model validators
-
-    A model_validator with mode="before" (or no kwargs) runs after the values
-    have been ingested already, and the `values` arg is a dictionary of model
-    types.
-
-    Note: This is defined here so we don't have to deal with forward reference
-    types.
-    """
-
-    version: float
-    expectations: Expectations
-    actions: Dict[str, Action]
-
-
 class Pipeline(BaseModel):
     version: float
     expectations: Expectations
@@ -148,20 +130,18 @@ class Pipeline(BaseModel):
         return [action for action in self.actions.keys() if action != RUN_ALL_COMMAND]
 
     @model_validator(mode="after")
-    def validate_actions(
-        cls, values: PartiallyValidatedPipeline
-    ) -> PartiallyValidatedPipeline:
+    def validate_actions(self) -> "Pipeline":
         # TODO: move to Action when we move name onto it
         validators = {
             cohortextractor_pat: validate_cohortextractor_outputs,
             databuilder_pat: validate_databuilder_outputs,
         }
-        for action_id, config in values.get("actions", {}).items():
+        for action_id, config in self.actions.items():
             for cmd, validator_func in validators.items():
                 if cmd.match(config.run.raw):
                     validator_func(action_id, config)
 
-        return values
+        return self
 
     @model_validator(mode="before")
     def validate_expectations_per_version(cls, values: RawPipeline) -> RawPipeline:
@@ -192,31 +172,19 @@ class Pipeline(BaseModel):
         return values
 
     @model_validator(mode="after")
-    def validate_outputs_per_version(
-        cls, values: PartiallyValidatedPipeline
-    ) -> PartiallyValidatedPipeline:
+    def validate_outputs_per_version(self) -> "Pipeline":
         """
         Ensure outputs are unique for version 2 onwards
 
         We validate this on Pipeline so we can get the version
         """
-
-        # we're not using pre=True in the validator so we can rely on the
-        # version and action keys being the correct type but we have to handle
-        # them not existing
-        if not (version := values.get("version")):
-            return values  # handle missing version
-
-        if (actions := values.get("actions")) is None:
-            return values  # hand no actions
-
-        feat = get_feature_flags_for_version(version)
+        feat = get_feature_flags_for_version(self.version)
         if not feat.UNIQUE_OUTPUT_PATH:
-            return values
+            return self
 
         # find duplicate paths defined in the outputs section
         seen_files = []
-        for config in actions.values():
+        for config in self.actions.values():
             for output in config.outputs.dict(exclude_unset=True).values():
                 for filename in output.values():
                     if filename in seen_files:
@@ -224,7 +192,7 @@ class Pipeline(BaseModel):
 
                     seen_files.append(filename)
 
-        return values
+        return self
 
     @model_validator(mode="before")
     def validate_actions_run(cls, values: RawPipeline) -> RawPipeline:
