@@ -4,8 +4,6 @@ export VIRTUAL_ENV  := `echo ${VIRTUAL_ENV:-.venv}`
 
 export BIN := VIRTUAL_ENV + "/bin"
 export PIP := BIN + "/python -m pip"
-# enforce our chosen pip compile flags
-export COMPILE := BIN + "/pip-compile --allow-unsafe --generate-hashes"
 
 
 # list available commands
