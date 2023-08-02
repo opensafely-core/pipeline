@@ -40,7 +40,7 @@ class Outputs(BaseModel):
     minimally_sensitive: Optional[Dict[str, str]] = None
 
     def __len__(self) -> int:
-        return len(self.dict(exclude_unset=True))
+        return len(self.model_dump(exclude_unset=True))
 
     @model_validator(mode="after")
     def at_least_one_output(self) -> "Outputs":
@@ -185,7 +185,7 @@ class Pipeline(BaseModel):
         # find duplicate paths defined in the outputs section
         seen_files = []
         for config in self.actions.values():
-            for output in config.outputs.dict(exclude_unset=True).values():
+            for output in config.outputs.model_dump(exclude_unset=True).values():
                 for filename in output.values():
                     if filename in seen_files:
                         raise ValueError(f"Output path {filename} is not unique")
