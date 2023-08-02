@@ -35,9 +35,9 @@ class Expectations(BaseModel):
 
 
 class Outputs(BaseModel):
-    highly_sensitive: Optional[Dict[str, str]]
-    moderately_sensitive: Optional[Dict[str, str]]
-    minimally_sensitive: Optional[Dict[str, str]]
+    highly_sensitive: Optional[Dict[str, str]] = None
+    moderately_sensitive: Optional[Dict[str, str]] = None
+    minimally_sensitive: Optional[Dict[str, str]] = None
 
     def __len__(self) -> int:
         return len(self.dict(exclude_unset=True))
@@ -99,7 +99,7 @@ class Action(BaseModel):
     run: Command
     needs: List[str] = []
     outputs: Outputs
-    dummy_data_file: Optional[pathlib.Path]
+    dummy_data_file: Optional[pathlib.Path] = None
 
     @field_validator("run", mode="before")
     def parse_run_string(cls, run: str) -> Command:
