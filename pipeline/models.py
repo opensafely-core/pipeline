@@ -4,7 +4,7 @@ import shlex
 from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Optional, Set
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from .constants import RUN_ALL_COMMAND
 from .exceptions import InvalidPatternError
@@ -69,10 +69,11 @@ class Outputs(BaseModel):
 class Command(BaseModel):
     raw: str  # original string
 
-    class Config:
+    model_config = ConfigDict(
         # this makes Command hashable, which for some reason due to the
         # Action.parse_run_string works, pydantic requires.
-        frozen = True
+        frozen=True,
+    )
 
     @property
     def args(self) -> str:
