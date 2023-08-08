@@ -144,3 +144,19 @@ fix: devenv
 # Run the dev project
 run: devenv
     echo "Not implemented yet"
+
+
+# Cut a release of this package
+release:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    CALVER=$(python scripts/get-version.py version)
+
+    git checkout main
+    git pull
+    git checkout -b release-$CALVER
+    echo $CALVER > version
+    git add version
+    git commit --message "Release $CALVER"
+    gh pr create --fill
