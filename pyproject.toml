@@ -13,7 +13,7 @@ classifiers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-  "pydantic",
+  "pydantic<2",
   "ruyaml",
 ]
 dynamic = ["version"]
