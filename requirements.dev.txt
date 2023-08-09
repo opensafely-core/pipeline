@@ -57,7 +57,7 @@ platformdirs==2.5.1
     #   virtualenv
 pluggy==1.0.0
     # via pytest
-pre-commit==2.20.0
+pre-commit==3.3.3
     # via -r requirements.dev.in
 pytest==7.2.0
     # via
@@ -73,8 +73,6 @@ six==1.16.0
     # via
     #   asttokens
     #   virtualenv
-toml==0.10.2
-    # via pre-commit
 tomli==2.0.1
     # via pep517
 typing-extensions==4.1.1
