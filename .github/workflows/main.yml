@@ -66,17 +66,14 @@ jobs:
 
     if: github.ref == 'refs/heads/main'
 
-    outputs:
-      tag: ${{ steps.tag.outputs.new_version }}
-
     steps:
       - uses: actions/checkout@v3
-      - name: Bump version and push tag
-        id: tag
-        uses: mathieudutour/github-tag-action@d745f2e74aaf1ee82e747b181f7a0967978abee0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          create_annotated_tag: true
+      - name: Tag new release
+        run: |
+          # ignore failures here to avoid merges into main without version
+          # bumps failing this job.
+          git tag "v$(cat version)" || exit
+          git push --tags
 
   required-checks:
     if: always()
