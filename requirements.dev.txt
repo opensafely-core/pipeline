@@ -18,11 +18,11 @@ click==8.0.4
     #   pip-tools
 coverage==7.2.7
     # via -r requirements.dev.in
-devtools==0.9.0
+devtools==0.11.0
     # via -r requirements.dev.in
 distlib==0.3.4
     # via virtualenv
-executing==0.8.3
+executing==1.2.0
     # via devtools
 filelock==3.6.0
     # via virtualenv
