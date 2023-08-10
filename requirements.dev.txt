@@ -6,8 +6,6 @@
 #
 asttokens==2.0.5
     # via devtools
-attrs==20.3.0
-    # via pytest
 black==23.7.0
     # via -r requirements.dev.in
 build==0.8.0
@@ -24,8 +22,6 @@ devtools==0.9.0
     # via -r requirements.dev.in
 distlib==0.3.4
     # via virtualenv
-exceptiongroup==1.1.2
-    # via pytest
 executing==0.8.3
     # via devtools
 filelock==3.6.0
@@ -61,7 +57,7 @@ pluggy==1.0.0
     # via pytest
 pre-commit==3.3.3
     # via -r requirements.dev.in
-pytest==7.2.0
+pytest==7.4.0
     # via
     #   -r requirements.dev.in
     #   pytest-mock
@@ -76,17 +72,9 @@ six==1.16.0
     #   asttokens
     #   virtualenv
 tomli==2.0.1
-    # via
-    #   black
-    #   build
-    #   mypy
-    #   pep517
-    #   pip-tools
-    #   pytest
+    # via pep517
 typing-extensions==4.7.1
-    # via
-    #   black
-    #   mypy
+    # via mypy
 virtualenv==20.13.3
     # via pre-commit
 wheel==0.37.1
