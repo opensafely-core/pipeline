@@ -2,9 +2,9 @@ import pathlib
 import re
 import shlex
 from collections import defaultdict
-from typing import Any, Dict, Iterable, List, Optional, Set, TypedDict
+from typing import Any, Dict, Iterable, List, Optional, Set
 
-from pydantic import BaseModel, root_validator, validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from .constants import RUN_ALL_COMMAND
 from .exceptions import InvalidPatternError
@@ -24,7 +24,7 @@ databuilder_pat = re.compile(r"databuilder|ehrql:\S+ generate[-_]dataset")
 class Expectations(BaseModel):
     population_size: int
 
-    @validator("population_size", pre=True)
+    @field_validator("population_size", mode="before")
     def validate_population_size(cls, population_size: str) -> int:
         try:
             return int(population_size)
@@ -35,25 +35,24 @@ class Expectations(BaseModel):
 
 
 class Outputs(BaseModel):
-    highly_sensitive: Optional[Dict[str, str]]
-    moderately_sensitive: Optional[Dict[str, str]]
-    minimally_sensitive: Optional[Dict[str, str]]
+    highly_sensitive: Optional[Dict[str, str]] = None
+    moderately_sensitive: Optional[Dict[str, str]] = None
+    minimally_sensitive: Optional[Dict[str, str]] = None
 
     def __len__(self) -> int:
-        return len(self.dict(exclude_unset=True))
+        return len(self.model_dump(exclude_unset=True))
 
-    @root_validator()
-    def at_least_one_output(cls, outputs: Dict[str, str]) -> Dict[str, str]:
-        if not any(outputs.values()):
-            raise ValueError(
-                f"must specify at least one output of: {', '.join(outputs)}"
-            )
+    @model_validator(mode="after")
+    def at_least_one_output(self) -> "Outputs":
+        if not self.model_fields_set:
+            fields = ", ".join(self.model_fields.keys())
+            raise ValueError(f"must specify at least one output of: {fields}")
 
-        return outputs
+        return self
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def validate_output_filenames_are_valid(cls, outputs: RawOutputs) -> RawOutputs:
-        # we use pre=True here so that we only get the outputs specified in the
+        # we use mode="before" here so that we only get the outputs specified in the
         # input data.  With Optional[…] wrapped fields pydantic will set None
         # for us and that just makes the logic a little fiddler with no
         # benefit.
@@ -70,10 +69,11 @@ class Outputs(BaseModel):
 class Command(BaseModel):
     raw: str  # original string
 
-    class Config:
+    model_config = ConfigDict(
         # this makes Command hashable, which for some reason due to the
         # Action.parse_run_string works, pydantic requires.
-        frozen = True
+        frozen=True,
+    )
 
     @property
     def args(self) -> str:
@@ -99,9 +99,9 @@ class Action(BaseModel):
     run: Command
     needs: List[str] = []
     outputs: Outputs
-    dummy_data_file: Optional[pathlib.Path]
+    dummy_data_file: Optional[pathlib.Path] = None
 
-    @validator("run", pre=True)
+    @field_validator("run", mode="before")
     def parse_run_string(cls, run: str) -> Command:
         parts = shlex.split(run)
 
@@ -112,22 +112,6 @@ class Action(BaseModel):
             )
 
         return Command(raw=run)
-
-
-class PartiallyValidatedPipeline(TypedDict):
-    """
-    A custom type to type-check the values in "post" root validators
-
-    A root_validator with pre=False (or no kwargs) runs after the values have
-    been ingested already, and the `values` arg is a dictionary of model types.
-
-    Note: This is defined here so we don't have to deal with forward reference
-    types.
-    """
-
-    version: float
-    expectations: Expectations
-    actions: Dict[str, Action]
 
 
 class Pipeline(BaseModel):
@@ -146,23 +130,21 @@ class Pipeline(BaseModel):
         """
         return [action for action in self.actions.keys() if action != RUN_ALL_COMMAND]
 
-    @root_validator()
-    def validate_actions(
-        cls, values: PartiallyValidatedPipeline
-    ) -> PartiallyValidatedPipeline:
+    @model_validator(mode="after")
+    def validate_actions(self) -> "Pipeline":
         # TODO: move to Action when we move name onto it
         validators = {
             cohortextractor_pat: validate_cohortextractor_outputs,
             databuilder_pat: validate_databuilder_outputs,
         }
-        for action_id, config in values.get("actions", {}).items():
+        for action_id, config in self.actions.items():
             for cmd, validator_func in validators.items():
                 if cmd.match(config.run.raw):
                     validator_func(action_id, config)
 
-        return values
+        return self
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def validate_expectations_per_version(cls, values: RawPipeline) -> RawPipeline:
         """Ensure the expectations key exists for version 3 onwards"""
         try:
@@ -190,42 +172,30 @@ class Pipeline(BaseModel):
 
         return values
 
-    @root_validator()
-    def validate_outputs_per_version(
-        cls, values: PartiallyValidatedPipeline
-    ) -> PartiallyValidatedPipeline:
+    @model_validator(mode="after")
+    def validate_outputs_per_version(self) -> "Pipeline":
         """
         Ensure outputs are unique for version 2 onwards
 
         We validate this on Pipeline so we can get the version
         """
-
-        # we're not using pre=True in the validator so we can rely on the
-        # version and action keys being the correct type but we have to handle
-        # them not existing
-        if not (version := values.get("version")):
-            return values  # handle missing version
-
-        if (actions := values.get("actions")) is None:
-            return values  # hand no actions
-
-        feat = get_feature_flags_for_version(version)
+        feat = get_feature_flags_for_version(self.version)
         if not feat.UNIQUE_OUTPUT_PATH:
-            return values
+            return self
 
         # find duplicate paths defined in the outputs section
         seen_files = []
-        for config in actions.values():
-            for output in config.outputs.dict(exclude_unset=True).values():
+        for config in self.actions.values():
+            for output in config.outputs.model_dump(exclude_unset=True).values():
                 for filename in output.values():
                     if filename in seen_files:
                         raise ValueError(f"Output path {filename} is not unique")
 
                     seen_files.append(filename)
 
-        return values
+        return self
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def validate_actions_run(cls, values: RawPipeline) -> RawPipeline:
         # TODO: move to Action when we move name onto it
         for action_id, config in values.get("actions", {}).items():
@@ -237,7 +207,7 @@ class Pipeline(BaseModel):
 
         return values
 
-    @validator("actions")
+    @field_validator("actions")
     def validate_unique_commands(cls, actions: Dict[str, Action]) -> Dict[str, Action]:
         seen: Dict[Command, List[str]] = defaultdict(list)
         for name, config in actions.items():
@@ -250,7 +220,7 @@ class Pipeline(BaseModel):
 
         return actions
 
-    @validator("actions")
+    @field_validator("actions")
     def validate_needs_are_comma_delimited(
         cls, actions: Dict[str, Action]
     ) -> Dict[str, Action]:
@@ -279,7 +249,7 @@ class Pipeline(BaseModel):
 
         raise ValueError("\n".join(msg))
 
-    @validator("actions")
+    @field_validator("actions")
     def validate_needs_exist(cls, actions: Dict[str, Action]) -> Dict[str, Action]:
         missing = {}
         for name, action in actions.items():
@@ -302,7 +272,7 @@ class Pipeline(BaseModel):
         ]
         raise ValueError("\n".join(msg))
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def validate_version_exists(cls, values: RawPipeline) -> RawPipeline:
         """
         Ensure the version key exists.
@@ -320,7 +290,7 @@ class Pipeline(BaseModel):
             f"latest version is {LATEST_VERSION})"
         )
 
-    @validator("version", pre=True)
+    @field_validator("version", mode="before")
     def validate_version_value(cls, value: str) -> float:
         try:
             return float(value)

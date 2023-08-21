@@ -126,7 +126,7 @@ def test_action_extraction_command_with_one_outputs():
 
     config = Pipeline(**data)
 
-    outputs = config.actions["generate_cohort"].outputs.dict(exclude_unset=True)
+    outputs = config.actions["generate_cohort"].outputs.model_dump(exclude_unset=True)
     assert len(outputs.values()) == 1
 
 
