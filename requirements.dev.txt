@@ -18,7 +18,7 @@ click==8.0.4
     #   pip-tools
 coverage==7.3.0
     # via -r requirements.dev.in
-devtools==0.11.0
+devtools==0.12.1
     # via -r requirements.dev.in
 distlib==0.3.4
     # via virtualenv
@@ -57,6 +57,8 @@ pluggy==1.0.0
     # via pytest
 pre-commit==3.3.3
     # via -r requirements.dev.in
+pygments==2.16.1
+    # via devtools
 pytest==7.4.0
     # via
     #   -r requirements.dev.in
