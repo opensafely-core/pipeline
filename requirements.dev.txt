@@ -22,8 +22,6 @@ devtools==0.12.1
     # via -r requirements.dev.in
 distlib==0.3.4
     # via virtualenv
-exceptiongroup==1.1.2
-    # via pytest
 executing==1.2.0
     # via devtools
 filelock==3.6.0
@@ -69,24 +67,16 @@ pytest-mock==3.11.1
     # via -r requirements.dev.in
 pyyaml==6.0.1
     # via pre-commit
-ruff==0.0.285
+ruff==0.0.286
     # via -r requirements.dev.in
 six==1.16.0
     # via
     #   asttokens
     #   virtualenv
 tomli==2.0.1
-    # via
-    #   black
-    #   build
-    #   mypy
-    #   pep517
-    #   pip-tools
-    #   pytest
+    # via pep517
 typing-extensions==4.7.1
-    # via
-    #   black
-    #   mypy
+    # via mypy
 virtualenv==20.13.3
     # via pre-commit
 wheel==0.38.1
