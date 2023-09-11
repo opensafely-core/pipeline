@@ -16,7 +16,7 @@ click==8.0.4
     # via
     #   black
     #   pip-tools
-coverage==7.3.0
+coverage==7.3.1
     # via -r requirements.dev.in
 devtools==0.12.2
     # via -r requirements.dev.in
