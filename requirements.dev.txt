@@ -76,17 +76,9 @@ six==1.16.0
     #   asttokens
     #   virtualenv
 tomli==2.0.1
-    # via
-    #   black
-    #   build
-    #   mypy
-    #   pep517
-    #   pip-tools
-    #   pytest
+    # via pep517
 typing-extensions==4.7.1
-    # via
-    #   black
-    #   mypy
+    # via mypy
 virtualenv==20.13.3
     # via pre-commit
 wheel==0.38.1
