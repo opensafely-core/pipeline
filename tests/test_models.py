@@ -520,3 +520,54 @@ def test_pipeline_databuilder_recognizes_old_action_spelling():
 
     with pytest.raises(ValidationError):
         Pipeline(**data)
+
+
+@pytest.mark.parametrize(
+    "name,run,is_database_action",
+    [
+        (
+            "generate_cohort",
+            "cohortextractor:latest generate_cohort args --option",
+            True,
+        ),
+        (
+            "generate_databuilder_dataset",
+            "databuilder:v0 generate-dataset args --output=output/input.csv",
+            True,
+        ),
+        (
+            "generate_ehrql_dataset",
+            "ehrql:v0 generate-dataset args --output=output/input.csv",
+            True,
+        ),
+        (
+            "generate_ehrql_v1_dataset",
+            "ehrql:v1 generate-dataset args --output=output/input.csv",
+            True,
+        ),
+        ("generate_ehrql_measures", "ehrql:v0 generate-measures args --option", True),
+        (
+            "generate_cohortextractor_measures",
+            "cohortextractor:latest generate_measures args --option",
+            False,
+        ),
+        (
+            "non_db_generate_measures",
+            "python:latest generate-measures.py args --option",
+            False,
+        ),
+    ],
+)
+def test_action_is_database_action(name, run, is_database_action):
+    data = {
+        "version": 1,
+        "actions": {
+            name: {
+                "run": run,
+                "outputs": {"highly_sensitive": {"outputs": "output/input.csv"}},
+            }
+        },
+    }
+
+    action = Pipeline(**data).actions[name]
+    assert action.is_database_action == is_database_action

@@ -20,6 +20,22 @@ from .validation import (
 cohortextractor_pat = re.compile(r"cohortextractor:\S+ generate_cohort")
 databuilder_pat = re.compile(r"databuilder|ehrql:\S+ generate[-_]dataset")
 
+database_action_pat = re.compile(
+    r"""
+    # image name
+    ^\b(?:cohortextractor|databuilder|ehrql)\b
+    # :<version> (v0, latest etc)
+    :.+
+    # command; for cohortextractor, only generate_cohort is a database action
+    # For ehrql (and legacy databuilder), generate-dataset and generate-measures
+    # are both database actions. Happily cohortextractor uses generate_measures as
+    # its measures command, so we can excluded cohortextractor measures
+    # actions with this regex.
+    \b(?:generate_cohort|generate-dataset|generate-measures)
+    """,
+    flags=re.X,
+)
+
 
 class Expectations(BaseModel):
     population_size: int
@@ -112,6 +128,10 @@ class Action(BaseModel):
             )
 
         return Command(raw=run)
+
+    @property
+    def is_database_action(self) -> bool:
+        return database_action_pat.match(self.run.raw) is not None
 
 
 class PartiallyValidatedPipeline(TypedDict):
