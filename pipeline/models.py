@@ -60,9 +60,9 @@ class Outputs(BaseModel):
         for privacy_level, output in outputs.items():
             for output_id, filename in output.items():
                 try:
-                    assert_valid_glob_pattern(filename)
+                    assert_valid_glob_pattern(filename, privacy_level)
                 except InvalidPatternError as e:
-                    raise ValueError(f"Output path {filename} is not permitted: {e}")
+                    raise ValueError(f"Output path {filename} is invalid: {e}")
 
         return outputs
 

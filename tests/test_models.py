@@ -463,12 +463,12 @@ def test_outputs_with_invalid_pattern():
         "actions": {
             "generate_cohort": {
                 "run": "cohortextractor:latest generate_cohort",
-                "outputs": {"highly_sensitive": {"test": "test?foo"}},
+                "outputs": {"highly_sensitive": {"test": "test/foo"}},
             },
         },
     }
 
-    msg = "Output path test\\?foo is not permitted:"
+    msg = "Output path test/foo is invalid:"
     with pytest.raises(ValidationError, match=msg):
         Pipeline(**data)
 
