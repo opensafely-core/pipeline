@@ -4,21 +4,14 @@
 #
 #    pip-compile --allow-unsafe --output-file=requirements.prod.txt pyproject.toml
 #
-annotated-types==0.5.0
-    # via pydantic
 distro==1.8.0
     # via ruyaml
-pydantic==2.1.1
+pydantic==1.10.12
     # via opensafely-pipeline (pyproject.toml)
-pydantic-core==2.4.0
-    # via pydantic
 ruyaml==0.91.0
     # via opensafely-pipeline (pyproject.toml)
 typing-extensions==4.7.1
-    # via
-    #   annotated-types
-    #   pydantic
-    #   pydantic-core
+    # via pydantic
 
 # The following packages are considered to be unsafe in a requirements file:
 setuptools==67.1.0
