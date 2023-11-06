@@ -19,6 +19,7 @@ def test_assert_valid_glob_pattern():
         ("metadata", "highly_sensitive"),
         ("metadata/test.txt", "highly_sensitive"),
         ("outputs/*", "highly_sensitive"),
+        ("outputs/foo.*", "highly_sensitive"),
         ("outputs/output.rds", "moderately_sensitive"),
     ]
     for pattern, sensitivity in bad_patterns:

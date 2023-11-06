@@ -34,7 +34,7 @@ def assert_valid_glob_pattern(pattern: str, privacy_level: str) -> None:
 
     path = Path(pattern)
 
-    if path.suffix == "":
+    if path.suffix == "" or path.suffix.endswith("*"):
         raise InvalidPatternError(
             "output paths must have a file type extension at the end"
         )
@@ -42,7 +42,7 @@ def assert_valid_glob_pattern(pattern: str, privacy_level: str) -> None:
     if privacy_level == "moderately_sensitive":
         if path.suffix not in LEVEL4_FILE_TYPES:
             raise InvalidPatternError(
-                f"{path.suffix} is not an allowed file type for moderately_sensitive outputs"
+                f"{path} is not an allowed file type for moderately_sensitive outputs"
             )
 
     # Check that the path is in normal form
