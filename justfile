@@ -47,7 +47,7 @@ requirements-dev *args: requirements-prod
 
 
 # ensure prod requirements installed and up to date
-prodenv: virtualenv
+prodenv: virtualenv requirements-prod
     #!/usr/bin/env bash
     # exit if .txt file has not changed since we installed them (-nt == "newer than', but we negate with || to avoid error exit code)
     test requirements.prod.txt -nt $VIRTUAL_ENV/.prod || exit 0
