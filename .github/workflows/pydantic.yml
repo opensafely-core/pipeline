@@ -1,0 +1,14 @@
+---
+name: Pin pydantic
+
+on:
+  push:
+
+jobs:
+  pin-pydantic:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check pydantic version
+        run: grep -c 'pydantic<2' pyproject.toml
