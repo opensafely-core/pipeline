@@ -8,6 +8,9 @@ updates:
     open-pull-requests-limit: 20
     commit-message:
       prefix: "chore: "
+    ignore:
+      - dependency-name: "pydantic"
+        version-update: semver-major
 
   - package-ecosystem: "github-actions"
     directory: "/"
