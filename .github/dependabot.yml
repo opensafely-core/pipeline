@@ -10,7 +10,7 @@ updates:
       prefix: "chore: "
     ignore:
       - dependency-name: "pydantic"
-        version-update: semver-major
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
