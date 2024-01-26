@@ -526,16 +526,6 @@ def test_pipeline_databuilder_recognizes_old_action_spelling():
     "name,run,is_database_action",
     [
         (
-            "generate_cohort",
-            "cohortextractor:latest generate_cohort args --option",
-            True,
-        ),
-        (
-            "generate_databuilder_dataset",
-            "databuilder:v0 generate-dataset args --output=output/input.csv",
-            True,
-        ),
-        (
             "generate_ehrql_dataset",
             "ehrql:v0 generate-dataset args --output=output/input.csv",
             True,
@@ -547,6 +537,21 @@ def test_pipeline_databuilder_recognizes_old_action_spelling():
         ),
         ("generate_ehrql_measures", "ehrql:v0 generate-measures args --option", True),
         (
+            "sqlrunner",
+            "sqlrunner:v1 foo -output=output/input.csv",
+            True,
+        ),
+        (
+            "generate_cohort",
+            "cohortextractor:latest generate_cohort args --option",
+            True,
+        ),
+        (
+            "generate_databuilder_dataset",
+            "databuilder:v0 generate-dataset args --output=output/input.csv",
+            True,
+        ),
+        (
             "generate_cohortextractor_measures",
             "cohortextractor:latest generate_measures args --option",
             False,
@@ -556,6 +561,7 @@ def test_pipeline_databuilder_recognizes_old_action_spelling():
             "python:latest generate-measures.py args --option",
             False,
         ),
+        ("no_command", "ehrql:v1", False),
     ],
 )
 def test_action_is_database_action(name, run, is_database_action):
