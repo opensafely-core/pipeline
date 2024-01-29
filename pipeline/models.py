@@ -20,6 +20,35 @@ from .validation import (
 cohortextractor_pat = re.compile(r"cohortextractor:\S+ generate_cohort")
 databuilder_pat = re.compile(r"databuilder|ehrql:\S+ generate[-_]dataset")
 
+# orderd by most common, going forwards
+DB_COMMANDS = {
+    "ehrql": ("generate-dataset", "generate-measures"),
+    "sqlrunner": "*",  # all commands are valid
+    "cohortextractor": ("generate_cohort", "generate_codelist_report"),
+    "databuilder": ("generate-dataset",),
+}
+
+
+def is_database_action(args: List[str]) -> bool:
+    """
+    By default actions do not have database access, but certain trusted actions require it
+    """
+    image = args[0]
+    image = image.split(":")[0]
+    db_commands = DB_COMMANDS.get(image)
+    if db_commands is None:
+        return False
+
+    if db_commands == "*":
+        return True
+
+    # no command specified
+    if len(args) == 1:
+        return False
+
+    # 1st arg is command
+    return args[1] in db_commands
+
 
 class Expectations(BaseModel):
     population_size: int
@@ -113,35 +142,9 @@ class Action(BaseModel):
 
         return Command(raw=run)
 
-    # orderd by most common,  going forwards
-    DB_COMMANDS = {
-        "ehrql": ("generate-dataset", "generate-measures"),
-        "sqlrunner": "*",  # all commands are valid
-        "cohortextractor": ("generate_cohort", "generate_codelist_report"),
-        "databuilder": ("generate-dataset",),
-    }
-
     @property
     def is_database_action(self) -> bool:
-        """
-        By default actions do not have database access, but certain trusted actions require it
-        """
-        args = self.run.parts
-        image = args[0]
-        image = image.split(":")[0]
-        db_commands = self.DB_COMMANDS.get(image)
-        if db_commands is None:
-            return False
-
-        if db_commands == "*":
-            return True
-
-        # no command specified
-        if len(args) == 1:
-            return False
-
-        # 1st arg is command
-        return args[1] in db_commands
+        return is_database_action(self.run.parts)
 
 
 class PartiallyValidatedPipeline(TypedDict):
