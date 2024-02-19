@@ -8,7 +8,7 @@ asttokens==2.0.5
     # via devtools
 black==24.1.1
     # via -r requirements.dev.in
-build==0.8.0
+build==1.0.3
     # via pip-tools
 cfgv==3.3.1
     # via pre-commit
@@ -30,6 +30,8 @@ filelock==3.6.0
     # via virtualenv
 identify==2.4.11
     # via pre-commit
+importlib-metadata==7.0.1
+    # via build
 iniconfig==1.1.1
     # via pytest
 mypy==1.8.0
@@ -47,9 +49,7 @@ packaging==23.1
     #   pytest
 pathspec==0.9.0
     # via black
-pep517==0.12.0
-    # via build
-pip-tools==7.3.0
+pip-tools==7.4.0
     # via -r requirements.dev.in
 platformdirs==2.5.1
     # via
@@ -61,6 +61,10 @@ pre-commit==3.5.0
     # via -r requirements.dev.in
 pygments==2.16.1
     # via devtools
+pyproject-hooks==1.0.0
+    # via
+    #   build
+    #   pip-tools
 pytest==8.0.0
     # via
     #   -r requirements.dev.in
@@ -80,8 +84,8 @@ tomli==2.0.1
     #   black
     #   build
     #   mypy
-    #   pep517
     #   pip-tools
+    #   pyproject-hooks
     #   pytest
 typing-extensions==4.7.1
     # via
@@ -91,6 +95,8 @@ virtualenv==20.13.3
     # via pre-commit
 wheel==0.38.1
     # via pip-tools
+zipp==3.17.0
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==23.3
