@@ -21,6 +21,7 @@ def test_assert_valid_glob_pattern():
         ("outputs/*", "highly_sensitive"),
         ("outputs/foo.*", "highly_sensitive"),
         ("outputs/output.rds", "moderately_sensitive"),
+        ("outputs/output.pdf", "moderately_sensitive"),
     ]
     for pattern, sensitivity in bad_patterns:
         with pytest.raises(InvalidPatternError):
