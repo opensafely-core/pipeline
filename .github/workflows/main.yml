@@ -68,11 +68,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Tag new release
         run: |
           # ignore failures here to avoid merges into main without version
           # bumps failing this job.
-          git tag "v$(cat version)" || exit
+          git tag "v$(cat version)" || exit 0
           git push --tags
 
   required-checks:
