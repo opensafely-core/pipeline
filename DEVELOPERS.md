@@ -32,3 +32,12 @@ Run the tests with:
 ```
 just test <args>
 ```
+
+
+## Releasing
+To make a new release from the `main` branch:
+```
+just release
+```
+This will checkout the latest `main`, update the `version` file,
+and create a new release PR for you.
