@@ -8,7 +8,7 @@ For example:
         data = load_pipeline(f.read())
 
 
-The returned object is a Pydantic model, `Pipeline`, defined in `pipeline/models.py`.
+The returned object is an instance of `pipeline.models.Pipeline`.
 
 
 ## Developer docs

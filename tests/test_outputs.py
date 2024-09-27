@@ -5,7 +5,8 @@ from pipeline.outputs import get_output_dirs
 
 
 def test_get_output_dirs_with_duplicates():
-    outputs = Outputs(
+    outputs = Outputs.build(
+        action_id="test",
         highly_sensitive={
             "a": "output/1a.csv",
             "b": "output/2a.csv",
@@ -18,7 +19,8 @@ def test_get_output_dirs_with_duplicates():
 
 
 def test_get_output_dirs_without_duplicates():
-    outputs = Outputs(
+    outputs = Outputs.build(
+        action_id="test",
         highly_sensitive={
             "a": "1a/output.csv",
             "b": "2a/output.csv",
