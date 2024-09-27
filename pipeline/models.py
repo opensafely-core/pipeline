@@ -11,9 +11,9 @@ from .constants import RUN_ALL_COMMAND
 from .exceptions import InvalidPatternError, ValidationError
 from .features import LATEST_VERSION, get_feature_flags_for_version
 from .validation import (
-    assert_valid_glob_pattern,
     validate_cohortextractor_outputs,
     validate_databuilder_outputs,
+    validate_glob_pattern,
 )
 
 
@@ -124,7 +124,7 @@ class Outputs:
             return
         for output_id, filename in output.items():
             try:
-                assert_valid_glob_pattern(filename, privacy_level)
+                validate_glob_pattern(filename, privacy_level)
             except InvalidPatternError as e:
                 raise ValidationError(f"Output path {filename} is invalid: {e}")
 

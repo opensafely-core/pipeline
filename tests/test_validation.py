@@ -1,12 +1,12 @@
 import pytest
 
 from pipeline.exceptions import InvalidPatternError
-from pipeline.validation import assert_valid_glob_pattern
+from pipeline.validation import validate_glob_pattern
 
 
-def test_assert_valid_glob_pattern():
-    assert_valid_glob_pattern("foo/bar/*.txt", "highly_sensitive")
-    assert_valid_glob_pattern("foo/bar/*.txt", "moderately_sensitive")
+def test_validate_glob_pattern():
+    validate_glob_pattern("foo/bar/*.txt", "highly_sensitive")
+    validate_glob_pattern("foo/bar/*.txt", "moderately_sensitive")
     bad_patterns = [
         ("/abs/path.txt", "highly_sensitive"),
         ("not//canonical.txt", "highly_sensitive"),
@@ -25,4 +25,4 @@ def test_assert_valid_glob_pattern():
     ]
     for pattern, sensitivity in bad_patterns:
         with pytest.raises(InvalidPatternError):
-            assert_valid_glob_pattern(pattern, sensitivity)
+            validate_glob_pattern(pattern, sensitivity)

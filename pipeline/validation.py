@@ -13,7 +13,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from .models import Action
 
 
-def assert_valid_glob_pattern(pattern: str, privacy_level: str) -> None:
+def validate_glob_pattern(pattern: str, privacy_level: str) -> None:
     """
     These patterns get converted into regular expressions and matched
     with a `find` command so there shouldn't be any possibility of a path
