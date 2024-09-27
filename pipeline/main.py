@@ -25,7 +25,7 @@ def load_pipeline(pipeline_config: str | Path, filename: str | None = None) -> P
 
     # validate
     try:
-        return Pipeline(**parsed_data)
+        return Pipeline.build(**parsed_data)
     except ValidationError as exc:
         raise ProjectValidationError(
             f"Invalid project: {filename or ''}\n{exc}"

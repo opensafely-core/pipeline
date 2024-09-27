@@ -47,28 +47,54 @@ def is_database_action(args):
 
 class Expectations:
     def __init__(self, population_size):
+        self.population_size = population_size
+
+    @classmethod
+    def build(cls, population_size=None, **kwargs):
         try:
-            self.population_size = int(population_size)
+            population_size = int(population_size)
         except (TypeError, ValueError):
             raise ValidationError(
                 "Project expectations population size must be a number",
             )
+        return cls(population_size)
 
 
 class Outputs:
-    def __init__(
-        self,
+    def __init__(self, highly_sensitive, moderately_sensitive, minimally_sensitive):
+        self.highly_sensitive = highly_sensitive
+        self.moderately_sensitive = moderately_sensitive
+        self.minimally_sensitive = minimally_sensitive
+
+    @classmethod
+    def build(
+        cls,
         highly_sensitive=None,
         moderately_sensitive=None,
         minimally_sensitive=None,
         **kwargs,
     ):
-        self.highly_sensitive = highly_sensitive
-        self.moderately_sensitive = moderately_sensitive
-        self.minimally_sensitive = minimally_sensitive
+        if (
+            highly_sensitive is None
+            and moderately_sensitive is None
+            and minimally_sensitive is None
+        ):
+            raise ValidationError(
+                f"must specify at least one output of: {', '.join(['highly_sensitive', 'moderately_sensitive', 'minimally_sensitive'])}"
+            )
 
-        self.at_least_one_output()
-        self.validate_output_filenames_are_valid()
+        cls.validate_output_filenames_are_valid(
+            "highly_sensitive",
+            highly_sensitive,
+        )
+        cls.validate_output_filenames_are_valid(
+            "moderately_sensitive", moderately_sensitive
+        )
+        cls.validate_output_filenames_are_valid(
+            "minimally_sensitive", minimally_sensitive
+        )
+
+        return cls(highly_sensitive, moderately_sensitive, minimally_sensitive)
 
     def __len__(self):
         return len(self.dict())
@@ -84,19 +110,15 @@ class Outputs:
         }
         return {k: v for k, v in d.items() if v is not None}
 
-    def at_least_one_output(self):
-        if not self.dict():
-            raise ValidationError(
-                f"must specify at least one output of: {', '.join(vars(self))}"
-            )
-
-    def validate_output_filenames_are_valid(self):
-        for privacy_level, output in self.dict().items():
-            for output_id, filename in output.items():
-                try:
-                    assert_valid_glob_pattern(filename, privacy_level)
-                except InvalidPatternError as e:
-                    raise ValidationError(f"Output path {filename} is invalid: {e}")
+    @classmethod
+    def validate_output_filenames_are_valid(cls, privacy_level, output):
+        if output is None:
+            return
+        for output_id, filename in output.items():
+            try:
+                assert_valid_glob_pattern(filename, privacy_level)
+            except InvalidPatternError as e:
+                raise ValidationError(f"Output path {filename} is invalid: {e}")
 
 
 class Command:
@@ -131,14 +153,30 @@ class Command:
 
 
 class Action:
-    def __init__(self, outputs, run, needs=None, config=None, dummy_data_file=None):
-        self.outputs = Outputs(**outputs)
-        self.run = self.parse_run_string(run)
-        self.needs = needs or []
+    def __init__(self, outputs, run, needs, config, dummy_data_file):
+        self.outputs = outputs
+        self.run = run
+        self.needs = needs
         self.config = config
         self.dummy_data_file = dummy_data_file
 
-    def parse_run_string(self, run):
+    @classmethod
+    def build(
+        cls,
+        outputs=None,
+        run=None,
+        needs=None,
+        config=None,
+        dummy_data_file=None,
+        **kwargs,
+    ):
+        outputs = Outputs.build(**outputs)
+        run = cls.parse_run_string(run)
+        needs = needs or []
+        return cls(outputs, run, needs, config, dummy_data_file)
+
+    @classmethod
+    def parse_run_string(cls, run):
         parts = shlex.split(run)
 
         name, _, version = parts[0].partition(":")
@@ -155,23 +193,30 @@ class Action:
 
 
 class Pipeline:
-    def __init__(self, version=None, actions=None, expectations=None):
-        self.validate_version_exists(version)
-        self.version = self.validate_version_value(version)
+    def __init__(self, version, actions, expectations):
+        self.version = version
+        self.actions = actions
+        self.expectations = expectations
 
-        self.validate_actions_run(actions)
-        self.actions = {
-            action_id: Action(**action_config)
+    @classmethod
+    def build(cls, version=None, actions=None, expectations=None, **kwargs):
+        cls.validate_version_exists(version)
+        version = cls.validate_version_value(version)
+
+        cls.validate_actions_run(actions)
+        actions = {
+            action_id: Action.build(**action_config)
             for action_id, action_config in actions.items()
         }
-        self.validate_actions()
-        self.validate_needs_are_comma_delimited()
-        self.validate_needs_exist()
-        self.validate_unique_commands()
-        self.validate_outputs_per_version()
+        cls.validate_actions(actions)
+        cls.validate_needs_are_comma_delimited(actions)
+        cls.validate_needs_exist(actions)
+        cls.validate_unique_commands(actions)
+        cls.validate_outputs_per_version(version, actions)
 
-        expectations = self.validate_expectations_per_version(expectations)
-        self.expectations = Expectations(**expectations)
+        expectations = cls.validate_expectations_per_version(version, expectations)
+        expectations = Expectations.build(**expectations)
+        return cls(version, actions, expectations)
 
     @property
     def all_actions(self):
@@ -184,20 +229,22 @@ class Pipeline:
         """
         return [action for action in self.actions.keys() if action != RUN_ALL_COMMAND]
 
-    def validate_actions(self):
+    @classmethod
+    def validate_actions(cls, actions):
         # TODO: move to Action when we move name onto it
         validators = {
             cohortextractor_pat: validate_cohortextractor_outputs,
             databuilder_pat: validate_databuilder_outputs,
         }
-        for action_id, config in self.actions.items():
+        for action_id, config in actions.items():
             for cmd, validator_func in validators.items():
                 if cmd.match(config.run.raw):
                     validator_func(action_id, config)
 
-    def validate_expectations_per_version(self, expectations):
+    @classmethod
+    def validate_expectations_per_version(cls, version, expectations):
         """Ensure the expectations key exists for version 3 onwards"""
-        feat = get_feature_flags_for_version(self.version)
+        feat = get_feature_flags_for_version(version)
 
         if not feat.EXPECTATIONS_POPULATION:
             return {"population_size": 1000}
@@ -212,20 +259,21 @@ class Pipeline:
 
         return expectations
 
-    def validate_outputs_per_version(self):
+    @classmethod
+    def validate_outputs_per_version(cls, version, actions):
         """
         Ensure outputs are unique for version 2 onwards
 
         We validate this on Pipeline so we can get the version
         """
 
-        feat = get_feature_flags_for_version(self.version)
+        feat = get_feature_flags_for_version(version)
         if not feat.UNIQUE_OUTPUT_PATH:
             return
 
         # find duplicate paths defined in the outputs section
         seen_files = []
-        for config in self.actions.values():
+        for config in actions.values():
             for output in config.outputs.dict().values():
                 for filename in output.values():
                     if filename in seen_files:
@@ -233,7 +281,8 @@ class Pipeline:
 
                     seen_files.append(filename)
 
-    def validate_actions_run(self, actions):
+    @classmethod
+    def validate_actions_run(cls, actions):
         # TODO: move to Action when we move name onto it
         for action_id, config in actions.items():
             if config["run"] == "":
@@ -242,9 +291,10 @@ class Pipeline:
                     f"run must have a value, {action_id} has an empty run key"
                 )
 
-    def validate_unique_commands(self):
+    @classmethod
+    def validate_unique_commands(cls, actions):
         seen = defaultdict(list)
-        for name, config in self.actions.items():
+        for name, config in actions.items():
             run = config.run
             if run in seen:
                 raise ValidationError(
@@ -252,9 +302,10 @@ class Pipeline:
                 )
             seen[run].append(name)
 
-    def validate_needs_are_comma_delimited(self):
+    @classmethod
+    def validate_needs_are_comma_delimited(cls, actions):
         space_delimited = {}
-        for name, action in self.actions.items():
+        for name, action in actions.items():
             # find needs definitions with spaces in them
             incorrect = [dep for dep in action.needs if " " in dep]
             if incorrect:
@@ -276,10 +327,11 @@ class Pipeline:
 
         raise ValidationError("\n".join(msg))
 
-    def validate_needs_exist(self):
+    @classmethod
+    def validate_needs_exist(cls, actions):
         missing = {}
-        for name, action in self.actions.items():
-            unknown_needs = set(action.needs) - set(self.actions)
+        for name, action in actions.items():
+            unknown_needs = set(action.needs) - set(actions)
             if unknown_needs:
                 missing[name] = unknown_needs
 
@@ -298,7 +350,8 @@ class Pipeline:
         ]
         raise ValidationError("\n".join(msg))
 
-    def validate_version_exists(self, version):
+    @classmethod
+    def validate_version_exists(cls, version):
         """
         Ensure the version key exists.
         """
@@ -311,7 +364,8 @@ class Pipeline:
             f"latest version is {LATEST_VERSION})"
         )
 
-    def validate_version_value(self, value):
+    @classmethod
+    def validate_version_value(cls, value):
         try:
             return float(value)
         except (TypeError, ValueError):

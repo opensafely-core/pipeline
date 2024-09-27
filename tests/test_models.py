@@ -19,7 +19,7 @@ def test_success():
         },
     }
 
-    Pipeline(**data)
+    Pipeline.build(**data)
 
 
 def test_action_has_a_version():
@@ -37,7 +37,7 @@ def test_action_has_a_version():
 
     msg = "test must have a version specified"
     with pytest.raises(ValidationError, match=msg):
-        Pipeline(**data)
+        Pipeline.build(**data)
 
 
 def test_action_cohortextractor_multiple_outputs_with_output_flag():
@@ -56,7 +56,7 @@ def test_action_cohortextractor_multiple_outputs_with_output_flag():
         },
     }
 
-    run_command = Pipeline(**data).actions["generate_cohort"].run.raw
+    run_command = Pipeline.build(**data).actions["generate_cohort"].run.raw
 
     assert run_command == "cohortextractor:latest generate_cohort --output-dir=output"
 
@@ -81,7 +81,7 @@ def test_action_cohortextractor_multiple_ouputs_without_output_flag():
         "generate_cohort command should produce output in only one directory, found 2:"
     )
     with pytest.raises(ValidationError, match=msg):
-        Pipeline(**data)
+        Pipeline.build(**data)
 
 
 @pytest.mark.parametrize(
@@ -108,7 +108,7 @@ def test_action_extraction_command_with_multiple_outputs(image, command):
 
     msg = f"A `{command}` action must have exactly one output"
     with pytest.raises(ValidationError, match=msg):
-        Pipeline(**data)
+        Pipeline.build(**data)
 
 
 def test_action_extraction_command_with_one_outputs():
@@ -124,7 +124,7 @@ def test_action_extraction_command_with_one_outputs():
         },
     }
 
-    config = Pipeline(**data)
+    config = Pipeline.build(**data)
 
     outputs = config.actions["generate_cohort"].outputs.dict()
     assert len(outputs.values()) == 1
@@ -141,7 +141,7 @@ def test_command_properties():
         },
     }
 
-    action = Pipeline(**data).actions["generate_cohort"]
+    action = Pipeline.build(**data).actions["generate_cohort"]
     assert action.run.args == "generate_cohort another_arg"
     assert action.run.name == "cohortextractor"
     assert action.run.parts == [
@@ -164,7 +164,7 @@ def test_expectations_before_v3_has_a_default_set():
         },
     }
 
-    config = Pipeline(**data)
+    config = Pipeline.build(**data)
 
     assert config.expectations.population_size == 1000
 
@@ -183,7 +183,7 @@ def test_expectations_exists():
 
     msg = "Project must include `expectations` section"
     with pytest.raises(ValidationError, match=msg):
-        Pipeline(**data)
+        Pipeline.build(**data)
 
 
 def test_expectations_population_size_exists():
@@ -200,7 +200,7 @@ def test_expectations_population_size_exists():
 
     msg = "Project `expectations` section must include `population_size` section"
     with pytest.raises(ValidationError, match=msg):
-        Pipeline(**data)
+        Pipeline.build(**data)
 
 
 def test_expectations_population_size_is_a_number():
@@ -217,7 +217,7 @@ def test_expectations_population_size_is_a_number():
 
     msg = "Project expectations population size must be a number"
     with pytest.raises(ValidationError, match=msg):
-        Pipeline(**data)
+        Pipeline.build(**data)
 
 
 def test_pipeline_all_actions(test_file):
@@ -252,7 +252,7 @@ def test_pipeline_needs_success():
         },
     }
 
-    config = Pipeline(**data)
+    config = Pipeline.build(**data)
 
     assert config.actions["do_analysis"].needs == ["generate_cohort"]
 
@@ -279,7 +279,7 @@ def test_pipeline_needs_with_non_comma_delimited_actions():
 
     msg = "`needs` actions should be separated with commas. The following actions need fixing:"
     with pytest.raises(ValidationError, match=msg):
-        Pipeline(**data)
+        Pipeline.build(**data)
 
 
 def test_pipeline_needs_with_unknown_action():
@@ -298,7 +298,7 @@ def test_pipeline_needs_with_unknown_action():
 
     match = "One or more actions is referencing unknown actions in its needs list"
     with pytest.raises(ValidationError, match=match):
-        Pipeline(**data)
+        Pipeline.build(**data)
 
 
 def test_pipeline_with_duplicated_action_run_commands():
@@ -322,7 +322,7 @@ def test_pipeline_with_duplicated_action_run_commands():
 
     match = "Action action2 has the same 'run' command as other actions: action1"
     with pytest.raises(ValidationError, match=match):
-        Pipeline(**data)
+        Pipeline.build(**data)
 
 
 def test_pipeline_with_empty_run_command():
@@ -340,7 +340,7 @@ def test_pipeline_with_empty_run_command():
 
     match = "run must have a value, action1 has an empty run key"
     with pytest.raises(ValidationError, match=match):
-        Pipeline(**data)
+        Pipeline.build(**data)
 
 
 def test_pipeline_with_missing_or_none_version():
@@ -357,11 +357,11 @@ def test_pipeline_with_missing_or_none_version():
     msg = "Project file must have a `version` attribute"
 
     with pytest.raises(ValidationError, match=msg):
-        Pipeline(**data)
+        Pipeline.build(**data)
 
     with pytest.raises(ValidationError, match=msg):
         data["version"] = None
-        Pipeline(**data)
+        Pipeline.build(**data)
 
 
 def test_pipeline_with_non_numeric_version():
@@ -378,7 +378,7 @@ def test_pipeline_with_non_numeric_version():
 
     with pytest.raises(ValidationError, match=msg):
         data["version"] = "test"
-        Pipeline(**data)
+        Pipeline.build(**data)
 
 
 def test_outputs_files_are_unique():
@@ -399,7 +399,7 @@ def test_outputs_files_are_unique():
 
     msg = "Output path output/input.csv is not unique"
     with pytest.raises(ValidationError, match=msg):
-        Pipeline(**data)
+        Pipeline.build(**data)
 
 
 def test_outputs_duplicate_files_in_v1():
@@ -418,7 +418,7 @@ def test_outputs_duplicate_files_in_v1():
         },
     }
 
-    generate_cohort = Pipeline(**data).actions["generate_cohort"]
+    generate_cohort = Pipeline.build(**data).actions["generate_cohort"]
 
     cohort = generate_cohort.outputs.highly_sensitive["cohort"]
     test = generate_cohort.outputs.highly_sensitive["test"]
@@ -431,7 +431,7 @@ def test_outputs_with_unknown_privacy_level():
 
     with pytest.raises(ValidationError, match=msg):
         # no outputs
-        Pipeline(
+        Pipeline.build(
             **{
                 "version": 1,
                 "actions": {
@@ -444,7 +444,7 @@ def test_outputs_with_unknown_privacy_level():
         )
 
     with pytest.raises(ValidationError, match=msg):
-        Pipeline(
+        Pipeline.build(
             **{
                 "version": 1,
                 "actions": {
@@ -470,7 +470,7 @@ def test_outputs_with_invalid_pattern():
 
     msg = "Output path test/foo is invalid:"
     with pytest.raises(ValidationError, match=msg):
-        Pipeline(**data)
+        Pipeline.build(**data)
 
 
 @pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v0")])
@@ -485,7 +485,7 @@ def test_pipeline_databuilder_specifies_same_output(image, tag):
         },
     }
 
-    Pipeline(**data)
+    Pipeline.build(**data)
 
 
 @pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v0")])
@@ -502,7 +502,7 @@ def test_pipeline_databuilder_specifies_different_output(image, tag):
 
     msg = "--output in run command and outputs must match"
     with pytest.raises(ValidationError, match=msg):
-        Pipeline(**data)
+        Pipeline.build(**data)
 
 
 def test_pipeline_databuilder_recognizes_old_action_spelling():
@@ -519,7 +519,7 @@ def test_pipeline_databuilder_recognizes_old_action_spelling():
     }
 
     with pytest.raises(ValidationError):
-        Pipeline(**data)
+        Pipeline.build(**data)
 
 
 @pytest.mark.parametrize(
@@ -575,5 +575,5 @@ def test_action_is_database_action(name, run, is_database_action):
         },
     }
 
-    action = Pipeline(**data).actions[name]
+    action = Pipeline.build(**data).actions[name]
     assert action.is_database_action == is_database_action
