@@ -5,7 +5,7 @@ import re
 import shlex
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 
 from .constants import RUN_ALL_COMMAND
 from .exceptions import InvalidPatternError, ValidationError
@@ -211,14 +211,10 @@ class Action:
         return is_database_action(self.run.parts)
 
 
-Version = float
-Actions = Dict[str, Action]
-
-
 @dataclass(frozen=True)
 class Pipeline:
-    version: Version
-    actions: Actions
+    version: float
+    actions: dict[str, Action]
     expectations: Expectations
 
     @classmethod
