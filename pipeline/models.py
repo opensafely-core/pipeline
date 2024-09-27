@@ -165,8 +165,8 @@ class Action:
     def build(
         cls,
         action_id: str,
-        outputs: Any = None,
-        run: Any = None,
+        outputs: Any,
+        run: Any,
         needs: Any = None,
         config: Any = None,
         dummy_data_file: Any = None,
