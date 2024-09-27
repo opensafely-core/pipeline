@@ -1,7 +1,7 @@
 import pytest
-from pydantic import ValidationError
 
 from pipeline import load_pipeline
+from pipeline.exceptions import ValidationError
 from pipeline.models import Pipeline
 
 
@@ -126,7 +126,7 @@ def test_action_extraction_command_with_one_outputs():
 
     config = Pipeline(**data)
 
-    outputs = config.actions["generate_cohort"].outputs.dict(exclude_unset=True)
+    outputs = config.actions["generate_cohort"].outputs.dict()
     assert len(outputs.values()) == 1
 
 
@@ -359,6 +359,10 @@ def test_pipeline_with_missing_or_none_version():
     with pytest.raises(ValidationError, match=msg):
         Pipeline(**data)
 
+    with pytest.raises(ValidationError, match=msg):
+        data["version"] = None
+        Pipeline(**data)
+
 
 def test_pipeline_with_non_numeric_version():
     data = {
@@ -374,10 +378,6 @@ def test_pipeline_with_non_numeric_version():
 
     with pytest.raises(ValidationError, match=msg):
         data["version"] = "test"
-        Pipeline(**data)
-
-    with pytest.raises(ValidationError, match=msg):
-        data["version"] = None
         Pipeline(**data)
 
 

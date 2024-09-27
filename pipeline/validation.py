@@ -5,7 +5,7 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import TYPE_CHECKING
 
 from .constants import LEVEL4_FILE_TYPES
-from .exceptions import InvalidPatternError
+from .exceptions import InvalidPatternError, ValidationError
 from .outputs import get_first_output_file, get_output_dirs
 
 
@@ -72,7 +72,7 @@ def validate_cohortextractor_outputs(action_id: str, action: Action) -> None:
     # ensure we only have output level defined.
     num_output_levels = len(action.outputs)
     if num_output_levels != 1:
-        raise ValueError(
+        raise ValidationError(
             "A `generate_cohort` action must have exactly one output; "
             f"{action_id} had {num_output_levels}"
         )
@@ -90,7 +90,7 @@ def validate_cohortextractor_outputs(action_id: str, action: Action) -> None:
         arg == flag or arg.startswith(f"{flag}=") for arg in action.run.parts
     )
     if not has_output_dir:
-        raise ValueError(
+        raise ValidationError(
             f"generate_cohort command should produce output in only one "
             f"directory, found {len(output_dirs)}:\n"
             + "\n".join([f" - {d}/" for d in output_dirs])
@@ -107,11 +107,11 @@ def validate_databuilder_outputs(action_id: str, action: Action) -> None:
     # TODO: should this be checking output _paths_ instead of levels?
     num_output_levels = len(action.outputs)
     if num_output_levels != 1:
-        raise ValueError(
+        raise ValidationError(
             "A `generate-dataset` action must have exactly one output; "
             f"{action_id} had {num_output_levels}"
         )
 
     first_output_file = get_first_output_file(action.outputs)
     if first_output_file not in action.run.raw:
-        raise ValueError("--output in run command and outputs must match")
+        raise ValidationError("--output in run command and outputs must match")

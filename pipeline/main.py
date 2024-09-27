@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pydantic
-
-from .exceptions import ProjectValidationError, YAMLError
+from .exceptions import ProjectValidationError, ValidationError, YAMLError
 from .loading import parse_yaml_file
 from .models import Pipeline
 
@@ -28,7 +26,7 @@ def load_pipeline(pipeline_config: str | Path, filename: str | None = None) -> P
     # validate
     try:
         return Pipeline(**parsed_data)
-    except pydantic.ValidationError as exc:
+    except ValidationError as exc:
         raise ProjectValidationError(
             f"Invalid project: {filename or ''}\n{exc}"
         ) from exc

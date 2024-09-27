@@ -1,7 +1,7 @@
-import pydantic
 import pytest
 
 from pipeline import ProjectValidationError, load_pipeline
+from pipeline.exceptions import ValidationError
 from pipeline.models import Pipeline
 
 
@@ -67,4 +67,4 @@ def test_load_pipeline_with_project_error_raises_projectvalidationerror():
     with pytest.raises(ProjectValidationError, match="Invalid project") as exc:
         load_pipeline(config)
 
-    assert isinstance(exc.value.__cause__, pydantic.ValidationError)
+    assert isinstance(exc.value.__cause__, ValidationError)

@@ -13,7 +13,6 @@ classifiers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-  "pydantic<2",
   "ruyaml",
 ]
 dynamic = ["version"]
@@ -51,9 +50,6 @@ skip_glob = [".direnv", "venv", ".venv"]
 [tool.mypy]
 files = "pipeline"
 exclude = "^pipeline/__main__.py$"
-plugins = [
-  "pydantic.mypy",
-]
 strict = true
 warn_redundant_casts = true
 warn_unused_ignores = true
