@@ -175,11 +175,18 @@ class Action:
         outputs = Outputs.build(**outputs)
         run = cls.parse_run_string(action_id, run)
         needs = needs or []
+        for n in needs:
+            if " " in n:
+                raise ValidationError(
+                    f"`needs` actions should be separated with commas, but {action_id} needs `{n}`"
+                )
         action = cls(action_id, outputs, run, needs, config, dummy_data_file)
+
         if re.match(r"cohortextractor:\S+ generate_cohort", run.raw):
             validate_cohortextractor_outputs(action_id, action)
         if re.match(r"databuilder|ehrql:\S+ generate[-_]dataset", run.raw):
             validate_databuilder_outputs(action_id, action)
+
         return action
 
     @classmethod
@@ -240,7 +247,6 @@ class Pipeline:
             action_id: Action.build(action_id, **action_config)
             for action_id, action_config in actions.items()
         }
-        cls.validate_needs_are_comma_delimited(actions)
         cls.validate_needs_exist(actions)
         cls.validate_unique_commands(actions)
         cls.validate_outputs_per_version(version, actions)
@@ -303,33 +309,6 @@ class Pipeline:
                     f"Action {name} has the same 'run' command as other actions: {' ,'.join(seen[run])}"
                 )
             seen[run].append(name)
-
-    @classmethod
-    def validate_needs_are_comma_delimited(cls, actions: Actions) -> None:
-        space_delimited = {}
-        for name, action in actions.items():
-            # find needs definitions with spaces in them
-            incorrect = [dep for dep in action.needs if " " in dep]
-            if incorrect:
-                space_delimited[name] = incorrect
-
-        if not space_delimited:
-            return
-
-        def iter_incorrect_needs(
-            space_delimited: dict[str, list[str]],
-        ) -> Iterable[str]:
-            for name, needs in space_delimited.items():
-                yield f"Action: {name}"
-                for need in needs:
-                    yield f" - {need}"
-
-        msg = [
-            "`needs` actions should be separated with commas. The following actions need fixing:",
-            *iter_incorrect_needs(space_delimited),
-        ]
-
-        raise ValidationError("\n".join(msg))
 
     @classmethod
     def validate_needs_exist(cls, actions: Actions) -> None:

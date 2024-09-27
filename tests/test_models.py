@@ -277,7 +277,7 @@ def test_pipeline_needs_with_non_comma_delimited_actions():
         },
     }
 
-    msg = "`needs` actions should be separated with commas. The following actions need fixing:"
+    msg = "`needs` actions should be separated with commas, but do_further_analysis needs `generate_cohort do_analysis`"
     with pytest.raises(ValidationError, match=msg):
         Pipeline.build(**data)
 
