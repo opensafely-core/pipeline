@@ -14,6 +14,7 @@ from .validation import (
     validate_cohortextractor_outputs,
     validate_databuilder_outputs,
     validate_glob_pattern,
+    validate_type,
 )
 
 
@@ -75,6 +76,7 @@ class Outputs:
     @classmethod
     def build(
         cls,
+        action_id: str,
         highly_sensitive: Any = None,
         moderately_sensitive: Any = None,
         minimally_sensitive: Any = None,
@@ -90,14 +92,13 @@ class Outputs:
             )
 
         cls.validate_output_filenames_are_valid(
-            "highly_sensitive",
-            highly_sensitive,
+            action_id, "highly_sensitive", highly_sensitive
         )
         cls.validate_output_filenames_are_valid(
-            "moderately_sensitive", moderately_sensitive
+            action_id, "moderately_sensitive", moderately_sensitive
         )
         cls.validate_output_filenames_are_valid(
-            "minimally_sensitive", minimally_sensitive
+            action_id, "minimally_sensitive", minimally_sensitive
         )
 
         return cls(highly_sensitive, moderately_sensitive, minimally_sensitive)
@@ -118,11 +119,13 @@ class Outputs:
 
     @classmethod
     def validate_output_filenames_are_valid(
-        cls, privacy_level: str, output: Any
+        cls, action_id: str, privacy_level: str, output: Any
     ) -> None:
         if output is None:
             return
+        validate_type(output, dict, f"`{privacy_level}` section for action {action_id}")
         for output_id, filename in output.items():
+            validate_type(filename, str, f"`{output_id}` output for action {action_id}")
             try:
                 validate_glob_pattern(filename, privacy_level)
             except InvalidPatternError as e:
@@ -172,7 +175,22 @@ class Action:
         dummy_data_file: Any = None,
         **kwargs: Any,
     ) -> Action:
-        outputs = Outputs.build(**outputs)
+        validate_type(outputs, dict, f"`outputs` section for action {action_id}")
+        validate_type(run, str, f"`run` section for action {action_id}")
+        validate_type(
+            needs, list, f"`needs` section for action {action_id}", optional=True
+        )
+        validate_type(
+            config, dict, f"`config` section for action {action_id}", optional=True
+        )
+        validate_type(
+            dummy_data_file,
+            str,
+            f"`dummy_data_file` section for action {action_id}",
+            optional=True,
+        )
+
+        outputs = Outputs.build(action_id=action_id, **outputs)
         run = cls.parse_run_string(action_id, run)
         needs = needs or []
         for n in needs:
@@ -190,7 +208,7 @@ class Action:
         return action
 
     @classmethod
-    def parse_run_string(cls, action_id: str, run: Any) -> Command:
+    def parse_run_string(cls, action_id: str, run: str) -> Command:
         if run == "":
             raise ValidationError(
                 f"run must have a value, {action_id} has an empty run key"
@@ -239,6 +257,7 @@ class Pipeline:
                 f"`version` must be a number between 1 and {LATEST_VERSION}"
             )
 
+        validate_type(actions, dict, "Project `actions` section")
         actions = {
             action_id: Action.build(action_id, **action_config)
             for action_id, action_config in actions.items()
@@ -280,6 +299,7 @@ class Pipeline:
         else:
             expectations = {"population_size": 1000}
 
+        validate_type(expectations, dict, "Project `expectations` section")
         if "population_size" not in expectations:
             raise ValidationError(
                 "Project `expectations` section must include `population_size` section",

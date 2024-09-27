@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import posixpath
 from pathlib import Path, PurePosixPath, PureWindowsPath
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .constants import LEVEL4_FILE_TYPES
 from .exceptions import InvalidPatternError, ValidationError
@@ -11,6 +11,18 @@ from .outputs import get_first_output_file, get_output_dirs
 
 if TYPE_CHECKING:  # pragma: no cover
     from .models import Action
+
+
+def validate_type(val: Any, exp_type: type, loc: str, optional: bool = False) -> None:
+    type_lookup: dict[type, str] = {
+        str: "string",
+        dict: "dictionary of key/value pairs",
+        list: "list",
+    }
+    if optional and val is None:
+        return
+    if not isinstance(val, exp_type):
+        raise ValidationError(f"{loc} must be a {type_lookup[exp_type]}")
 
 
 def validate_glob_pattern(pattern: str, privacy_level: str) -> None:
