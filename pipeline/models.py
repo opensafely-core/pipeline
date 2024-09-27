@@ -269,14 +269,11 @@ class Pipeline:
     @classmethod
     def validate_actions(cls, actions: Actions) -> None:
         # TODO: move to Action when we move name onto it
-        validators = {
-            cohortextractor_pat: validate_cohortextractor_outputs,
-            databuilder_pat: validate_databuilder_outputs,
-        }
         for action_id, config in actions.items():
-            for cmd, validator_func in validators.items():
-                if cmd.match(config.run.raw):
-                    validator_func(action_id, config)
+            if cohortextractor_pat.match(config.run.raw):
+                validate_cohortextractor_outputs(action_id, config)
+            if databuilder_pat.match(config.run.raw):
+                validate_databuilder_outputs(action_id, config)
 
     @classmethod
     def validate_outputs_per_version(cls, version: Version, actions: Actions) -> None:
