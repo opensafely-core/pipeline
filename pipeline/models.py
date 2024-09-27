@@ -157,6 +157,7 @@ class Command:
 
 @dataclass(frozen=True)
 class Action:
+    action_id: str
     outputs: Outputs
     run: Command
     needs: list[str]
@@ -166,6 +167,7 @@ class Action:
     @classmethod
     def build(
         cls,
+        action_id: str,
         outputs: Any = None,
         run: Any = None,
         needs: Any = None,
@@ -176,7 +178,7 @@ class Action:
         outputs = Outputs.build(**outputs)
         run = cls.parse_run_string(run)
         needs = needs or []
-        return cls(outputs, run, needs, config, dummy_data_file)
+        return cls(action_id, outputs, run, needs, config, dummy_data_file)
 
     @classmethod
     def parse_run_string(cls, run: Any) -> Command:
@@ -229,7 +231,7 @@ class Pipeline:
 
         cls.validate_actions_run(actions)
         actions = {
-            action_id: Action.build(**action_config)
+            action_id: Action.build(action_id, **action_config)
             for action_id, action_config in actions.items()
         }
         cls.validate_actions(actions)
