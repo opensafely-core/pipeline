@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import pathlib
 import re
 import shlex
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable
 
 from .constants import RUN_ALL_COMMAND
 from .exceptions import InvalidPatternError, ValidationError
@@ -27,7 +29,7 @@ DB_COMMANDS = {
 }
 
 
-def is_database_action(args):
+def is_database_action(args: list[str]) -> bool:
     """
     By default actions do not have database access, but certain trusted actions require it
     """
@@ -53,7 +55,11 @@ class Expectations:
     population_size: int
 
     @classmethod
-    def build(cls, population_size=None, **kwargs):
+    def build(
+        cls,
+        population_size: Any = None,
+        **kwargs: Any,
+    ) -> Expectations:
         try:
             population_size = int(population_size)
         except (TypeError, ValueError):
@@ -65,18 +71,18 @@ class Expectations:
 
 @dataclass(frozen=True)
 class Outputs:
-    highly_sensitive: Optional[Dict[str, str]]
-    moderately_sensitive: Optional[Dict[str, str]]
-    minimally_sensitive: Optional[Dict[str, str]]
+    highly_sensitive: dict[str, str] | None
+    moderately_sensitive: dict[str, str] | None
+    minimally_sensitive: dict[str, str] | None
 
     @classmethod
     def build(
         cls,
-        highly_sensitive=None,
-        moderately_sensitive=None,
-        minimally_sensitive=None,
-        **kwargs,
-    ):
+        highly_sensitive: Any = None,
+        moderately_sensitive: Any = None,
+        minimally_sensitive: Any = None,
+        **kwargs: Any,
+    ) -> Outputs:
         if (
             highly_sensitive is None
             and moderately_sensitive is None
@@ -99,10 +105,10 @@ class Outputs:
 
         return cls(highly_sensitive, moderately_sensitive, minimally_sensitive)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.dict())
 
-    def dict(self):
+    def dict(self) -> dict[str, dict[str, str]]:
         d = {
             k: getattr(self, k)
             for k in [
@@ -114,7 +120,9 @@ class Outputs:
         return {k: v for k, v in d.items() if v is not None}
 
     @classmethod
-    def validate_output_filenames_are_valid(cls, privacy_level, output):
+    def validate_output_filenames_are_valid(
+        cls, privacy_level: str, output: Any
+    ) -> None:
         if output is None:
             return
         for output_id, filename in output.items():
@@ -129,20 +137,20 @@ class Command:
     raw: str
 
     @property
-    def args(self):
+    def args(self) -> str:
         return " ".join(self.parts[1:])
 
     @property
-    def name(self):
+    def name(self) -> str:
         # parts[0] with version split off
         return self.parts[0].split(":")[0]
 
     @property
-    def parts(self):
+    def parts(self) -> list[str]:
         return shlex.split(self.raw)
 
     @property
-    def version(self):
+    def version(self) -> str:
         # parts[0] with name split off
         return self.parts[0].split(":")[1]
 
@@ -151,27 +159,27 @@ class Command:
 class Action:
     outputs: Outputs
     run: Command
-    needs: List[str]
-    config: Optional[Dict[Any, Any]]
-    dummy_data_file: Optional[pathlib.Path]
+    needs: list[str]
+    config: dict[Any, Any] | None
+    dummy_data_file: pathlib.Path | None
 
     @classmethod
     def build(
         cls,
-        outputs=None,
-        run=None,
-        needs=None,
-        config=None,
-        dummy_data_file=None,
-        **kwargs,
-    ):
+        outputs: Any = None,
+        run: Any = None,
+        needs: Any = None,
+        config: Any = None,
+        dummy_data_file: Any = None,
+        **kwargs: Any,
+    ) -> Action:
         outputs = Outputs.build(**outputs)
         run = cls.parse_run_string(run)
         needs = needs or []
         return cls(outputs, run, needs, config, dummy_data_file)
 
     @classmethod
-    def parse_run_string(cls, run):
+    def parse_run_string(cls, run: Any) -> Command:
         parts = shlex.split(run)
 
         name, _, version = parts[0].partition(":")
@@ -183,18 +191,28 @@ class Action:
         return Command(raw=run)
 
     @property
-    def is_database_action(self):
+    def is_database_action(self) -> bool:
         return is_database_action(self.run.parts)
+
+
+Version = float
+Actions = Dict[str, Action]
 
 
 @dataclass(frozen=True)
 class Pipeline:
-    version: float
-    actions: Dict[str, Action]
+    version: Version
+    actions: Actions
     expectations: Expectations
 
     @classmethod
-    def build(cls, version=None, actions=None, expectations=None, **kwargs):
+    def build(
+        cls,
+        version: Any = None,
+        actions: Any = None,
+        expectations: Any = None,
+        **kwargs: Any,
+    ) -> Pipeline:
         cls.validate_version_exists(version)
         version = cls.validate_version_value(version)
 
@@ -214,7 +232,7 @@ class Pipeline:
         return cls(version, actions, expectations)
 
     @property
-    def all_actions(self):
+    def all_actions(self) -> list[str]:
         """
         Get all actions for this Pipeline instance
 
@@ -225,7 +243,7 @@ class Pipeline:
         return [action for action in self.actions.keys() if action != RUN_ALL_COMMAND]
 
     @classmethod
-    def validate_actions(cls, actions):
+    def validate_actions(cls, actions: Actions) -> None:
         # TODO: move to Action when we move name onto it
         validators = {
             cohortextractor_pat: validate_cohortextractor_outputs,
@@ -237,7 +255,9 @@ class Pipeline:
                     validator_func(action_id, config)
 
     @classmethod
-    def validate_expectations_per_version(cls, version, expectations):
+    def validate_expectations_per_version(
+        cls, version: Version, expectations: Any
+    ) -> Any:
         """Ensure the expectations key exists for version 3 onwards"""
         feat = get_feature_flags_for_version(version)
 
@@ -255,7 +275,7 @@ class Pipeline:
         return expectations
 
     @classmethod
-    def validate_outputs_per_version(cls, version, actions):
+    def validate_outputs_per_version(cls, version: Version, actions: Actions) -> None:
         """
         Ensure outputs are unique for version 2 onwards
 
@@ -277,7 +297,7 @@ class Pipeline:
                     seen_files.append(filename)
 
     @classmethod
-    def validate_actions_run(cls, actions):
+    def validate_actions_run(cls, actions: Any) -> None:
         # TODO: move to Action when we move name onto it
         for action_id, config in actions.items():
             if config["run"] == "":
@@ -287,8 +307,8 @@ class Pipeline:
                 )
 
     @classmethod
-    def validate_unique_commands(cls, actions):
-        seen = defaultdict(list)
+    def validate_unique_commands(cls, actions: Actions) -> None:
+        seen: dict[Command, list[str]] = defaultdict(list)
         for name, config in actions.items():
             run = config.run
             if run in seen:
@@ -298,7 +318,7 @@ class Pipeline:
             seen[run].append(name)
 
     @classmethod
-    def validate_needs_are_comma_delimited(cls, actions):
+    def validate_needs_are_comma_delimited(cls, actions: Actions) -> None:
         space_delimited = {}
         for name, action in actions.items():
             # find needs definitions with spaces in them
@@ -309,7 +329,9 @@ class Pipeline:
         if not space_delimited:
             return
 
-        def iter_incorrect_needs(space_delimited):
+        def iter_incorrect_needs(
+            space_delimited: dict[str, list[str]],
+        ) -> Iterable[str]:
             for name, needs in space_delimited.items():
                 yield f"Action: {name}"
                 for need in needs:
@@ -323,7 +345,7 @@ class Pipeline:
         raise ValidationError("\n".join(msg))
 
     @classmethod
-    def validate_needs_exist(cls, actions):
+    def validate_needs_exist(cls, actions: Actions) -> None:
         missing = {}
         for name, action in actions.items():
             unknown_needs = set(action.needs) - set(actions)
@@ -333,7 +355,7 @@ class Pipeline:
         if not missing:
             return
 
-        def iter_missing_needs(missing):
+        def iter_missing_needs(missing: dict[str, set[str]]) -> Iterable[str]:
             for name, needs in missing.items():
                 yield f"Action: {name}"
                 for need in needs:
@@ -346,7 +368,7 @@ class Pipeline:
         raise ValidationError("\n".join(msg))
 
     @classmethod
-    def validate_version_exists(cls, version):
+    def validate_version_exists(cls, version: Any) -> None:
         """
         Ensure the version key exists.
         """
@@ -360,7 +382,7 @@ class Pipeline:
         )
 
     @classmethod
-    def validate_version_value(cls, value):
+    def validate_version_value(cls, value: Any) -> float:
         try:
             return float(value)
         except (TypeError, ValueError):
