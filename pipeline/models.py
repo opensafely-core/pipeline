@@ -213,8 +213,19 @@ class Pipeline:
         expectations: Any = None,
         **kwargs: Any,
     ) -> Pipeline:
-        cls.validate_version_exists(version)
-        version = cls.validate_version_value(version)
+        if version is None:
+            raise ValidationError(
+                f"Project file must have a `version` attribute specifying which "
+                f"version of the project configuration format it uses (current "
+                f"latest version is {LATEST_VERSION})"
+            )
+
+        try:
+            version = float(version)
+        except (TypeError, ValueError):
+            raise ValidationError(
+                f"`version` must be a number between 1 and {LATEST_VERSION}"
+            )
 
         cls.validate_actions_run(actions)
         actions = {
@@ -366,26 +377,3 @@ class Pipeline:
             *iter_missing_needs(missing),
         ]
         raise ValidationError("\n".join(msg))
-
-    @classmethod
-    def validate_version_exists(cls, version: Any) -> None:
-        """
-        Ensure the version key exists.
-        """
-        if version is not None:
-            return
-
-        raise ValidationError(
-            f"Project file must have a `version` attribute specifying which "
-            f"version of the project configuration format it uses (current "
-            f"latest version is {LATEST_VERSION})"
-        )
-
-    @classmethod
-    def validate_version_value(cls, value: Any) -> float:
-        try:
-            return float(value)
-        except (TypeError, ValueError):
-            raise ValidationError(
-                f"`version` must be a number between 1 and {LATEST_VERSION}"
-            )
