@@ -1,6 +1,9 @@
+import pathlib
 import re
 import shlex
 from collections import defaultdict
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 from .constants import RUN_ALL_COMMAND
 from .exceptions import InvalidPatternError, ValidationError
@@ -45,9 +48,9 @@ def is_database_action(args):
     return args[1] in db_commands
 
 
+@dataclass(frozen=True)
 class Expectations:
-    def __init__(self, population_size):
-        self.population_size = population_size
+    population_size: int
 
     @classmethod
     def build(cls, population_size=None, **kwargs):
@@ -60,11 +63,11 @@ class Expectations:
         return cls(population_size)
 
 
+@dataclass(frozen=True)
 class Outputs:
-    def __init__(self, highly_sensitive, moderately_sensitive, minimally_sensitive):
-        self.highly_sensitive = highly_sensitive
-        self.moderately_sensitive = moderately_sensitive
-        self.minimally_sensitive = minimally_sensitive
+    highly_sensitive: Optional[Dict[str, str]]
+    moderately_sensitive: Optional[Dict[str, str]]
+    minimally_sensitive: Optional[Dict[str, str]]
 
     @classmethod
     def build(
@@ -121,17 +124,9 @@ class Outputs:
                 raise ValidationError(f"Output path {filename} is invalid: {e}")
 
 
+@dataclass(frozen=True)
 class Command:
-    def __init__(self, raw):
-        self.raw = raw
-
-    def __eq__(self, other):
-        if not isinstance(other, Command):  # pragma: no cover
-            return NotImplemented
-        return self.raw == other.raw
-
-    def __hash__(self):
-        return hash(self.raw)
+    raw: str
 
     @property
     def args(self):
@@ -152,13 +147,13 @@ class Command:
         return self.parts[0].split(":")[1]
 
 
+@dataclass(frozen=True)
 class Action:
-    def __init__(self, outputs, run, needs, config, dummy_data_file):
-        self.outputs = outputs
-        self.run = run
-        self.needs = needs
-        self.config = config
-        self.dummy_data_file = dummy_data_file
+    outputs: Outputs
+    run: Command
+    needs: List[str]
+    config: Optional[Dict[Any, Any]]
+    dummy_data_file: Optional[pathlib.Path]
 
     @classmethod
     def build(
@@ -192,11 +187,11 @@ class Action:
         return is_database_action(self.run.parts)
 
 
+@dataclass(frozen=True)
 class Pipeline:
-    def __init__(self, version, actions, expectations):
-        self.version = version
-        self.actions = actions
-        self.expectations = expectations
+    version: float
+    actions: Dict[str, Action]
+    expectations: Expectations
 
     @classmethod
     def build(cls, version=None, actions=None, expectations=None, **kwargs):
