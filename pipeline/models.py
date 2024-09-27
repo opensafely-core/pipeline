@@ -2,14 +2,13 @@ import pathlib
 import re
 import shlex
 from collections import defaultdict
-from typing import Any, Dict, Iterable, List, Optional, Set, TypedDict
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, root_validator, validator
 
 from .constants import RUN_ALL_COMMAND
 from .exceptions import InvalidPatternError
 from .features import LATEST_VERSION, get_feature_flags_for_version
-from .types import RawOutputs, RawPipeline
 from .validation import (
     assert_valid_glob_pattern,
     validate_cohortextractor_outputs,
@@ -29,7 +28,7 @@ DB_COMMANDS = {
 }
 
 
-def is_database_action(args: List[str]) -> bool:
+def is_database_action(args):
     """
     By default actions do not have database access, but certain trusted actions require it
     """
@@ -54,7 +53,7 @@ class Expectations(BaseModel):
     population_size: int
 
     @validator("population_size", pre=True)
-    def validate_population_size(cls, population_size: str) -> int:
+    def validate_population_size(cls, population_size):
         try:
             return int(population_size)
         except (TypeError, ValueError):
@@ -68,11 +67,11 @@ class Outputs(BaseModel):
     moderately_sensitive: Optional[Dict[str, str]]
     minimally_sensitive: Optional[Dict[str, str]]
 
-    def __len__(self) -> int:
+    def __len__(self):
         return len(self.dict(exclude_unset=True))
 
     @root_validator()
-    def at_least_one_output(cls, outputs: Dict[str, str]) -> Dict[str, str]:
+    def at_least_one_output(cls, outputs):
         if not any(outputs.values()):
             raise ValueError(
                 f"must specify at least one output of: {', '.join(outputs)}"
@@ -81,7 +80,7 @@ class Outputs(BaseModel):
         return outputs
 
     @root_validator(pre=True)
-    def validate_output_filenames_are_valid(cls, outputs: RawOutputs) -> RawOutputs:
+    def validate_output_filenames_are_valid(cls, outputs):
         # we use pre=True here so that we only get the outputs specified in the
         # input data.  With Optional[…] wrapped fields pydantic will set None
         # for us and that just makes the logic a little fiddler with no
@@ -105,20 +104,20 @@ class Command(BaseModel):
         frozen = True
 
     @property
-    def args(self) -> str:
+    def args(self):
         return " ".join(self.parts[1:])
 
     @property
-    def name(self) -> str:
+    def name(self):
         # parts[0] with version split off
         return self.parts[0].split(":")[0]
 
     @property
-    def parts(self) -> List[str]:
+    def parts(self):
         return shlex.split(self.raw)
 
     @property
-    def version(self) -> str:
+    def version(self):
         # parts[0] with name split off
         return self.parts[0].split(":")[1]
 
@@ -131,7 +130,7 @@ class Action(BaseModel):
     dummy_data_file: Optional[pathlib.Path]
 
     @validator("run", pre=True)
-    def parse_run_string(cls, run: str) -> Command:
+    def parse_run_string(cls, run):
         parts = shlex.split(run)
 
         name, _, version = parts[0].partition(":")
@@ -143,24 +142,8 @@ class Action(BaseModel):
         return Command(raw=run)
 
     @property
-    def is_database_action(self) -> bool:
+    def is_database_action(self):
         return is_database_action(self.run.parts)
-
-
-class PartiallyValidatedPipeline(TypedDict):
-    """
-    A custom type to type-check the values in "post" root validators
-
-    A root_validator with pre=False (or no kwargs) runs after the values have
-    been ingested already, and the `values` arg is a dictionary of model types.
-
-    Note: This is defined here so we don't have to deal with forward reference
-    types.
-    """
-
-    version: float
-    expectations: Expectations
-    actions: Dict[str, Action]
 
 
 class Pipeline(BaseModel):
@@ -169,7 +152,7 @@ class Pipeline(BaseModel):
     actions: Dict[str, Action]
 
     @property
-    def all_actions(self) -> List[str]:
+    def all_actions(self):
         """
         Get all actions for this Pipeline instance
 
@@ -180,9 +163,7 @@ class Pipeline(BaseModel):
         return [action for action in self.actions.keys() if action != RUN_ALL_COMMAND]
 
     @root_validator()
-    def validate_actions(
-        cls, values: PartiallyValidatedPipeline
-    ) -> PartiallyValidatedPipeline:
+    def validate_actions(cls, values):
         # TODO: move to Action when we move name onto it
         validators = {
             cohortextractor_pat: validate_cohortextractor_outputs,
@@ -196,7 +177,7 @@ class Pipeline(BaseModel):
         return values
 
     @root_validator(pre=True)
-    def validate_expectations_per_version(cls, values: RawPipeline) -> RawPipeline:
+    def validate_expectations_per_version(cls, values):
         """Ensure the expectations key exists for version 3 onwards"""
         try:
             version = float(values["version"])
@@ -224,9 +205,7 @@ class Pipeline(BaseModel):
         return values
 
     @root_validator()
-    def validate_outputs_per_version(
-        cls, values: PartiallyValidatedPipeline
-    ) -> PartiallyValidatedPipeline:
+    def validate_outputs_per_version(cls, values):
         """
         Ensure outputs are unique for version 2 onwards
 
@@ -259,7 +238,7 @@ class Pipeline(BaseModel):
         return values
 
     @root_validator(pre=True)
-    def validate_actions_run(cls, values: RawPipeline) -> RawPipeline:
+    def validate_actions_run(cls, values):
         # TODO: move to Action when we move name onto it
         for action_id, config in values.get("actions", {}).items():
             if config["run"] == "":
@@ -271,8 +250,8 @@ class Pipeline(BaseModel):
         return values
 
     @validator("actions")
-    def validate_unique_commands(cls, actions: Dict[str, Action]) -> Dict[str, Action]:
-        seen: Dict[Command, List[str]] = defaultdict(list)
+    def validate_unique_commands(cls, actions):
+        seen = defaultdict(list)
         for name, config in actions.items():
             run = config.run
             if run in seen:
@@ -284,9 +263,7 @@ class Pipeline(BaseModel):
         return actions
 
     @validator("actions")
-    def validate_needs_are_comma_delimited(
-        cls, actions: Dict[str, Action]
-    ) -> Dict[str, Action]:
+    def validate_needs_are_comma_delimited(cls, actions):
         space_delimited = {}
         for name, action in actions.items():
             # find needs definitions with spaces in them
@@ -297,9 +274,7 @@ class Pipeline(BaseModel):
         if not space_delimited:
             return actions
 
-        def iter_incorrect_needs(
-            space_delimited: Dict[str, List[str]]
-        ) -> Iterable[str]:
+        def iter_incorrect_needs(space_delimited):
             for name, needs in space_delimited.items():
                 yield f"Action: {name}"
                 for need in needs:
@@ -313,7 +288,7 @@ class Pipeline(BaseModel):
         raise ValueError("\n".join(msg))
 
     @validator("actions")
-    def validate_needs_exist(cls, actions: Dict[str, Action]) -> Dict[str, Action]:
+    def validate_needs_exist(cls, actions):
         missing = {}
         for name, action in actions.items():
             unknown_needs = set(action.needs) - set(actions)
@@ -323,7 +298,7 @@ class Pipeline(BaseModel):
         if not missing:
             return actions
 
-        def iter_missing_needs(missing: Dict[str, Set[str]]) -> Iterable[str]:
+        def iter_missing_needs(missing):
             for name, needs in missing.items():
                 yield f"Action: {name}"
                 for need in needs:
@@ -336,7 +311,7 @@ class Pipeline(BaseModel):
         raise ValueError("\n".join(msg))
 
     @root_validator(pre=True)
-    def validate_version_exists(cls, values: RawPipeline) -> RawPipeline:
+    def validate_version_exists(cls, values):
         """
         Ensure the version key exists.
 
@@ -354,7 +329,7 @@ class Pipeline(BaseModel):
         )
 
     @validator("version", pre=True)
-    def validate_version_value(cls, value: str) -> float:
+    def validate_version_value(cls, value):
         try:
             return float(value)
         except (TypeError, ValueError):
