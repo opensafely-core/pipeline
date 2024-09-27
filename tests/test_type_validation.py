@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from pipeline.exceptions import ValidationError
@@ -113,4 +115,62 @@ def test_output_filename_incorrect_type():
                 }
             },
             expectations={"population_size": 10},
+        )
+
+
+def test_project_extra_parameters():
+    with pytest.raises(
+        ValidationError, match=re.escape("Unexpected parameters (extra) in project")
+    ):
+        Pipeline.build(extra=123)
+
+
+def test_action_extra_parameters():
+    with pytest.raises(
+        ValidationError,
+        match=re.escape("Unexpected parameters (extra) in action action1"),
+    ):
+        Pipeline.build(
+            version=3,
+            actions={
+                "action1": {
+                    "outputs": {},
+                    "run": "test:v1",
+                    "extra": 123,
+                }
+            },
+            expectations={"population_size": 10},
+        )
+
+
+def test_outputs_extra_parameters():
+    with pytest.raises(
+        ValidationError,
+        match=re.escape(
+            "Unexpected parameters (extra) in `outputs` section for action action1"
+        ),
+    ):
+        Pipeline.build(
+            version=3,
+            actions={
+                "action1": {
+                    "outputs": {"highly_sensitive": {"dataset": {}}, "extra": 123},
+                    "run": "test:v1",
+                }
+            },
+            expectations={"population_size": 10},
+        )
+
+
+def test_expectations_extra_parameters():
+    with pytest.raises(
+        ValidationError,
+        match=re.escape(
+            "Unexpected parameters (extra) in project `expectations` section"
+        ),
+    ):
+        Pipeline.build(
+            version=3,
+            actions={},
+            expectations={"population_size": 10, "extra": 123},
         )

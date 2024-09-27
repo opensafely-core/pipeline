@@ -14,6 +14,7 @@ from .validation import (
     validate_cohortextractor_outputs,
     validate_databuilder_outputs,
     validate_glob_pattern,
+    validate_no_kwargs,
     validate_type,
 )
 
@@ -58,6 +59,7 @@ class Expectations:
         population_size: Any = None,
         **kwargs: Any,
     ) -> Expectations:
+        validate_no_kwargs(kwargs, "project `expectations` section")
         try:
             population_size = int(population_size)
         except (TypeError, ValueError):
@@ -90,6 +92,8 @@ class Outputs:
             raise ValidationError(
                 f"must specify at least one output of: {', '.join(['highly_sensitive', 'moderately_sensitive', 'minimally_sensitive'])}"
             )
+
+        validate_no_kwargs(kwargs, f"`outputs` section for action {action_id}")
 
         cls.validate_output_filenames_are_valid(
             action_id, "highly_sensitive", highly_sensitive
@@ -175,6 +179,7 @@ class Action:
         dummy_data_file: Any = None,
         **kwargs: Any,
     ) -> Action:
+        validate_no_kwargs(kwargs, f"action {action_id}")
         validate_type(outputs, dict, f"`outputs` section for action {action_id}")
         validate_type(run, str, f"`run` section for action {action_id}")
         validate_type(
@@ -243,6 +248,7 @@ class Pipeline:
         expectations: Any = None,
         **kwargs: Any,
     ) -> Pipeline:
+        validate_no_kwargs(kwargs, "project")
         if version is None:
             raise ValidationError(
                 f"Project file must have a `version` attribute specifying which "

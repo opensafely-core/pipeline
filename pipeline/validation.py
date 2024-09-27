@@ -25,6 +25,11 @@ def validate_type(val: Any, exp_type: type, loc: str, optional: bool = False) ->
         raise ValidationError(f"{loc} must be a {type_lookup[exp_type]}")
 
 
+def validate_no_kwargs(kwargs: dict[str, Any], loc: str) -> None:
+    if kwargs:
+        raise ValidationError(f"Unexpected parameters ({', '.join(kwargs)}) in {loc}")
+
+
 def validate_glob_pattern(pattern: str, privacy_level: str) -> None:
     """
     These patterns get converted into regular expressions and matched
