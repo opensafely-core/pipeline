@@ -247,8 +247,28 @@ class Pipeline:
             action_id: Action.build(action_id, **action_config)
             for action_id, action_config in actions.items()
         }
-        cls.validate_unique_commands(actions)
-        cls.validate_outputs_per_version(version, actions)
+
+        seen: dict[Command, list[str]] = defaultdict(list)
+        for name, config in actions.items():
+            run = config.run
+            if run in seen:
+                raise ValidationError(
+                    f"Action {name} has the same 'run' command as other actions: {' ,'.join(seen[run])}"
+                )
+            seen[run].append(name)
+
+        if get_feature_flags_for_version(version).UNIQUE_OUTPUT_PATH:
+            # find duplicate paths defined in the outputs section
+            seen_files = []
+            for config in actions.values():
+                for output in config.outputs.dict().values():
+                    for filename in output.values():
+                        if filename in seen_files:
+                            raise ValidationError(
+                                f"Output path {filename} is not unique"
+                            )
+
+                        seen_files.append(filename)
 
         for a in actions.values():
             for n in a.needs:
@@ -282,36 +302,3 @@ class Pipeline:
         than set operators as previously so we preserve the original order.
         """
         return [action for action in self.actions.keys() if action != RUN_ALL_COMMAND]
-
-    @classmethod
-    def validate_outputs_per_version(cls, version: Version, actions: Actions) -> None:
-        """
-        Ensure outputs are unique for version 2 onwards
-
-        We validate this on Pipeline so we can get the version
-        """
-
-        feat = get_feature_flags_for_version(version)
-        if not feat.UNIQUE_OUTPUT_PATH:
-            return
-
-        # find duplicate paths defined in the outputs section
-        seen_files = []
-        for config in actions.values():
-            for output in config.outputs.dict().values():
-                for filename in output.values():
-                    if filename in seen_files:
-                        raise ValidationError(f"Output path {filename} is not unique")
-
-                    seen_files.append(filename)
-
-    @classmethod
-    def validate_unique_commands(cls, actions: Actions) -> None:
-        seen: dict[Command, list[str]] = defaultdict(list)
-        for name, config in actions.items():
-            run = config.run
-            if run in seen:
-                raise ValidationError(
-                    f"Action {name} has the same 'run' command as other actions: {' ,'.join(seen[run])}"
-                )
-            seen[run].append(name)
