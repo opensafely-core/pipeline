@@ -238,8 +238,19 @@ class Pipeline:
         cls.validate_unique_commands(actions)
         cls.validate_outputs_per_version(version, actions)
 
-        expectations = cls.validate_expectations_per_version(version, expectations)
+        feat = get_feature_flags_for_version(version)
+        if feat.EXPECTATIONS_POPULATION:
+            if expectations is None:
+                raise ValidationError("Project must include `expectations` section")
+        else:
+            expectations = {"population_size": 1000}
+
+        if "population_size" not in expectations:
+            raise ValidationError(
+                "Project `expectations` section must include `population_size` section",
+            )
         expectations = Expectations.build(**expectations)
+
         return cls(version, actions, expectations)
 
     @property
@@ -264,26 +275,6 @@ class Pipeline:
             for cmd, validator_func in validators.items():
                 if cmd.match(config.run.raw):
                     validator_func(action_id, config)
-
-    @classmethod
-    def validate_expectations_per_version(
-        cls, version: Version, expectations: Any
-    ) -> Any:
-        """Ensure the expectations key exists for version 3 onwards"""
-        feat = get_feature_flags_for_version(version)
-
-        if not feat.EXPECTATIONS_POPULATION:
-            return {"population_size": 1000}
-
-        if expectations is None:
-            raise ValidationError("Project must include `expectations` section")
-
-        if "population_size" not in expectations:
-            raise ValidationError(
-                "Project `expectations` section must include `population_size` section",
-            )
-
-        return expectations
 
     @classmethod
     def validate_outputs_per_version(cls, version: Version, actions: Actions) -> None:
