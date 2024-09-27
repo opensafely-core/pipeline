@@ -173,12 +173,22 @@ class Action:
         **kwargs: Any,
     ) -> Action:
         outputs = Outputs.build(**outputs)
-        run = cls.parse_run_string(run)
+        run = cls.parse_run_string(action_id, run)
         needs = needs or []
-        return cls(action_id, outputs, run, needs, config, dummy_data_file)
+        action = cls(action_id, outputs, run, needs, config, dummy_data_file)
+        if re.match(r"cohortextractor:\S+ generate_cohort", run.raw):
+            validate_cohortextractor_outputs(action_id, action)
+        if re.match(r"databuilder|ehrql:\S+ generate[-_]dataset", run.raw):
+            validate_databuilder_outputs(action_id, action)
+        return action
 
     @classmethod
-    def parse_run_string(cls, run: Any) -> Command:
+    def parse_run_string(cls, action_id: str, run: Any) -> Command:
+        if run == "":
+            raise ValidationError(
+                f"run must have a value, {action_id} has an empty run key"
+            )
+
         parts = shlex.split(run)
 
         name, _, version = parts[0].partition(":")
@@ -226,12 +236,10 @@ class Pipeline:
                 f"`version` must be a number between 1 and {LATEST_VERSION}"
             )
 
-        cls.validate_actions_run(actions)
         actions = {
             action_id: Action.build(action_id, **action_config)
             for action_id, action_config in actions.items()
         }
-        cls.validate_actions(actions)
         cls.validate_needs_are_comma_delimited(actions)
         cls.validate_needs_exist(actions)
         cls.validate_unique_commands(actions)
@@ -264,15 +272,6 @@ class Pipeline:
         return [action for action in self.actions.keys() if action != RUN_ALL_COMMAND]
 
     @classmethod
-    def validate_actions(cls, actions: Actions) -> None:
-        # TODO: move to Action when we move name onto it
-        for action_id, config in actions.items():
-            if re.match(r"cohortextractor:\S+ generate_cohort", config.run.raw):
-                validate_cohortextractor_outputs(action_id, config)
-            if re.match(r"databuilder|ehrql:\S+ generate[-_]dataset", config.run.raw):
-                validate_databuilder_outputs(action_id, config)
-
-    @classmethod
     def validate_outputs_per_version(cls, version: Version, actions: Actions) -> None:
         """
         Ensure outputs are unique for version 2 onwards
@@ -293,16 +292,6 @@ class Pipeline:
                         raise ValidationError(f"Output path {filename} is not unique")
 
                     seen_files.append(filename)
-
-    @classmethod
-    def validate_actions_run(cls, actions: Any) -> None:
-        # TODO: move to Action when we move name onto it
-        for action_id, config in actions.items():
-            if config["run"] == "":
-                # key is present but empty
-                raise ValidationError(
-                    f"run must have a value, {action_id} has an empty run key"
-                )
 
     @classmethod
     def validate_unique_commands(cls, actions: Actions) -> None:
