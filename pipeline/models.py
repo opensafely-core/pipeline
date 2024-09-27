@@ -17,9 +17,6 @@ from .validation import (
 )
 
 
-cohortextractor_pat = re.compile(r"cohortextractor:\S+ generate_cohort")
-databuilder_pat = re.compile(r"databuilder|ehrql:\S+ generate[-_]dataset")
-
 # orderd by most common, going forwards
 DB_COMMANDS = {
     "ehrql": ("generate-dataset", "generate-measures"),
@@ -270,9 +267,9 @@ class Pipeline:
     def validate_actions(cls, actions: Actions) -> None:
         # TODO: move to Action when we move name onto it
         for action_id, config in actions.items():
-            if cohortextractor_pat.match(config.run.raw):
+            if re.match(r"cohortextractor:\S+ generate_cohort", config.run.raw):
                 validate_cohortextractor_outputs(action_id, config)
-            if databuilder_pat.match(config.run.raw):
+            if re.match(r"databuilder|ehrql:\S+ generate[-_]dataset", config.run.raw):
                 validate_databuilder_outputs(action_id, config)
 
     @classmethod
