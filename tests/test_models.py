@@ -296,7 +296,7 @@ def test_pipeline_needs_with_unknown_action():
         },
     }
 
-    match = "One or more actions is referencing unknown actions in its needs list"
+    match = "Action `action1` references an unknown action in its `needs` list: action2"
     with pytest.raises(ValidationError, match=match):
         Pipeline.build(**data)
 

@@ -5,7 +5,7 @@ import re
 import shlex
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable
+from typing import Any, Dict
 
 from .constants import RUN_ALL_COMMAND
 from .exceptions import InvalidPatternError, ValidationError
@@ -247,9 +247,15 @@ class Pipeline:
             action_id: Action.build(action_id, **action_config)
             for action_id, action_config in actions.items()
         }
-        cls.validate_needs_exist(actions)
         cls.validate_unique_commands(actions)
         cls.validate_outputs_per_version(version, actions)
+
+        for a in actions.values():
+            for n in a.needs:
+                if n not in actions:
+                    raise ValidationError(
+                        f"Action `{a.action_id}` references an unknown action in its `needs` list: {n}"
+                    )
 
         feat = get_feature_flags_for_version(version)
         if feat.EXPECTATIONS_POPULATION:
@@ -309,26 +315,3 @@ class Pipeline:
                     f"Action {name} has the same 'run' command as other actions: {' ,'.join(seen[run])}"
                 )
             seen[run].append(name)
-
-    @classmethod
-    def validate_needs_exist(cls, actions: Actions) -> None:
-        missing = {}
-        for name, action in actions.items():
-            unknown_needs = set(action.needs) - set(actions)
-            if unknown_needs:
-                missing[name] = unknown_needs
-
-        if not missing:
-            return
-
-        def iter_missing_needs(missing: dict[str, set[str]]) -> Iterable[str]:
-            for name, needs in missing.items():
-                yield f"Action: {name}"
-                for need in needs:
-                    yield f" - {need}"
-
-        msg = [
-            "One or more actions is referencing unknown actions in its needs list:",
-            *iter_missing_needs(missing),
-        ]
-        raise ValidationError("\n".join(msg))
