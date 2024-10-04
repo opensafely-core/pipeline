@@ -129,6 +129,23 @@ def test_action_extraction_command_with_one_outputs():
     assert len(outputs.values()) == 1
 
 
+def test_cohortextractor_actions_not_used_after_v3():
+    data = {
+        "version": "4",
+        "actions": {
+            "generate_cohort": {
+                "run": "cohortextractor:latest generate_cohort",
+                "outputs": {
+                    "highly_sensitive": {"cohort": "output/input.csv"},
+                },
+            },
+        },
+    }
+    msg = "uses cohortextractor actions, which are not supported in this version."
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline.build(**data)
+
+
 def test_command_properties():
     data = {
         "version": 1,
@@ -166,6 +183,22 @@ def test_expectations_before_v3_has_a_default_set():
     config = Pipeline.build(**data)
 
     assert config.expectations.population_size == 1000
+
+
+def test_expectations_does_not_exist_after_v3():
+    data = {
+        "version": 4,
+        "expectations": {},
+        "actions": {
+            "generate_dataset": {
+                "run": "ehrql:v1 generate-dataset args --output output/dataset.csv.gz",
+                "outputs": {"highly_sensitive": {"dataset": "output/dataset.csv.gz"}},
+            }
+        },
+    }
+    msg = "Project includes `expectations` section"
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline.build(**data)
 
 
 def test_expectations_exists_for_v3():
