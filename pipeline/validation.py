@@ -79,6 +79,13 @@ def validate_glob_pattern(pattern: str, privacy_level: str) -> None:
         raise InvalidPatternError("is an absolute path")
 
 
+def validate_not_cohort_extractor_action(action: Action) -> None:
+    if action.run.parts[0].startswith("cohortextractor"):
+        raise ValidationError(
+            f"Action {action.action_id} uses cohortextractor actions, which are not supported in this version."
+        )
+
+
 def validate_cohortextractor_outputs(action_id: str, action: Action) -> None:
     """
     Check cohortextractor's output config is valid for this command

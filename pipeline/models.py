@@ -15,6 +15,7 @@ from .validation import (
     validate_databuilder_outputs,
     validate_glob_pattern,
     validate_no_kwargs,
+    validate_not_cohort_extractor_action,
     validate_type,
 )
 
@@ -238,7 +239,7 @@ class Action:
 class Pipeline:
     version: float
     actions: dict[str, Action]
-    expectations: Expectations
+    expectations: Expectations | None
 
     @classmethod
     def build(
@@ -262,12 +263,17 @@ class Pipeline:
             raise ValidationError(
                 f"`version` must be a number between 1 and {LATEST_VERSION}"
             )
+        feat = get_feature_flags_for_version(version)
 
         validate_type(actions, dict, "Project `actions` section")
         actions = {
             action_id: Action.build(action_id, **action_config)
             for action_id, action_config in actions.items()
         }
+
+        if feat.REMOVE_SUPPORT_FOR_COHORT_EXTRACTOR:
+            for config in actions.values():
+                validate_not_cohort_extractor_action(config)
 
         seen: dict[Command, list[str]] = defaultdict(list)
         for name, config in actions.items():
@@ -278,7 +284,7 @@ class Pipeline:
                 )
             seen[run].append(name)
 
-        if get_feature_flags_for_version(version).UNIQUE_OUTPUT_PATH:
+        if feat.UNIQUE_OUTPUT_PATH:
             # find duplicate paths defined in the outputs section
             seen_files = []
             for config in actions.values():
@@ -298,19 +304,24 @@ class Pipeline:
                         f"Action `{a.action_id}` references an unknown action in its `needs` list: {n}"
                     )
 
-        feat = get_feature_flags_for_version(version)
-        if feat.EXPECTATIONS_POPULATION:
+        if feat.REMOVE_SUPPORT_FOR_COHORT_EXTRACTOR:
+            if expectations is not None:
+                raise ValidationError(
+                    "Project includes `expectations` section, which is not supported in this version"
+                )
+        elif feat.EXPECTATIONS_POPULATION:
             if expectations is None:
                 raise ValidationError("Project must include `expectations` section")
         else:
             expectations = {"population_size": 1000}
 
-        validate_type(expectations, dict, "Project `expectations` section")
-        if "population_size" not in expectations:
-            raise ValidationError(
-                "Project `expectations` section must include `population_size` section",
-            )
-        expectations = Expectations.build(**expectations)
+        if expectations is not None:
+            validate_type(expectations, dict, "Project `expectations` section")
+            if "population_size" not in expectations:
+                raise ValidationError(
+                    "Project `expectations` section must include `population_size` section",
+                )
+            expectations = Expectations.build(**expectations)
 
         return cls(version, actions, expectations)
 

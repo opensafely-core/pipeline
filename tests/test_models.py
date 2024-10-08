@@ -7,13 +7,12 @@ from pipeline.models import Pipeline
 
 def test_success():
     data = {
-        "version": "3",
-        "expectations": {"population_size": 10},
+        "version": "4",
         "actions": {
             "action1": {
                 "run": "test:latest",
                 "outputs": {
-                    "moderately_sensitive": {"cohort": "output.csv"},
+                    "moderately_sensitive": {"dataset": "output.csv"},
                 },
             },
         },
@@ -130,6 +129,23 @@ def test_action_extraction_command_with_one_outputs():
     assert len(outputs.values()) == 1
 
 
+def test_cohortextractor_actions_not_used_after_v3():
+    data = {
+        "version": "4",
+        "actions": {
+            "generate_cohort": {
+                "run": "cohortextractor:latest generate_cohort",
+                "outputs": {
+                    "highly_sensitive": {"cohort": "output/input.csv"},
+                },
+            },
+        },
+    }
+    msg = "uses cohortextractor actions, which are not supported in this version."
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline.build(**data)
+
+
 def test_command_properties():
     data = {
         "version": 1,
@@ -169,7 +185,23 @@ def test_expectations_before_v3_has_a_default_set():
     assert config.expectations.population_size == 1000
 
 
-def test_expectations_exists():
+def test_expectations_does_not_exist_after_v3():
+    data = {
+        "version": 4,
+        "expectations": {},
+        "actions": {
+            "generate_dataset": {
+                "run": "ehrql:v1 generate-dataset args --output output/dataset.csv.gz",
+                "outputs": {"highly_sensitive": {"dataset": "output/dataset.csv.gz"}},
+            }
+        },
+    }
+    msg = "Project includes `expectations` section"
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline.build(**data)
+
+
+def test_expectations_exists_for_v3():
     # our logic for this is custom so ensure it works as expected
     data = {
         "version": 3,
@@ -186,7 +218,7 @@ def test_expectations_exists():
         Pipeline.build(**data)
 
 
-def test_expectations_population_size_exists():
+def test_expectations_population_size_exists_for_v3():
     data = {
         "version": 3,
         "expectations": {},
@@ -203,7 +235,7 @@ def test_expectations_population_size_exists():
         Pipeline.build(**data)
 
 
-def test_expectations_population_size_is_a_number():
+def test_expectations_population_size_is_a_number_for_v3():
     data = {
         "version": 3,
         "expectations": {"population_size": "test"},
@@ -225,8 +257,7 @@ def test_pipeline_all_actions(test_file):
     config = load_pipeline(test_file)
 
     assert config.all_actions == [
-        "generate_cohort",
-        "generate_cohort_with_dummy_data",
+        "generate_dataset",
         "prepare_data_m",
         "prepare_data_f",
         "prepare_data_with_quote_in_filename",
