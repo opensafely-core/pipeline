@@ -11,6 +11,7 @@ from .constants import RUN_ALL_COMMAND
 from .exceptions import InvalidPatternError, ValidationError
 from .features import LATEST_VERSION, get_feature_flags_for_version
 from .validation import (
+    validate_action_config,
     validate_cohortextractor_outputs,
     validate_databuilder_outputs,
     validate_glob_pattern,
@@ -266,10 +267,12 @@ class Pipeline:
         feat = get_feature_flags_for_version(version)
 
         validate_type(actions, dict, "Project `actions` section")
-        actions = {
-            action_id: Action.build(action_id, **action_config)
-            for action_id, action_config in actions.items()
-        }
+
+        _actions = dict()
+        for action_id, action_config in actions.items():
+            validate_action_config(action_id, action_config)
+            _actions[action_id] = Action.build(action_id, **action_config)
+        actions = _actions
 
         if feat.REMOVE_SUPPORT_FOR_COHORT_EXTRACTOR:
             for config in actions.values():
