@@ -77,6 +77,11 @@ devenv: prodenv requirements-dev && install-precommit
     touch $VIRTUAL_ENV/.dev
 
 
+# install fast YAML parsing library
+install-fastparser: devenv
+    $PIP install --no-deps --only-binary ':all:' -r requirements.fastparser.txt
+
+
 # ensure precommit is installed
 install-precommit:
     #!/usr/bin/env bash

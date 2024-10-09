@@ -1,0 +1,4 @@
+# These are the optional packages which, if installed, we will use to parse
+# YAML but are not hard dependencies
+ruamel.yaml
+ruamel.yaml.clib
