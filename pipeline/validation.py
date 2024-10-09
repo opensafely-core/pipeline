@@ -79,6 +79,16 @@ def validate_glob_pattern(pattern: str, privacy_level: str) -> None:
         raise InvalidPatternError("is an absolute path")
 
 
+def validate_action_config(action_id: str, action_config: Any) -> None:
+    # Verifies the required arguments for Action.build are present
+    validate_type(action_config, dict, f"Configuration for action {action_id}")
+    for key in ["run", "outputs"]:
+        if key not in action_config:
+            raise ValidationError(
+                f"Action {action_id} must contain a configuration for '{key}'"
+            )
+
+
 def validate_not_cohort_extractor_action(action: Action) -> None:
     if action.run.parts[0].startswith("cohortextractor"):
         raise ValidationError(

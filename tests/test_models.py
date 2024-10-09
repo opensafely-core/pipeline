@@ -356,6 +356,22 @@ def test_pipeline_with_duplicated_action_run_commands():
         Pipeline.build(**data)
 
 
+@pytest.mark.parametrize(
+    "action_value,match",
+    [
+        (None, "Configuration for action action1 must be a dictionary"),
+        ({}, "Action action1 must contain a configuration for 'run'"),
+    ],
+)
+def test_pipeline_with_empty_action(action_value, match):
+    data = {
+        "version": 1,
+        "actions": {"action1": action_value},
+    }
+    with pytest.raises(ValidationError, match=match):
+        Pipeline.build(**data)
+
+
 def test_pipeline_with_empty_run_command():
     data = {
         "version": 1,
@@ -370,6 +386,19 @@ def test_pipeline_with_empty_run_command():
     }
 
     match = "run must have a value, action1 has an empty run key"
+    with pytest.raises(ValidationError, match=match):
+        Pipeline.build(**data)
+
+
+def test_pipeline_without_specifying_output_for_action():
+    data = {
+        "version": 1,
+        "actions": {
+            "action1": {"run": "test"},
+        },
+    }
+
+    match = "Action action1 must contain a configuration for 'outputs'"
     with pytest.raises(ValidationError, match=match):
         Pipeline.build(**data)
 
