@@ -25,6 +25,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
+        with-fastparser: [false, true]
 
     runs-on: ubuntu-20.04
 
@@ -34,6 +35,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           install-just: true
+      - name: Install dev requirements
+        run: just devenv
+      - name: Install fast YAML parser
+        if: ${{ matrix.with-fastparser }}
+        run: just install-fastparser
       - name: Run tests
         run: just test
 

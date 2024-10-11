@@ -77,6 +77,18 @@ devenv: prodenv requirements-dev && install-precommit
     touch $VIRTUAL_ENV/.dev
 
 
+build-fastparser-wheel: devenv
+    #!/usr/bin/env bash
+    rm -rf fastparser/dist
+    $BIN/python -m build --wheel fastparser
+    mv fastparser/dist/*.whl .
+
+
+# install fast YAML parsing library
+install-fastparser: devenv
+    $PIP install --only-binary ':all:' file:///$PWD/opensafely_fastparser-1.0-py3-none-any.whl
+
+
 # ensure precommit is installed
 install-precommit:
     #!/usr/bin/env bash
