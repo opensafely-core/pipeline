@@ -15,7 +15,10 @@ requires-python = ">=3.8"
 dependencies = [
   "ruyaml",
 ]
-dynamic = ["version"]
+dynamic = ["version", "optional-dependencies"]
+
+[tool.setuptools.dynamic.optional-dependencies]
+fastparser = {file = "fastparser/requirements.txt"}
 
 [project.urls]
 Home = "https://opensafely.org"
