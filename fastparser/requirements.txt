@@ -4,9 +4,9 @@
 #
 #    pip-compile requirements.fastparser.in
 #
-ruamel-yaml==0.18.6
-    # via -r requirements.fastparser.in
+ruamel-yaml==0.18.10
+    # via -r fastparser/requirements.in
 ruamel-yaml-clib==0.2.8
     # via
-    #   -r requirements.fastparser.in
+    #   -r fastparser/requirements.in
     #   ruamel-yaml
