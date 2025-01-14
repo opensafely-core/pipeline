@@ -134,22 +134,23 @@ package-test type: package-build
     unzip -Z -1 dist/*.whl | grep -vq "^tests/"
 
 
-black *args=".": devenv
-    $BIN/black --check {{ args }}
-
 ruff *args=".": devenv
-    $BIN/ruff check {{ args }}
+    $BIN/ruff format --diff --quiet .
+    $BIN/ruff check --output-format=full .
+
 
 mypy: devenv
     $BIN/mypy
 
-# run the various dev checks but does not change any files
-check: black ruff mypy
 
-# fix formatting and import sort ordering
+# check format and linting
+check: ruff mypy
+
+
+# fix format and linting
 fix: devenv
-    $BIN/black .
-    $BIN/isort .
+    $BIN/ruff format .
+    $BIN/ruff check --fix .
 
 # Run the dev project
 run: devenv
