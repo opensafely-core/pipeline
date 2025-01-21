@@ -21,12 +21,23 @@ def test_success():
     Pipeline.build(**data)
 
 
-def test_action_has_a_version():
+@pytest.mark.parametrize(
+    "action",
+    [
+        "test",
+        "test:",
+        "test:v",
+        "test:other",
+        "test:vnotdigits",
+        "test:v1x1",
+    ],
+)
+def test_action_handles_invalid_version(action):
     data = {
         "version": 1,
         "actions": {
             "generate_cohort": {
-                "run": "test foo",
+                "run": action,
                 "outputs": {
                     "highly_sensitive": {"cohort": "output/input.csv"},
                 },
@@ -37,6 +48,36 @@ def test_action_has_a_version():
     msg = "test must have a version specified"
     with pytest.raises(ValidationError, match=msg):
         Pipeline.build(**data)
+
+
+@pytest.mark.parametrize(
+    "action",
+    [
+        "test:v1",
+        "test:v2",
+        "test:v1.2",
+        "test:v1.2.3",
+        "test:dev",
+        "test:latest",
+    ],
+)
+def test_action_handles_valid_version(action):
+    data = {
+        "version": 1,
+        "actions": {
+            "generate_cohort": {
+                "run": action,
+                "outputs": {
+                    "highly_sensitive": {"cohort": "output/input.csv"},
+                },
+            }
+        },
+    }
+
+    run = Pipeline.build(**data).actions["generate_cohort"].run
+    n, _, v = action.partition(":")
+    assert run.name == n
+    assert run.version == v
 
 
 def test_action_cohortextractor_multiple_outputs_with_output_flag():
@@ -337,13 +378,13 @@ def test_pipeline_with_duplicated_action_run_commands():
         "version": 1,
         "actions": {
             "action1": {
-                "run": "test:lastest",
+                "run": "test:latest",
                 "outputs": {
                     "moderately_sensitive": {"cohort": "output.csv"},
                 },
             },
             "action2": {
-                "run": "test:lastest",
+                "run": "test:latest",
                 "outputs": {
                     "moderately_sensitive": {"cohort": "output.csv"},
                 },
