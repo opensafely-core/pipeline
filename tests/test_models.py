@@ -678,3 +678,38 @@ def test_action_is_database_action(name, run, is_database_action):
 
     action = Pipeline.build(**data).actions[name]
     assert action.is_database_action == is_database_action
+
+
+def test_action_images():
+    data = {
+        "version": 1,
+        "actions": {
+            "ehrql": {
+                "run": "ehrql:v1 ...",
+                "outputs": {
+                    "highly_sensitive": {"cohort": "output/input.csv"},
+                },
+            },
+            "r1": {
+                "run": "r:latest 1",
+                "outputs": {
+                    "highly_sensitive": {"cohort": "output/input.csv"},
+                },
+            },
+            "r2": {
+                "run": "r:latest 2",
+                "outputs": {
+                    "highly_sensitive": {"cohort": "output/input.csv"},
+                },
+            },
+            "python": {
+                "run": "python:v2 ...",
+                "outputs": {
+                    "highly_sensitive": {"cohort": "output/input.csv"},
+                },
+            },
+        },
+    }
+
+    pipeline = Pipeline.build(**data)
+    assert pipeline.action_images == set(["ehrql:v1", "r:v1", "python:v2"])
