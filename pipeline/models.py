@@ -344,3 +344,19 @@ class Pipeline:
         than set operators as previously so we preserve the original order.
         """
         return [action for action in self.actions.keys() if action != RUN_ALL_COMMAND]
+
+    @property
+    def action_images(self) -> set[str]:
+        """
+        Get all unique action images/version used in this project.
+
+        This is useful for tooling to know which image version to support.
+        """
+        images = set()
+        for action in self.actions.values():
+            # for hysterical raisins, :latest is actually mapped to v1, not v2 or later.
+            # We hope to fix this at some point
+            version = "v1" if action.run.version == "latest" else action.run.version
+            images.add(f"{action.run.name}:{version}")
+
+        return images
