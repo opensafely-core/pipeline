@@ -9,6 +9,8 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
+    env:
+      PYTHON_VERSION: "python${{ matrix.python }}"
 
     runs-on: ubuntu-22.04
 
@@ -18,7 +20,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           install-just: true
-      - run: "echo PYTHON_VERSION='python${{ matrix.python-version }}' >> $GITHUB_ENV"
       - name: Check formatting, linting and import sorting
         run: just check
 
@@ -27,6 +28,8 @@ jobs:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
         with-fastparser: [false, true]
+    env:
+      PYTHON_VERSION: "python${{ matrix.python }}"
 
     runs-on: ubuntu-22.04
 
@@ -36,7 +39,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           install-just: true
-      - run: "echo PYTHON_VERSION='python${{ matrix.python-version }}' >> $GITHUB_ENV"
       - name: Install dev requirements
         run: just devenv
       - name: Install fast YAML parser
@@ -49,6 +51,8 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
+    env:
+      PYTHON_VERSION: "python${{ matrix.python }}"
 
     runs-on: ubuntu-22.04
 
@@ -61,8 +65,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           install-just: true
-
-      - run: "echo PYTHON_VERSION='python${{ matrix.python-version }}' >> $GITHUB_ENV"
 
       - name: Check the wheel installs and runs
         run: just package-test wheel

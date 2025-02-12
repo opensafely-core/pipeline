@@ -22,7 +22,7 @@ def test_load_pipeline_with_path(mocker, tmp_path):
     }
     mock = mocker.patch(
         "pipeline.main.parse_yaml_file",
-        auto_spec=True,
+        autospec=True,
         return_value=data,
     )
 
