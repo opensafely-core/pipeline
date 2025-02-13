@@ -9,8 +9,10 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
+    env:
+      PYTHON_VERSION: "python${{ matrix.python }}"
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v4
@@ -26,8 +28,10 @@ jobs:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
         with-fastparser: [false, true]
+    env:
+      PYTHON_VERSION: "python${{ matrix.python }}"
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v4
@@ -47,8 +51,10 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
+    env:
+      PYTHON_VERSION: "python${{ matrix.python }}"
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     name: Test we can build a Python package
     steps:
@@ -68,7 +74,7 @@ jobs:
 
   tag-new-version:
     needs: [check, test, test-package-build]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     if: github.ref == 'refs/heads/main'
 
