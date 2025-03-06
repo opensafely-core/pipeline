@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from .constants import LEVEL4_FILE_TYPES
 from .exceptions import InvalidPatternError, ValidationError
-from .outputs import get_first_output_file, get_output_dirs
+from .outputs import get_output_dirs
 
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -144,6 +144,27 @@ def validate_ehrql_outputs(action_id: str, action: Action) -> None:
             f"be labelled `highly_sensitive`"
         )
 
-    first_output_file = get_first_output_file(action.outputs)
-    if first_output_file not in action.run.raw:
+    output_spec = get_output_spec_from_args(action.run.parts)
+    if not output_spec:
+        raise ValidationError(
+            f"`{action_id}` action does not provide an `--output` argument specifying "
+            f"where the results of `generate-dataset` should be stored"
+        )
+
+    output_patterns = (action.outputs.highly_sensitive or {}).values()
+    if not output_patterns_match_spec(output_spec, list(output_patterns)):
         raise ValidationError("--output in run command and outputs must match")
+
+
+def get_output_spec_from_args(args: list[str]) -> str | None:
+    for switch, value in zip(args, args[1:] + [""]):
+        if switch == "--output":
+            return value
+        if switch.startswith("--output="):
+            # Need to support 3.8 so no `removeprefix`
+            return switch[len("--output=") :]
+    return None
+
+
+def output_patterns_match_spec(spec: str, patterns: list[str]) -> bool:
+    return spec in patterns

@@ -189,6 +189,27 @@ def test_expected_privacy_levels():
     }
 
 
+def test_action_ehrql_with_no_output_file():
+    data = {
+        "version": 4,
+        "actions": {
+            "generate_dataset": {
+                "run": "ehrql:v1 generate-dataset",
+                "outputs": {
+                    "highly_sensitive": {"dataset": "output/input.csv"},
+                },
+            }
+        },
+    }
+
+    msg = (
+        "`generate_dataset` action does not provide an `--output` argument specifying "
+        "where the results of `generate-dataset` should be stored"
+    )
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline.build(**data)
+
+
 def test_action_extraction_command_with_one_outputs():
     data = {
         "version": 1,

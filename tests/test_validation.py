@@ -1,7 +1,9 @@
+import shlex
+
 import pytest
 
 from pipeline.exceptions import InvalidPatternError
-from pipeline.validation import validate_glob_pattern
+from pipeline.validation import get_output_spec_from_args, validate_glob_pattern
 
 
 def test_validate_glob_pattern():
@@ -26,3 +28,17 @@ def test_validate_glob_pattern():
     for pattern, sensitivity in bad_patterns:
         with pytest.raises(InvalidPatternError):
             validate_glob_pattern(pattern, sensitivity)
+
+
+@pytest.mark.parametrize(
+    "args,expected",
+    [
+        ("--output a.csv dataset.py", "a.csv"),
+        ("--output=b.csv dataset.py", "b.csv"),
+        ("--output='c.csv' dataset.py", "c.csv"),
+        ("dataset.py --output d.csv", "d.csv"),
+        ("dataset.py --output=e.csv", "e.csv"),
+    ],
+)
+def test_get_output_spec_from_args(args, expected):
+    assert get_output_spec_from_args(shlex.split(args)) == expected
