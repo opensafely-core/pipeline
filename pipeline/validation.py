@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import fnmatch
 import posixpath
-from pathlib import Path, PurePosixPath, PureWindowsPath
+from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from typing import TYPE_CHECKING, Any
 
 from .constants import LEVEL4_FILE_TYPES
@@ -167,4 +168,21 @@ def get_output_spec_from_args(args: list[str]) -> str | None:
 
 
 def output_patterns_match_spec(spec: str, patterns: list[str]) -> bool:
-    return spec in patterns
+    directory, extension = split_directory_and_extension(PurePosixPath(spec))
+    if extension:
+        glob_pattern = f"{directory}/*{extension}"
+        return all(fnmatch.fnmatch(pattern, glob_pattern) for pattern in patterns)
+    else:
+        return spec in patterns
+
+
+# Borrowed directly from ehrQL:
+# https://github.com/opensafely-core/ehrql/blob/e511dca176d0/ehrql/file_formats/main.py#L153-L166
+def split_directory_and_extension(filename: PurePath) -> tuple[PurePath, str]:
+    name, separator, extension = filename.name.rpartition(":")
+    if not separator:
+        return filename, ""
+    elif not name:
+        return filename.parent, f".{extension}"
+    else:
+        return filename.with_name(name), f".{extension}"

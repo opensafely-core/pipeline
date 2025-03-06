@@ -229,6 +229,22 @@ def test_action_extraction_command_with_one_outputs():
     assert len(outputs.values()) == 1
 
 
+def test_action_ehrql_with_multiple_output_files():
+    data = {
+        "version": 4,
+        "actions": {
+            "generate_dataset": {
+                "run": "ehrql:v1 generate-dataset --output outputs:arrow",
+                "outputs": {
+                    "highly_sensitive": {"results": "outputs/*.arrow"},
+                },
+            }
+        },
+    }
+
+    assert Pipeline.build(**data)
+
+
 def test_cohortextractor_actions_not_used_after_v3():
     data = {
         "version": "4",

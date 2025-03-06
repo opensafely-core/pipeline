@@ -3,7 +3,11 @@ import shlex
 import pytest
 
 from pipeline.exceptions import InvalidPatternError
-from pipeline.validation import get_output_spec_from_args, validate_glob_pattern
+from pipeline.validation import (
+    get_output_spec_from_args,
+    output_patterns_match_spec,
+    validate_glob_pattern,
+)
 
 
 def test_validate_glob_pattern():
@@ -42,3 +46,19 @@ def test_validate_glob_pattern():
 )
 def test_get_output_spec_from_args(args, expected):
     assert get_output_spec_from_args(shlex.split(args)) == expected
+
+
+@pytest.mark.parametrize(
+    "expected,spec,patterns",
+    [
+        (True, "foo/bar.csv", ["foo/bar.csv"]),
+        (False, "foo/bar.csv", ["foo/baz.csv"]),
+        (True, "foo/bar:csv", ["foo/bar/*.csv"]),
+        (True, "foo/bar:csv", ["foo/bar/dataset.csv", "foo/bar/events.csv"]),
+        (True, "foo/bar/:csv", ["foo/bar/*.csv"]),
+        (False, "foo/bar:csv", ["foo/bar/*"]),
+        (False, "foo/bar:arrow", ["foo/bar/*.csv"]),
+    ],
+)
+def test_output_patterns_match_spec(expected, spec, patterns):
+    assert output_patterns_match_spec(spec, patterns) == expected
