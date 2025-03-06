@@ -209,7 +209,7 @@ class Action:
 
         if re.match(r"cohortextractor:\S+ generate_cohort", run.raw):
             validate_cohortextractor_outputs(action_id, action)
-        if re.match(r"databuilder|ehrql:\S+ generate[-_]dataset", run.raw):
+        if re.match(r"(ehrql|databuilder):\S+ generate[-_]dataset", run.raw):
             validate_ehrql_outputs(action_id, action)
 
         return action
