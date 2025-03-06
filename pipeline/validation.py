@@ -138,12 +138,10 @@ def validate_ehrql_outputs(action_id: str, action: Action) -> None:
     We can't validate outputs in the Action or Outputs models because we need
     to look up other fields (eg run).
     """
-    # TODO: should this be checking output _paths_ instead of levels?
-    num_output_levels = len(action.outputs)
-    if num_output_levels != 1:
+    if action.outputs.moderately_sensitive or action.outputs.minimally_sensitive:
         raise ValidationError(
-            "A `generate-dataset` action must have exactly one output; "
-            f"{action_id} had {num_output_levels}"
+            f"`{action_id}` action uses `generate-dataset` and so all outputs must "
+            f"be labelled `highly_sensitive`"
         )
 
     first_output_file = get_first_output_file(action.outputs)
