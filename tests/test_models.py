@@ -574,7 +574,7 @@ def test_outputs_with_invalid_pattern():
         Pipeline.build(**data)
 
 
-@pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v0")])
+@pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v1")])
 def test_pipeline_ehrql_specifies_same_output(image, tag):
     data = {
         "version": 1,
@@ -589,7 +589,7 @@ def test_pipeline_ehrql_specifies_same_output(image, tag):
     Pipeline.build(**data)
 
 
-@pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v0")])
+@pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v1")])
 def test_pipeline_ehrql_specifies_different_output(image, tag):
     data = {
         "version": 1,
@@ -628,7 +628,7 @@ def test_pipeline_databuilder_recognizes_old_action_spelling():
     [
         (
             "generate_ehrql_dataset",
-            "ehrql:v0 generate-dataset args --output=output/input.csv",
+            "ehrql:v1 generate-dataset args --output=output/input.csv",
             True,
         ),
         (
@@ -636,7 +636,7 @@ def test_pipeline_databuilder_recognizes_old_action_spelling():
             "ehrql:v1 generate-dataset args --output=output/input.csv",
             True,
         ),
-        ("generate_ehrql_measures", "ehrql:v0 generate-measures args --option", True),
+        ("generate_ehrql_measures", "ehrql:v1 generate-measures args --option", True),
         (
             "sqlrunner",
             "sqlrunner:v1 foo -output=output/input.csv",
