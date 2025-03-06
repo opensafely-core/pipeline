@@ -575,7 +575,7 @@ def test_outputs_with_invalid_pattern():
 
 
 @pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v0")])
-def test_pipeline_databuilder_specifies_same_output(image, tag):
+def test_pipeline_ehrql_specifies_same_output(image, tag):
     data = {
         "version": 1,
         "actions": {
@@ -590,7 +590,7 @@ def test_pipeline_databuilder_specifies_same_output(image, tag):
 
 
 @pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v0")])
-def test_pipeline_databuilder_specifies_different_output(image, tag):
+def test_pipeline_ehrql_specifies_different_output(image, tag):
     data = {
         "version": 1,
         "actions": {

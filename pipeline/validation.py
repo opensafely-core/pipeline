@@ -131,9 +131,9 @@ def validate_cohortextractor_outputs(action_id: str, action: Action) -> None:
         )
 
 
-def validate_databuilder_outputs(action_id: str, action: Action) -> None:
+def validate_ehrql_outputs(action_id: str, action: Action) -> None:
     """
-    Check databuilder's output config is valid for this command
+    Check ehrQL's output config is valid for this command
 
     We can't validate outputs in the Action or Outputs models because we need
     to look up other fields (eg run).
