@@ -13,7 +13,7 @@ from .features import LATEST_VERSION, get_feature_flags_for_version
 from .validation import (
     validate_action_config,
     validate_cohortextractor_outputs,
-    validate_databuilder_outputs,
+    validate_ehrql_outputs,
     validate_glob_pattern,
     validate_no_kwargs,
     validate_not_cohort_extractor_action,
@@ -209,8 +209,8 @@ class Action:
 
         if re.match(r"cohortextractor:\S+ generate_cohort", run.raw):
             validate_cohortextractor_outputs(action_id, action)
-        if re.match(r"databuilder|ehrql:\S+ generate[-_]dataset", run.raw):
-            validate_databuilder_outputs(action_id, action)
+        if re.match(r"(ehrql|databuilder):\S+ generate[-_]dataset", run.raw):
+            validate_ehrql_outputs(action_id, action)
 
         return action
 

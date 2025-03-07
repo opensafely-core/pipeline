@@ -1,8 +1,10 @@
+import dataclasses
+
 import pytest
 
 from pipeline import load_pipeline
 from pipeline.exceptions import ValidationError
-from pipeline.models import Pipeline
+from pipeline.models import Outputs, Pipeline
 
 
 def test_success():
@@ -124,29 +126,86 @@ def test_action_cohortextractor_multiple_ouputs_without_output_flag():
         Pipeline.build(**data)
 
 
-@pytest.mark.parametrize(
-    "image,command",
-    [
-        ("cohortextractor", "generate_cohort"),
-        ("databuilder", "generate-dataset"),
-        ("ehrql", "generate-dataset"),
-    ],
-)
-def test_action_extraction_command_with_multiple_outputs(image, command):
+# Note that the behaviour this tests confirms is nonsense, but I don't really want to
+# touch any of the cohortextractor stuff and coverage complains if we don't exercise
+# this logic.
+def test_action_cohortextractor_multiple_ouputs_levels():
     data = {
         "version": 1,
         "actions": {
             "generate_cohort": {
-                "run": f"{image}:latest {command}",
+                "run": "cohortextractor:latest generate_cohort",
                 "outputs": {
-                    "highly_sensitive": {"cohort": "output/input.csv"},
-                    "moderately_sensitive": {"cohort2": "output/input2.csv"},
+                    "highly_sensitive": {
+                        "cohort": "output/input.csv",
+                    },
+                    "moderately_sensitive": {
+                        "other": "other/graph.png",
+                    },
                 },
             }
         },
     }
 
-    msg = f"A `{command}` action must have exactly one output"
+    msg = (
+        "A `generate_cohort` action must have exactly one output; generate_cohort had 2"
+    )
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline.build(**data)
+
+
+@pytest.mark.parametrize("image", ["databuilder", "ehrql"])
+@pytest.mark.parametrize("sensitivity", ["moderately_sensitive", "minimally_sensitive"])
+def test_action_extraction_command_with_less_than_highly_sensitive_output(
+    image, sensitivity
+):
+    data = {
+        "version": 1,
+        "actions": {
+            "generate_cohort": {
+                "run": f"{image}:latest generate-dataset",
+                "outputs": {
+                    sensitivity: {"cohort": "output/input.csv"},
+                },
+            }
+        },
+    }
+
+    msg = (
+        "`generate_cohort` action uses `generate-dataset` and so all outputs must "
+        "be labelled `highly_sensitive`"
+    )
+    with pytest.raises(ValidationError, match=msg):
+        Pipeline.build(**data)
+
+
+def test_expected_privacy_levels():
+    # If these levels ever change then the `sensitivity` parameters above need to change
+    # to reflect them and remain exhaustive
+    assert {f.name for f in dataclasses.fields(Outputs)} == {
+        "highly_sensitive",
+        "moderately_sensitive",
+        "minimally_sensitive",
+    }
+
+
+def test_action_ehrql_with_no_output_file():
+    data = {
+        "version": 4,
+        "actions": {
+            "generate_dataset": {
+                "run": "ehrql:v1 generate-dataset",
+                "outputs": {
+                    "highly_sensitive": {"dataset": "output/input.csv"},
+                },
+            }
+        },
+    }
+
+    msg = (
+        "`generate_dataset` action does not provide an `--output` argument specifying "
+        "where the results of `generate-dataset` should be stored"
+    )
     with pytest.raises(ValidationError, match=msg):
         Pipeline.build(**data)
 
@@ -168,6 +227,22 @@ def test_action_extraction_command_with_one_outputs():
 
     outputs = config.actions["generate_cohort"].outputs.dict()
     assert len(outputs.values()) == 1
+
+
+def test_action_ehrql_with_multiple_output_files():
+    data = {
+        "version": 4,
+        "actions": {
+            "generate_dataset": {
+                "run": "ehrql:v1 generate-dataset --output outputs:arrow",
+                "outputs": {
+                    "highly_sensitive": {"results": "outputs/*.arrow"},
+                },
+            }
+        },
+    }
+
+    assert Pipeline.build(**data)
 
 
 def test_cohortextractor_actions_not_used_after_v3():
@@ -574,8 +649,8 @@ def test_outputs_with_invalid_pattern():
         Pipeline.build(**data)
 
 
-@pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v0")])
-def test_pipeline_databuilder_specifies_same_output(image, tag):
+@pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v1")])
+def test_pipeline_ehrql_specifies_same_output(image, tag):
     data = {
         "version": 1,
         "actions": {
@@ -589,8 +664,8 @@ def test_pipeline_databuilder_specifies_same_output(image, tag):
     Pipeline.build(**data)
 
 
-@pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v0")])
-def test_pipeline_databuilder_specifies_different_output(image, tag):
+@pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v1")])
+def test_pipeline_ehrql_specifies_different_output(image, tag):
     data = {
         "version": 1,
         "actions": {
@@ -628,7 +703,7 @@ def test_pipeline_databuilder_recognizes_old_action_spelling():
     [
         (
             "generate_ehrql_dataset",
-            "ehrql:v0 generate-dataset args --output=output/input.csv",
+            "ehrql:v1 generate-dataset args --output=output/input.csv",
             True,
         ),
         (
@@ -636,7 +711,7 @@ def test_pipeline_databuilder_recognizes_old_action_spelling():
             "ehrql:v1 generate-dataset args --output=output/input.csv",
             True,
         ),
-        ("generate_ehrql_measures", "ehrql:v0 generate-measures args --option", True),
+        ("generate_ehrql_measures", "ehrql:v1 generate-measures args --option", True),
         (
             "sqlrunner",
             "sqlrunner:v1 foo -output=output/input.csv",
