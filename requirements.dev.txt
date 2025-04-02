@@ -72,9 +72,9 @@ tomli==2.2.1
     #   mypy
     #   pip-tools
     #   pytest
-typing-extensions==4.12.2
+typing-extensions==4.13.0
     # via mypy
-virtualenv==20.29.3
+virtualenv==20.30.0
     # via pre-commit
 wheel==0.45.1
     # via pip-tools
