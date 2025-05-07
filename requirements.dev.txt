@@ -62,7 +62,7 @@ pytest-mock==3.14.0
     # via -r requirements.dev.in
 pyyaml==6.0.2
     # via pre-commit
-ruff==0.11.6
+ruff==0.11.8
     # via -r requirements.dev.in
 six==1.17.0
     # via asttokens
@@ -74,7 +74,7 @@ tomli==2.2.1
     #   pytest
 typing-extensions==4.13.2
     # via mypy
-virtualenv==20.30.0
+virtualenv==20.31.1
     # via pre-commit
 wheel==0.45.1
     # via pip-tools
