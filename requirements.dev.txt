@@ -40,7 +40,7 @@ packaging==25.0
     # via
     #   build
     #   pytest
-pip-tools==7.4.1
+pip-tools==7.5.0
     # via -r requirements.dev.in
 platformdirs==4.3.6
     # via virtualenv
@@ -76,7 +76,7 @@ typing-extensions==4.13.2
     # via
     #   exceptiongroup
     #   mypy
-virtualenv==20.32.0
+virtualenv==20.33.1
     # via pre-commit
 wheel==0.45.1
     # via pip-tools
