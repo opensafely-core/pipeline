@@ -9,27 +9,23 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
-    env:
-      PYTHON_VERSION: "python${{ matrix.python }}"
 
     runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v5
-      - uses: "opensafely-core/setup-action@v1"
+      - uses: opensafely-core/setup-action@v1
         with:
-          python-version: ${{ matrix.python-version }}
           install-just: true
+          install-uv: true
+          cache: uv
       - name: Check formatting, linting and import sorting
-        run: just check
+        run: just check ${{ matrix.python-version }}
 
   test:
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
-        with-fastparser: [false, true]
-    env:
-      PYTHON_VERSION: "python${{ matrix.python }}"
 
     runs-on: ubuntu-22.04
 
@@ -37,22 +33,35 @@ jobs:
       - uses: actions/checkout@v5
       - uses: "opensafely-core/setup-action@v1"
         with:
-          python-version: ${{ matrix.python-version }}
           install-just: true
-      - name: Install dev requirements
-        run: just devenv
-      - name: Install fast YAML parser
-        if: ${{ matrix.with-fastparser }}
-        run: just install-fastparser
+          install-uv: true
+          cache: uv
+
       - name: Run tests
-        run: just test
+        run: just test ${{ matrix.python-version }}
+
+  test-fastparser:
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: "opensafely-core/setup-action@v1"
+        with:
+          install-just: true
+          install-uv: true
+          cache: uv
+
+      - name: Run tests
+        run: just test-with-fastparser ${{ matrix.python-version }}
 
   test-package-build:
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
-    env:
-      PYTHON_VERSION: "python${{ matrix.python }}"
 
     runs-on: ubuntu-22.04
 
@@ -63,17 +72,18 @@ jobs:
           fetch-depth: 0
       - uses: "opensafely-core/setup-action@v1"
         with:
-          python-version: ${{ matrix.python-version }}
           install-just: true
+          install-uv: true
+          cache: uv
 
       - name: Check the wheel installs and runs
-        run: just package-test wheel
+        run: just package-test wheel ${{ matrix.python-version }}
 
       - name: Check the sdist installs and runs
-        run: just package-test sdist
+        run: just package-test sdist ${{ matrix.python-version }}
 
   tag-new-version:
-    needs: [check, test, test-package-build]
+    needs: [check, test, test-fastparser, test-package-build]
     runs-on: ubuntu-22.04
 
     if: github.ref == 'refs/heads/main'
@@ -95,6 +105,7 @@ jobs:
     needs:
     - check
     - test
+    - test-fastparser
 
     runs-on: Ubuntu-latest
 
