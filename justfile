@@ -70,6 +70,8 @@ bump-uv-cutoff days="7":
 # Bump the timestamp cutoff to midnight UTC 7 days ago and upgrade all dependencies
 update-dependencies: bump-uv-cutoff upgrade-all
 
+update-fastparser-dependencies:
+    uv pip compile --upgrade fastparser/requirements.in -o fastparser/requirements.txt
 
 build-fastparser-wheel:
     #!/usr/bin/env bash
