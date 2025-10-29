@@ -1,113 +1,136 @@
-# just has no idiom for setting a default value for an environment variable
-# so we shell out, as we need VIRTUAL_ENV in the justfile environment
-export VIRTUAL_ENV  := `echo ${VIRTUAL_ENV:-.venv}`
-
-export BIN := VIRTUAL_ENV + "/bin"
-export PIP := BIN + "/python -m pip"
-
-
 # list available commands
 default:
-    @{{ just_executable() }} --list
+    @"{{ just_executable() }}" --list
 
 
 # clean up temporary files
 clean:
     rm -rf .venv
 
-
-# ensure valid virtualenv
-virtualenv:
-    #!/usr/bin/env bash
-    # allow users to specify python version in .env
-    PYTHON_VERSION=${PYTHON_VERSION:-python3.8}
-
-    # create venv and upgrade pip
-    test -d $VIRTUAL_ENV || { $PYTHON_VERSION -m venv $VIRTUAL_ENV && $PIP install --upgrade pip; }
-
-    # ensure we have pip-tools so we can run pip-compile
-    test -e $BIN/pip-compile || $PIP install pip-tools
-
-
-_compile src dst *args: virtualenv
-    #!/usr/bin/env bash
-    # exit if src file is older than dst file (-nt = 'newer than', but we negate with || to avoid error exit code)
-    test "${FORCE:-}" = "true" -o {{ src }} -nt {{ dst }} || exit 0
-    $BIN/pip-compile --allow-unsafe --output-file={{ dst }} {{ src }} {{ args }}
-
-
-# update requirements.prod.txt if pyproject.toml has changed
-requirements-prod *args:
-    {{ just_executable() }} _compile pyproject.toml requirements.prod.txt {{ args }}
-
-
-# update requirements.dev.txt if requirements.dev.in has changed
-requirements-dev *args: requirements-prod
-    {{ just_executable() }} _compile requirements.dev.in requirements.dev.txt {{ args }}
-
-
-# ensure prod requirements installed and up to date
-prodenv: virtualenv requirements-prod
-    #!/usr/bin/env bash
-    # exit if .txt file has not changed since we installed them (-nt == "newer than', but we negate with || to avoid error exit code)
-    test requirements.prod.txt -nt $VIRTUAL_ENV/.prod || exit 0
-
-    $PIP install -r requirements.prod.txt
-    touch $VIRTUAL_ENV/.prod
-
-
-# upgrade dev or prod dependencies (specify package to upgrade single package, all by default)
-upgrade env package="": virtualenv
-    #!/usr/bin/env bash
-    opts="--upgrade"
-    test -z "{{ package }}" || opts="--upgrade-package {{ package }}"
-    FORCE=true {{ just_executable() }} requirements-{{ env }} $opts
+# Install production requirements into and remove extraneous packages from venv
+prodenv:
+    uv sync --no-dev
 
 
 # && dependencies are run after the recipe has run. Needs just>=0.9.9. This is
 # a killer feature over Makefiles.
 #
-# ensure dev requirements installed and up to date
-devenv: prodenv requirements-dev && install-precommit
+# Install dev requirements into venv without removing extraneous packages
+devenv: && install-precommit
+    uv sync --inexact
+
+
+# Ensure precommit is installed
+install-precommit:
     #!/usr/bin/env bash
-    # exit if .txt file has not changed since we installed them (-nt == "newer than', but we negate with || to avoid error exit code)
-    test requirements.dev.txt -nt $VIRTUAL_ENV/.dev || exit 0
+    set -euo pipefail
 
-    $PIP install -r requirements.dev.txt
-    touch $VIRTUAL_ENV/.dev
+    BASE_DIR=$(git rev-parse --show-toplevel)
+    test -f $BASE_DIR/.git/hooks/pre-commit || uv run pre-commit install
 
 
-build-fastparser-wheel: devenv
+# Upgrade a single package to the latest version as of the cutoff in pyproject.toml
+upgrade-package package: && devenv
+    uv lock --upgrade-package {{ package }}
+
+
+# Upgrade all packages to the latest versions as of the cutoff in pyproject.toml
+upgrade-all: && devenv
+    uv lock --upgrade
+
+
+# Move the cutoff date in pyproject.toml to N days ago (default: 7) at midnight UTC
+bump-uv-cutoff days="7":
+    #!/usr/bin/env -S uvx --with tomlkit python3
+
+    import datetime
+    import tomlkit
+
+    with open("pyproject.toml", "rb") as f:
+        content = tomlkit.load(f)
+
+    new_datetime = (
+        datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=int("{{ days }}"))
+    ).replace(hour=0, minute=0, second=0, microsecond=0)
+    new_timestamp = new_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")
+    if existing_timestamp := content["tool"]["uv"].get("exclude-newer"):
+        if new_datetime < datetime.datetime.fromisoformat(existing_timestamp):
+            print(
+                f"Existing cutoff {existing_timestamp} is more recent than {new_timestamp}, not updating."
+            )
+            exit(0)
+    content["tool"]["uv"]["exclude-newer"] = new_timestamp
+
+    with open("pyproject.toml", "w") as f:
+        tomlkit.dump(content, f)
+
+
+# This is the default input command to update-dependencies action
+# https://github.com/bennettoxford/update-dependencies-action
+# Bump the timestamp cutoff to midnight UTC 7 days ago and upgrade all dependencies
+update-dependencies: bump-uv-cutoff upgrade-all
+
+
+build-fastparser-wheel:
     #!/usr/bin/env bash
     rm -rf fastparser/dist
-    $BIN/python -m build --wheel fastparser
+    uv build --wheel fastparser
     mv fastparser/dist/*.whl .
 
 
 # install fast YAML parsing library
 install-fastparser: devenv
-    $PIP install --only-binary ':all:' file:///$PWD/opensafely_fastparser-1.0-py3-none-any.whl
-
-
-# ensure precommit is installed
-install-precommit:
-    #!/usr/bin/env bash
-    BASE_DIR=$(git rev-parse --show-toplevel)
-    test -f $BASE_DIR/.git/hooks/pre-commit || $BIN/pre-commit install
+    uv pip install --only-binary ':all:' file:///$PWD/opensafely_fastparser-1.0-py3-none-any.whl
 
 
 # *args is variadic, 0 or more. This allows us to do `just test -k match`, for example.
 # Run the tests
-test *args: devenv
-    $BIN/coverage run --module pytest {{ args }}
-    $BIN/coverage report || $BIN/coverage html
+test *args:
+    uv run coverage run --module pytest {{ args }}
+    uv run coverage report || $BIN/coverage html
 
 
-package-build: virtualenv
+format *args="--diff --quiet .":
+    uv run ruff format --check {{ args }}
+
+
+lint *args="--output-format=full .":
+    uv run ruff check {{ args }}
+
+
+mypy:
+    uv run mypy
+
+
+# Runs the various dev checks but does not change any files
+check: && format lint mypy # Check the lockfile before `uv run` is used
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Make sure dates in pyproject.toml and uv.lock are in sync
+    unset UV_EXCLUDE_NEWER
+    rc=0
+    uv lock --check || rc=$?
+    if test "$rc" != "0" ; then
+        echo "Timestamp cutoffs in uv.lock must match those in pyproject.toml. See DEVELOPERS.md for details and hints." >&2
+        exit $rc
+    fi
+
+
+# Fix formatting and import sort ordering
+fix:
+    uv run ruff check --fix .
+    uv run ruff format .
+
+
+# Run the dev project
+run: devenv
+    echo "Not implemented yet"
+
+
+package-build:
     rm -rf dist
-
-    $PIP install build
-    $BIN/python -m build
+    uv build
 
 
 package-test type: package-build
@@ -116,45 +139,22 @@ package-test type: package-build
     distribution_suffix="{{ if type == "wheel" { "whl" } else { "tar.gz" } }}"
 
     # build a fresh venv
-    python -m venv $VENV
+    uv venv $VENV
 
     # clean up after ourselves, even if there are errors
     trap 'rm -rf $VENV' EXIT
 
     # ensure a modern pip
-    $VENV/bin/pip install pip --upgrade
+    uv pip install pip --upgrade
 
     # install the wheel distribution
-    $VENV/bin/pip install dist/*."$distribution_suffix"
+    uv pip install dist/*."$distribution_suffix"
 
     # Minimal check that it has actually built correctly
-    $VENV/bin/python -c "import pipeline"
+    uv run python -c "import pipeline"
 
     # check we haven't packaged tests with it
     unzip -Z -1 dist/*.whl | grep -vq "^tests/"
-
-
-ruff *args=".": devenv
-    $BIN/ruff format --diff --quiet .
-    $BIN/ruff check --output-format=full .
-
-
-mypy: devenv
-    $BIN/mypy
-
-
-# check format and linting
-check: ruff mypy
-
-
-# fix format and linting
-fix: devenv
-    $BIN/ruff format .
-    $BIN/ruff check --fix .
-
-# Run the dev project
-run: devenv
-    echo "Not implemented yet"
 
 
 # Cut a release of this package
