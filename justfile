@@ -85,32 +85,36 @@ install-fastparser: devenv
 
 # *args is variadic, 0 or more. This allows us to do `just test -k match`, for example.
 # Run the tests
-test *args:
-    uv run coverage run --module pytest {{ args }}
-    uv run coverage report || $BIN/coverage html
+test python-version="$(cat .python-version)" extra="" *args="":
+    uv run --python {{ python-version }} {{ extra }} coverage run --module pytest
+    uv run --python {{ python-version }} {{ extra }} coverage report || $BIN/coverage html
 
 
-format *args="--diff --quiet .":
-    uv run ruff format --check {{ args }}
+test-with-fastparser python-version="$(cat .python-version)":
+    just test {{ python-version }} "--extra fastparser"
 
 
-lint *args="--output-format=full .":
-    uv run ruff check {{ args }}
+format python-version="$(cat .python-version)" *args="--diff --quiet .":
+    uv run --python {{ python-version }} ruff format --check {{ args }}
 
 
-mypy:
-    uv run mypy
+lint python-version="$(cat .python-version)" *args="--output-format=full .":
+    uv run --python {{ python-version }} ruff check {{ args }}
+
+
+mypy python-version="$(cat .python-version)":
+    uv run --python {{ python-version }} mypy
 
 
 # Runs the various dev checks but does not change any files
-check: && format lint mypy # Check the lockfile before `uv run` is used
+check python-version="$(cat .python-version)": && (format python-version) (lint python-version) (mypy python-version) # Check the lockfile before `uv run` is used
     #!/usr/bin/env bash
     set -euo pipefail
 
     # Make sure dates in pyproject.toml and uv.lock are in sync
     unset UV_EXCLUDE_NEWER
     rc=0
-    uv lock --check || rc=$?
+    uv lock --check --python {{ python-version }} || rc=$?
     if test "$rc" != "0" ; then
         echo "Timestamp cutoffs in uv.lock must match those in pyproject.toml. See DEVELOPERS.md for details and hints." >&2
         exit $rc
