@@ -137,25 +137,29 @@ package-build:
     uv build
 
 
-package-test type: package-build
+package-test type python-version="$(cat .python-version)": package-build
     #!/usr/bin/env bash
     VENV="test-{{ type }}"
     distribution_suffix="{{ if type == "wheel" { "whl" } else { "tar.gz" } }}"
 
     # build a fresh venv
-    uv venv $VENV
+    # We're using uv to create the venv here so we can use it for our
+    # pythons, but we deliberately activate the venc and pip install
+    # the distribution so we can check it's working in the non-uv way
+    uv venv --python {{ python-version }} --seed $VENV
+    . $VENV/bin/activate
 
     # clean up after ourselves, even if there are errors
     trap 'rm -rf $VENV' EXIT
 
     # ensure a modern pip
-    uv pip install pip --upgrade
+    $VENV/bin/pip install pip --upgrade
 
     # install the wheel distribution
-    uv pip install dist/*."$distribution_suffix"
+    $VENV/bin/pip install dist/*."$distribution_suffix"
 
     # Minimal check that it has actually built correctly
-    uv run python -c "import pipeline"
+    $VENV/bin/python -c "import pipeline"
 
     # check we haven't packaged tests with it
     unzip -Z -1 dist/*.whl | grep -vq "^tests/"
