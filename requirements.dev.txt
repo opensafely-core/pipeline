@@ -62,7 +62,7 @@ pytest-mock==3.14.1
     # via -r requirements.dev.in
 pyyaml==6.0.3
     # via pre-commit
-ruff==0.14.2
+ruff==0.14.3
     # via -r requirements.dev.in
 six==1.17.0
     # via asttokens
@@ -77,7 +77,7 @@ typing-extensions==4.13.2
     #   exceptiongroup
     #   mypy
     #   virtualenv
-virtualenv==20.35.3
+virtualenv==20.35.4
     # via pre-commit
 wheel==0.45.1
     # via pip-tools
