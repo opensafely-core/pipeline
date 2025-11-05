@@ -41,7 +41,7 @@ upgrade-all: && devenv
 
 # Move the cutoff date in pyproject.toml to N days ago (default: 7) at midnight UTC
 bump-uv-cutoff days="7":
-    #!/usr/bin/env -S uvx --with tomlkit python3
+    #!/usr/bin/env -S uvx --with tomlkit python3.13
 
     import datetime
     import tomlkit
