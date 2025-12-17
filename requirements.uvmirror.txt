@@ -11,7 +11,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     # via pytest
 coverage==7.6.1 ; python_full_version < '3.9'
 coverage==7.10.7 ; python_full_version == '3.9.*'
-coverage==7.12.0 ; python_full_version >= '3.10'
+coverage==7.13.0 ; python_full_version >= '3.10'
 devtools==0.12.2
 distlib==0.4.0
     # via virtualenv
@@ -35,7 +35,7 @@ iniconfig==2.1.0 ; python_full_version < '3.10'
     # via pytest
 iniconfig==2.3.0 ; python_full_version >= '3.10'
     # via pytest
-librt==0.6.3 ; python_full_version >= '3.9'
+librt==0.7.3 ; python_full_version >= '3.9'
     # via mypy
 mypy==1.14.1 ; python_full_version < '3.9'
 mypy==1.19.0 ; python_full_version >= '3.9'
@@ -51,7 +51,7 @@ platformdirs==4.3.6 ; python_full_version < '3.9'
     # via virtualenv
 platformdirs==4.4.0 ; python_full_version == '3.9.*'
     # via virtualenv
-platformdirs==4.5.0 ; python_full_version >= '3.10'
+platformdirs==4.5.1 ; python_full_version >= '3.10'
     # via virtualenv
 pluggy==1.5.0 ; python_full_version < '3.9'
     # via pytest
@@ -68,7 +68,7 @@ pytest==8.3.5 ; python_full_version < '3.9'
     # via pytest-mock
 pytest==8.4.2 ; python_full_version == '3.9.*'
     # via pytest-mock
-pytest==9.0.1 ; python_full_version >= '3.10'
+pytest==9.0.2 ; python_full_version >= '3.10'
     # via pytest-mock
 pytest-mock==3.14.1 ; python_full_version < '3.9'
 pytest-mock==3.15.1 ; python_full_version >= '3.9'
@@ -80,7 +80,7 @@ ruamel-yaml-clib==0.2.8
     # via
     #   opensafely-pipeline
     #   ruamel-yaml
-ruff==0.14.7
+ruff==0.14.8
 ruyaml==0.91.0
     # via opensafely-pipeline
 setuptools==75.3.2 ; python_full_version < '3.9'
