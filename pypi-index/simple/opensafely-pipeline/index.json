@@ -1,0 +1,80 @@
+{
+  "meta": {
+    "api-version": "1.1"
+  },
+  "name": "opensafely-pipeline",
+  "versions": {
+    "2025.03.06.161237": {
+      "files": [
+        {
+          "url": "https://github.com/opensafely-core/pipeline/archive/refs/tags/v2025.03.06.161237.zip",
+          "upload-time": "2025-03-07T07:48:47Z"
+        }
+      ]
+    },
+    "2025.02.10.092559": {
+      "files": [
+        {
+          "url": "https://github.com/opensafely-core/pipeline/archive/refs/tags/v2025.02.10.092559.zip",
+          "upload-time": "2025-02-10T10:29:53Z"
+        }
+      ]
+    },
+    "2025.01.21.182725": {
+      "files": [
+        {
+          "url": "https://github.com/opensafely-core/pipeline/archive/refs/tags/v2025.01.21.182725.zip",
+          "upload-time": "2025-01-21T18:41:22Z"
+        }
+      ]
+    },
+    "2024.10.11.170331": {
+      "files": [
+        {
+          "url": "https://github.com/opensafely-core/pipeline/archive/refs/tags/v2024.10.11.170331.zip",
+          "upload-time": "2024-10-14T10:47:27Z"
+        }
+      ]
+    },
+    "2024.10.08.124104": {
+      "files": [
+        {
+          "url": "https://github.com/opensafely-core/pipeline/archive/refs/tags/v2024.10.08.124104.zip",
+          "upload-time": "2024-10-08T14:43:28Z"
+        }
+      ]
+    },
+    "2024.09.27.131013": {
+      "files": [
+        {
+          "url": "https://github.com/opensafely-core/pipeline/archive/refs/tags/v2024.09.27.131013.zip",
+          "upload-time": "2024-09-27T13:45:28Z"
+        }
+      ]
+    },
+    "2024.07.25.105509": {
+      "files": [
+        {
+          "url": "https://github.com/opensafely-core/pipeline/archive/refs/tags/v2024.07.25.105509.zip",
+          "upload-time": "2024-07-25T12:29:50Z"
+        }
+      ]
+    },
+    "2024.03.19.153938": {
+      "files": [
+        {
+          "url": "https://github.com/opensafely-core/pipeline/archive/refs/tags/v2024.03.19.153938.zip",
+          "upload-time": "2024-03-20T09:34:18Z"
+        }
+      ]
+    },
+    "2024.01.29.114645": {
+      "files": [
+        {
+          "url": "https://github.com/opensafely-core/pipeline/archive/refs/tags/v2024.01.29.114645.zip",
+          "upload-time": "2024-01-29T11:50:28Z"
+        }
+      ]
+    }
+  }
+}
