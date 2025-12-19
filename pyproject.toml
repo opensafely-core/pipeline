@@ -110,7 +110,6 @@ dev = [
     "coverage",
     "devtools",
     "mypy",
-    "pre-commit",
     "pytest",
     "pytest-mock",
     "ruff",

@@ -15,16 +15,8 @@ prodenv:
 #
 
 # Install dev requirements into venv without removing extraneous packages
-devenv: && install-precommit
+devenv:
     uv sync --inexact
-
-# Ensure precommit is installed
-install-precommit:
-    #!/usr/bin/env bash
-    set -euo pipefail
-
-    BASE_DIR=$(git rev-parse --show-toplevel)
-    test -f $BASE_DIR/.git/hooks/pre-commit || uv run pre-commit install
 
 # Upgrade a single package to the latest version as of the cutoff in pyproject.toml
 upgrade-package package: && uvmirror devenv
