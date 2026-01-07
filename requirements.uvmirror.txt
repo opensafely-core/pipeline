@@ -11,7 +11,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     # via pytest
 coverage==7.6.1 ; python_full_version < '3.9'
 coverage==7.10.7 ; python_full_version == '3.9.*'
-coverage==7.13.0 ; python_full_version >= '3.10'
+coverage==7.13.1 ; python_full_version >= '3.10'
 devtools==0.12.2
 distlib==0.4.0
     # via virtualenv
@@ -25,7 +25,7 @@ filelock==3.16.1 ; python_full_version < '3.9'
     # via virtualenv
 filelock==3.19.1 ; python_full_version == '3.9.*'
     # via virtualenv
-filelock==3.20.0 ; python_full_version >= '3.10'
+filelock==3.20.1 ; python_full_version >= '3.10'
     # via virtualenv
 identify==2.6.1 ; python_full_version < '3.9'
     # via pre-commit
@@ -35,13 +35,13 @@ iniconfig==2.1.0 ; python_full_version < '3.10'
     # via pytest
 iniconfig==2.3.0 ; python_full_version >= '3.10'
     # via pytest
-librt==0.7.3 ; python_full_version >= '3.9'
+librt==0.7.5 ; python_full_version >= '3.9' and platform_python_implementation != 'PyPy'
     # via mypy
 mypy==1.14.1 ; python_full_version < '3.9'
-mypy==1.19.0 ; python_full_version >= '3.9'
+mypy==1.19.1 ; python_full_version >= '3.9'
 mypy-extensions==1.1.0
     # via mypy
-nodeenv==1.9.1
+nodeenv==1.10.0
     # via pre-commit
 packaging==25.0
     # via pytest
@@ -59,7 +59,7 @@ pluggy==1.6.0 ; python_full_version >= '3.9'
     # via pytest
 pre-commit==3.5.0 ; python_full_version < '3.9'
 pre-commit==4.3.0 ; python_full_version == '3.9.*'
-pre-commit==4.5.0 ; python_full_version >= '3.10'
+pre-commit==4.5.1 ; python_full_version >= '3.10'
 pygments==2.19.2
     # via
     #   devtools
@@ -80,7 +80,7 @@ ruamel-yaml-clib==0.2.8
     # via
     #   opensafely-pipeline
     #   ruamel-yaml
-ruff==0.14.8
+ruff==0.14.10
 ruyaml==0.91.0
     # via opensafely-pipeline
 setuptools==75.3.2 ; python_full_version < '3.9'
