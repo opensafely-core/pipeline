@@ -10,3 +10,10 @@ updates:
       prefix: "chore: "
     cooldown:
       default-days: 7
+
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    # Security updates only
+    open-pull-requests-limit: 0
