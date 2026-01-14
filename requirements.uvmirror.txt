@@ -25,7 +25,7 @@ filelock==3.16.1 ; python_full_version < '3.9'
     # via virtualenv
 filelock==3.19.1 ; python_full_version == '3.9.*'
     # via virtualenv
-filelock==3.20.1 ; python_full_version >= '3.10'
+filelock==3.20.2 ; python_full_version >= '3.10'
     # via virtualenv
 identify==2.6.1 ; python_full_version < '3.9'
     # via pre-commit
@@ -35,7 +35,7 @@ iniconfig==2.1.0 ; python_full_version < '3.10'
     # via pytest
 iniconfig==2.3.0 ; python_full_version >= '3.10'
     # via pytest
-librt==0.7.5 ; python_full_version >= '3.9' and platform_python_implementation != 'PyPy'
+librt==0.7.7 ; python_full_version >= '3.9' and platform_python_implementation != 'PyPy'
     # via mypy
 mypy==1.14.1 ; python_full_version < '3.9'
 mypy==1.19.1 ; python_full_version >= '3.9'
@@ -45,7 +45,7 @@ nodeenv==1.10.0
     # via pre-commit
 packaging==25.0
     # via pytest
-pathspec==0.12.1 ; python_full_version >= '3.9'
+pathspec==1.0.1 ; python_full_version >= '3.9'
     # via mypy
 platformdirs==4.3.6 ; python_full_version < '3.9'
     # via virtualenv
