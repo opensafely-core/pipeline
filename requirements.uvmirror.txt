@@ -25,11 +25,13 @@ filelock==3.16.1 ; python_full_version < '3.9'
     # via virtualenv
 filelock==3.19.1 ; python_full_version == '3.9.*'
     # via virtualenv
-filelock==3.20.2 ; python_full_version >= '3.10'
+filelock==3.20.3 ; python_full_version >= '3.10'
     # via virtualenv
 identify==2.6.1 ; python_full_version < '3.9'
     # via pre-commit
-identify==2.6.15 ; python_full_version >= '3.9'
+identify==2.6.15 ; python_full_version == '3.9.*'
+    # via pre-commit
+identify==2.6.16 ; python_full_version >= '3.10'
     # via pre-commit
 iniconfig==2.1.0 ; python_full_version < '3.10'
     # via pytest
@@ -45,7 +47,7 @@ nodeenv==1.10.0
     # via pre-commit
 packaging==25.0
     # via pytest
-pathspec==1.0.1 ; python_full_version >= '3.9'
+pathspec==1.0.3 ; python_full_version >= '3.9'
     # via mypy
 platformdirs==4.3.6 ; python_full_version < '3.9'
     # via virtualenv
@@ -80,7 +82,7 @@ ruamel-yaml-clib==0.2.8
     # via
     #   opensafely-pipeline
     #   ruamel-yaml
-ruff==0.14.10
+ruff==0.14.11
 ruyaml==0.91.0
     # via opensafely-pipeline
 setuptools==75.3.2 ; python_full_version < '3.9'
@@ -89,7 +91,7 @@ setuptools==80.9.0 ; python_full_version >= '3.9'
     # via ruyaml
 six==1.17.0
     # via asttokens
-tomli==2.3.0 ; python_full_version < '3.11'
+tomli==2.4.0 ; python_full_version < '3.11'
     # via
     #   mypy
     #   pytest
@@ -103,5 +105,5 @@ typing-extensions==4.15.0 ; python_full_version >= '3.9'
     #   exceptiongroup
     #   mypy
     #   virtualenv
-virtualenv==20.35.4
+virtualenv==20.36.1
     # via pre-commit
