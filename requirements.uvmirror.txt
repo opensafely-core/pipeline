@@ -3,36 +3,18 @@
 -e .
 asttokens==2.4.1
     # via devtools
-cfgv==3.4.0 ; python_full_version < '3.10'
-    # via pre-commit
-cfgv==3.5.0 ; python_full_version >= '3.10'
-    # via pre-commit
 colorama==0.4.6 ; sys_platform == 'win32'
     # via pytest
 coverage==7.6.1 ; python_full_version < '3.9'
 coverage==7.10.7 ; python_full_version == '3.9.*'
 coverage==7.13.1 ; python_full_version >= '3.10'
 devtools==0.12.2
-distlib==0.4.0
-    # via virtualenv
 distro==1.9.0
     # via ruyaml
 exceptiongroup==1.3.1 ; python_full_version < '3.11'
     # via pytest
 executing==2.2.1
     # via devtools
-filelock==3.16.1 ; python_full_version < '3.9'
-    # via virtualenv
-filelock==3.19.1 ; python_full_version == '3.9.*'
-    # via virtualenv
-filelock==3.20.3 ; python_full_version >= '3.10'
-    # via virtualenv
-identify==2.6.1 ; python_full_version < '3.9'
-    # via pre-commit
-identify==2.6.15 ; python_full_version == '3.9.*'
-    # via pre-commit
-identify==2.6.16 ; python_full_version >= '3.10'
-    # via pre-commit
 iniconfig==2.1.0 ; python_full_version < '3.10'
     # via pytest
 iniconfig==2.3.0 ; python_full_version >= '3.10'
@@ -43,25 +25,14 @@ mypy==1.14.1 ; python_full_version < '3.9'
 mypy==1.19.1 ; python_full_version >= '3.9'
 mypy-extensions==1.1.0
     # via mypy
-nodeenv==1.10.0
-    # via pre-commit
 packaging==25.0
     # via pytest
 pathspec==1.0.3 ; python_full_version >= '3.9'
     # via mypy
-platformdirs==4.3.6 ; python_full_version < '3.9'
-    # via virtualenv
-platformdirs==4.4.0 ; python_full_version == '3.9.*'
-    # via virtualenv
-platformdirs==4.5.1 ; python_full_version >= '3.10'
-    # via virtualenv
 pluggy==1.5.0 ; python_full_version < '3.9'
     # via pytest
 pluggy==1.6.0 ; python_full_version >= '3.9'
     # via pytest
-pre-commit==3.5.0 ; python_full_version < '3.9'
-pre-commit==4.3.0 ; python_full_version == '3.9.*'
-pre-commit==4.5.1 ; python_full_version >= '3.10'
 pygments==2.19.2
     # via
     #   devtools
@@ -74,8 +45,6 @@ pytest==9.0.2 ; python_full_version >= '3.10'
     # via pytest-mock
 pytest-mock==3.14.1 ; python_full_version < '3.9'
 pytest-mock==3.15.1 ; python_full_version >= '3.9'
-pyyaml==6.0.3
-    # via pre-commit
 ruamel-yaml==0.18.15
     # via opensafely-pipeline
 ruamel-yaml-clib==0.2.8
@@ -99,11 +68,7 @@ typing-extensions==4.13.2 ; python_full_version < '3.9'
     # via
     #   exceptiongroup
     #   mypy
-    #   virtualenv
 typing-extensions==4.15.0 ; python_full_version >= '3.9'
     # via
     #   exceptiongroup
     #   mypy
-    #   virtualenv
-virtualenv==20.36.1
-    # via pre-commit
