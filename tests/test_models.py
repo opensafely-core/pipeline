@@ -245,6 +245,28 @@ def test_action_ehrql_with_multiple_output_files():
     assert Pipeline.build(**data)
 
 
+def test_action_ehrql_with_multiple_output_files_and_mismatch():
+    data = {
+        "version": 4,
+        "actions": {
+            "generate_dataset": {
+                "run": "ehrql:v1 generate-dataset --output outputs:arrow",
+                "outputs": {
+                    "highly_sensitive": {"results": "outputs.arrow"},
+                },
+            }
+        },
+    }
+    msg = (
+        "(?s)"
+        "output specification must match the `--output` argument in the `run` command"
+        ".*got: outputs.arrow"
+        ".*but was expecting: outputs/:arrow"
+    )
+    with pytest.raises(ValidationError, match=msg):
+        assert Pipeline.build(**data)
+
+
 def test_cohortextractor_actions_not_used_after_v3():
     data = {
         "version": "4",
@@ -676,7 +698,7 @@ def test_pipeline_ehrql_specifies_different_output(image, tag):
         },
     }
 
-    msg = "--output in run command and outputs must match"
+    msg = "output specification must match the `--output` argument in the `run` command"
     with pytest.raises(ValidationError, match=msg):
         Pipeline.build(**data)
 
