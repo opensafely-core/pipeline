@@ -88,6 +88,8 @@ jobs:
   tag-new-version:
     needs: [check, test, test-fastparser, test-package-build]
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
 
     if: github.ref == 'refs/heads/main'
 
