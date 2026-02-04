@@ -7,7 +7,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     # via pytest
 coverage==7.6.1 ; python_full_version < '3.9'
 coverage==7.10.7 ; python_full_version == '3.9.*'
-coverage==7.13.1 ; python_full_version >= '3.10'
+coverage==7.13.2 ; python_full_version >= '3.10'
 devtools==0.12.2
 distro==1.9.0
     # via ruyaml
@@ -25,9 +25,9 @@ mypy==1.14.1 ; python_full_version < '3.9'
 mypy==1.19.1 ; python_full_version >= '3.9'
 mypy-extensions==1.1.0
     # via mypy
-packaging==25.0
+packaging==26.0
     # via pytest
-pathspec==1.0.3 ; python_full_version >= '3.9'
+pathspec==1.0.4 ; python_full_version >= '3.9'
     # via mypy
 pluggy==1.5.0 ; python_full_version < '3.9'
     # via pytest
@@ -51,12 +51,12 @@ ruamel-yaml-clib==0.2.8
     # via
     #   opensafely-pipeline
     #   ruamel-yaml
-ruff==0.14.13
+ruff==0.14.14
 ruyaml==0.91.0
     # via opensafely-pipeline
 setuptools==75.3.3 ; python_full_version < '3.9'
     # via ruyaml
-setuptools==80.9.0 ; python_full_version >= '3.9'
+setuptools==80.10.2 ; python_full_version >= '3.9'
     # via ruyaml
 six==1.17.0
     # via asttokens
