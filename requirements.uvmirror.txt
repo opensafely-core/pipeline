@@ -7,7 +7,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     # via pytest
 coverage==7.6.1 ; python_full_version < '3.9'
 coverage==7.10.7 ; python_full_version == '3.9.*'
-coverage==7.13.3 ; python_full_version >= '3.10'
+coverage==7.13.4 ; python_full_version >= '3.10'
 devtools==0.12.2
 distro==1.9.0
     # via ruyaml
@@ -54,9 +54,9 @@ ruamel-yaml-clib==0.2.8
 ruff==0.15.0
 ruyaml==0.91.0
     # via opensafely-pipeline
-setuptools==75.3.3 ; python_full_version < '3.9'
+setuptools==75.3.4 ; python_full_version < '3.9'
     # via ruyaml
-setuptools==80.10.2 ; python_full_version >= '3.9'
+setuptools==82.0.0 ; python_full_version >= '3.9'
     # via ruyaml
 six==1.17.0
     # via asttokens
