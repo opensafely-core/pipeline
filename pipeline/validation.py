@@ -3,6 +3,7 @@ from __future__ import annotations
 import fnmatch
 import posixpath
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
 from .constants import LEVEL4_FILE_TYPES
@@ -94,6 +95,20 @@ def validate_not_cohort_extractor_action(action: Action) -> None:
     if action.run.parts[0].startswith("cohortextractor"):
         raise ValidationError(
             f"Action {action.action_id} uses cohortextractor actions, which are not supported in this version."
+        )
+
+
+def validate_not_run_all_action(action_id: str, feat: SimpleNamespace) -> None:
+    if action_id != "run_all":
+        return
+    if feat.REMOVE_SUPPORT_FOR_RUN_ALL_ACTION:
+        raise ValidationError(
+            "`run_all` is a reserved action name and is not allowed for user-defined actions."
+        )
+    else:
+        print(
+            "Warning: `run_all` is a reserved action name; user-defined actions with this name "
+            "are ignored and will raise an error in later versions."
         )
 
 

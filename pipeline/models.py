@@ -17,6 +17,7 @@ from .validation import (
     validate_glob_pattern,
     validate_no_kwargs,
     validate_not_cohort_extractor_action,
+    validate_not_run_all_action,
     validate_type,
 )
 
@@ -276,6 +277,7 @@ class Pipeline:
 
         _actions = dict()
         for action_id, action_config in actions.items():
+            validate_not_run_all_action(action_id, feat)
             validate_action_config(action_id, action_config)
             _actions[action_id] = Action.build(action_id, **action_config)
         actions = _actions
@@ -339,9 +341,10 @@ class Pipeline:
         """
         Get all actions for this Pipeline instance
 
-        We ignore any manually defined run_all action (in later project
-        versions this will be an error). We use a list comprehension rather
-        than set operators as previously so we preserve the original order.
+        Versions < 5 ignore any manually defined run_all action and raise a
+        warning (later project versions the raise an error).
+        We use a list comprehension rather than set operators as previously so we preserve
+        the original order.
         """
         return [action for action in self.actions.keys() if action != RUN_ALL_COMMAND]
 

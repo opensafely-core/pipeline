@@ -810,3 +810,28 @@ def test_action_images():
 
     pipeline = Pipeline.build(**data)
     assert pipeline.action_images == set(["ehrql:v1", "r:v1", "python:v2"])
+
+
+def test_run_all_action_error_in_v5():
+    with pytest.raises(
+        ValidationError,
+        match="`run_all` is a reserved action name",
+    ):
+        Pipeline.build(
+            version=5,
+            actions={"run_all": {"outputs": {}, "run": "test:v1"}},
+        )
+
+
+def test_run_all_action_warning_before_v5(capsys):
+    Pipeline.build(
+        version=4,
+        actions={
+            "run_all": {
+                "outputs": {"highly_sensitive": {"foo": "bar.txt"}},
+                "run": "test:v1",
+            }
+        },
+    )
+    captured = capsys.readouterr()
+    assert "Warning: `run_all` is a reserved action name" in captured.out
