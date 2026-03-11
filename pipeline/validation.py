@@ -112,6 +112,13 @@ def validate_not_run_all_action(action_id: str, feat: SimpleNamespace) -> None:
         )
 
 
+def validate_not_latest_tag(action: Action) -> None:
+    if action.run.parts[0].endswith(":latest"):
+        raise ValidationError(
+            f"Action {action.action_id} uses `{action.run.parts[0]}`, which is not supported. Provide a version e.g. `:v2` instead"
+        )
+
+
 def validate_cohortextractor_outputs(action_id: str, action: Action) -> None:
     """
     Check cohortextractor's output config is valid for this command

@@ -779,30 +779,30 @@ def test_action_is_database_action(name, run, is_database_action):
 
 def test_action_images():
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             "ehrql": {
                 "run": "ehrql:v1 ...",
                 "outputs": {
-                    "highly_sensitive": {"cohort": "output/input.csv"},
+                    "highly_sensitive": {"cohort": "output/ehrql.csv"},
                 },
             },
             "r1": {
                 "run": "r:latest 1",
                 "outputs": {
-                    "highly_sensitive": {"cohort": "output/input.csv"},
+                    "highly_sensitive": {"cohort": "output/r1.csv"},
                 },
             },
             "r2": {
                 "run": "r:latest 2",
                 "outputs": {
-                    "highly_sensitive": {"cohort": "output/input.csv"},
+                    "highly_sensitive": {"cohort": "output/r2.csv"},
                 },
             },
             "python": {
                 "run": "python:v2 ...",
                 "outputs": {
-                    "highly_sensitive": {"cohort": "output/input.csv"},
+                    "highly_sensitive": {"cohort": "output/python.csv"},
                 },
             },
         },
@@ -810,6 +810,41 @@ def test_action_images():
 
     pipeline = Pipeline.build(**data)
     assert pipeline.action_images == set(["ehrql:v1", "r:v1", "python:v2"])
+
+
+def test_action_images_v5():
+    data = {
+        "version": 5,
+        "actions": {
+            "ehrql": {
+                "run": "ehrql:v1 ...",
+                "outputs": {
+                    "highly_sensitive": {"cohort": "output/ehrql.csv"},
+                },
+            },
+            "r1": {
+                "run": "r:v1 1",
+                "outputs": {
+                    "highly_sensitive": {"cohort": "output/r1.csv"},
+                },
+            },
+            "r2": {
+                "run": "r:v2 2",
+                "outputs": {
+                    "highly_sensitive": {"cohort": "output/r2.csv"},
+                },
+            },
+            "python": {
+                "run": "python:v2 ...",
+                "outputs": {
+                    "highly_sensitive": {"cohort": "output/python.csv"},
+                },
+            },
+        },
+    }
+
+    pipeline = Pipeline.build(**data)
+    assert pipeline.action_images == set(["ehrql:v1", "r:v1", "r:v2", "python:v2"])
 
 
 def test_run_all_action_error_in_v5():
@@ -835,3 +870,31 @@ def test_run_all_action_warning_before_v5(capsys):
     )
     captured = capsys.readouterr()
     assert "Warning: `run_all` is a reserved action name" in captured.out
+
+
+@pytest.mark.parametrize(
+    "run_command",
+    [
+        "ehrql:latest ...",
+        "r:latest 1",
+        "python:latest   do python thing",
+        " reusable:latest ...",
+    ],
+)
+def test_action_images_latest_not_allowed_in_v5(run_command):
+    data = {
+        "version": 5,
+        "actions": {
+            "my_action": {
+                "run": run_command,
+                "outputs": {
+                    "highly_sensitive": {"output": "output/result.csv"},
+                },
+            },
+        },
+    }
+    with pytest.raises(
+        ValidationError,
+        match=r"Action my_action uses `\w+:latest`, which is not supported. Provide a version e.g. `:v2` instead",
+    ):
+        Pipeline.build(**data)
