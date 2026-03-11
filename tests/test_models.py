@@ -898,3 +898,17 @@ def test_action_images_latest_not_allowed_in_v5(run_command):
         match=r"Action my_action uses `\w+:latest`, which is not supported. Provide a version e.g. `:v2` instead",
     ):
         Pipeline.build(**data)
+
+
+def test_warning_for_old_version(capsys):
+    Pipeline.build(
+        version=4,
+        actions={
+            "my_action": {
+                "outputs": {"highly_sensitive": {"foo": "bar.txt"}},
+                "run": "test:v1",
+            }
+        },
+    )
+    captured = capsys.readouterr()
+    assert "Warning: Your project file is using an old version (4.0)" in captured.out

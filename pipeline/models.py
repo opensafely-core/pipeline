@@ -272,6 +272,12 @@ class Pipeline:
             raise ValidationError(
                 f"`version` must be a number between 1 and {LATEST_VERSION}"
             )
+        else:
+            if version != LATEST_VERSION:
+                print(
+                    f"Warning: Your project file is using an old version ({version}); consider updating to version {LATEST_VERSION}"
+                )
+
         feat = get_feature_flags_for_version(version)
 
         validate_type(actions, dict, "Project `actions` section")
