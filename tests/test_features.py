@@ -42,6 +42,7 @@ def test_get_feature_flags_for_version_with_v5():
     assert not flags.EXPECTATIONS_POPULATION
     assert flags.REMOVE_SUPPORT_FOR_COHORT_EXTRACTOR
     assert flags.REMOVE_SUPPORT_FOR_RUN_ALL_ACTION
+    assert flags.REMOVE_SUPPORT_FOR_LATEST_TAG
 
 
 def test_get_feature_flags_for_version_with_v6():
