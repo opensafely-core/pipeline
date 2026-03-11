@@ -51,7 +51,7 @@ ruamel-yaml-clib==0.2.8
     # via
     #   opensafely-pipeline
     #   ruamel-yaml
-ruff==0.15.2
+ruff==0.15.4
 ruyaml==0.91.0
     # via opensafely-pipeline
 setuptools==75.3.4 ; python_full_version < '3.9'
