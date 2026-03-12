@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import fnmatch
 import posixpath
+import warnings
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
@@ -106,9 +107,10 @@ def validate_not_run_all_action(action_id: str, feat: SimpleNamespace) -> None:
             "`run_all` is a reserved action name and is not allowed for user-defined actions."
         )
     else:
-        print(
-            "Warning: `run_all` is a reserved action name; user-defined actions with this name "
-            "are ignored and will raise an error in later versions."
+        warnings.warn(
+            "ProjectWarning: `run_all` is a reserved action name; user-defined actions with this name "
+            "are ignored and will raise an error in later versions.",
+            stacklevel=3,
         )
 
 

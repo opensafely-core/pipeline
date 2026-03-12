@@ -858,18 +858,17 @@ def test_run_all_action_error_in_v5():
         )
 
 
-def test_run_all_action_warning_before_v5(capsys):
-    Pipeline.build(
-        version=4,
-        actions={
-            "run_all": {
-                "outputs": {"highly_sensitive": {"foo": "bar.txt"}},
-                "run": "test:v1",
-            }
-        },
-    )
-    captured = capsys.readouterr()
-    assert "Warning: `run_all` is a reserved action name" in captured.out
+def test_run_all_action_warning_before_v5():
+    with pytest.warns(UserWarning, match="`run_all` is a reserved action name"):
+        Pipeline.build(
+            version=4,
+            actions={
+                "run_all": {
+                    "outputs": {"highly_sensitive": {"foo": "bar.txt"}},
+                    "run": "test:v1",
+                }
+            },
+        )
 
 
 @pytest.mark.parametrize(
@@ -900,15 +899,14 @@ def test_action_images_latest_not_allowed_in_v5(run_command):
         Pipeline.build(**data)
 
 
-def test_warning_for_old_version(capsys):
-    Pipeline.build(
-        version=4,
-        actions={
-            "my_action": {
-                "outputs": {"highly_sensitive": {"foo": "bar.txt"}},
-                "run": "test:v1",
-            }
-        },
-    )
-    captured = capsys.readouterr()
-    assert "Warning: Your project file is using an old version (4.0)" in captured.out
+def test_warning_for_old_version():
+    with pytest.warns(UserWarning, match="project file is using an old version"):
+        Pipeline.build(
+            version=4,
+            actions={
+                "my_action": {
+                    "outputs": {"highly_sensitive": {"foo": "bar.txt"}},
+                    "run": "test:v1",
+                }
+            },
+        )

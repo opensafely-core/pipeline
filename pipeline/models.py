@@ -3,6 +3,7 @@ from __future__ import annotations
 import pathlib
 import re
 import shlex
+import warnings
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any
@@ -274,8 +275,9 @@ class Pipeline:
             )
         else:
             if version != LATEST_VERSION:
-                print(
-                    f"Warning: Your project file is using an old version ({version}); consider updating to version {LATEST_VERSION}"
+                warnings.warn(
+                    f"ProjectWarning: Your project file is using an old version ({version}); consider updating to version {LATEST_VERSION}",
+                    stacklevel=2,
                 )
 
         feat = get_feature_flags_for_version(version)
