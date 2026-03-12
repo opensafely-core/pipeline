@@ -36,6 +36,16 @@ def test_get_feature_flags_for_version_with_v4():
 
 
 def test_get_feature_flags_for_version_with_v5():
-    msg = "The latest version is v4, but got v5"
+    flags = get_feature_flags_for_version(5)
+
+    assert flags.UNIQUE_OUTPUT_PATH
+    assert not flags.EXPECTATIONS_POPULATION
+    assert flags.REMOVE_SUPPORT_FOR_COHORT_EXTRACTOR
+    assert flags.REMOVE_SUPPORT_FOR_RUN_ALL_ACTION
+    assert flags.REMOVE_SUPPORT_FOR_LATEST_TAG
+
+
+def test_get_feature_flags_for_version_with_v6():
+    msg = "The latest version is v5, but got v6"
     with pytest.raises(ValueError, match=msg):
-        get_feature_flags_for_version(5)
+        get_feature_flags_for_version(6)
