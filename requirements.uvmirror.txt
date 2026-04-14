@@ -22,7 +22,8 @@ iniconfig==2.3.0 ; python_full_version >= '3.10'
 librt==0.8.1 ; python_full_version >= '3.9' and platform_python_implementation != 'PyPy'
     # via mypy
 mypy==1.14.1 ; python_full_version < '3.9'
-mypy==1.19.1 ; python_full_version >= '3.9'
+mypy==1.19.1 ; python_full_version == '3.9.*'
+mypy==1.20.0 ; python_full_version >= '3.10'
 mypy-extensions==1.1.0
     # via mypy
 packaging==26.0
@@ -33,7 +34,9 @@ pluggy==1.5.0 ; python_full_version < '3.9'
     # via pytest
 pluggy==1.6.0 ; python_full_version >= '3.9'
     # via pytest
-pygments==2.19.2
+pygments==2.19.2 ; python_full_version < '3.9'
+    # via devtools
+pygments==2.20.0 ; python_full_version >= '3.9'
     # via
     #   devtools
     #   pytest
@@ -51,7 +54,7 @@ ruamel-yaml-clib==0.2.8
     # via
     #   opensafely-pipeline
     #   ruamel-yaml
-ruff==0.15.6
+ruff==0.15.8
 ruyaml==0.91.0
     # via opensafely-pipeline
 setuptools==75.3.4 ; python_full_version < '3.9'
@@ -60,7 +63,7 @@ setuptools==82.0.1 ; python_full_version >= '3.9'
     # via ruyaml
 six==1.17.0
     # via asttokens
-tomli==2.4.0 ; python_full_version < '3.11'
+tomli==2.4.1 ; python_full_version < '3.11'
     # via
     #   mypy
     #   pytest
