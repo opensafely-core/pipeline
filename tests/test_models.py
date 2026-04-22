@@ -32,6 +32,7 @@ def test_success():
         "test:other",
         "test:vnotdigits",
         "test:v1x1",
+        "test:pre",
     ],
 )
 def test_action_handles_invalid_version(action):
@@ -61,6 +62,8 @@ def test_action_handles_invalid_version(action):
         "test:v1.2.3",
         "test:dev",
         "test:latest",
+        "test:v1-pre",
+        "test:v1.2-pre",
     ],
 )
 def test_action_handles_valid_version(action):
