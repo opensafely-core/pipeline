@@ -16,8 +16,10 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v6
-      - uses: opensafely-core/setup-action@v1
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+      - uses: opensafely-core/setup-action@93841f27c28c75bf85b1a0a915e2391a06c6c8a6 # v1
         with:
           install-just: true
           install-uv: true
@@ -33,8 +35,10 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v6
-      - uses: "opensafely-core/setup-action@v1"
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+      - uses: opensafely-core/setup-action@93841f27c28c75bf85b1a0a915e2391a06c6c8a6 # v1
         with:
           install-just: true
           install-uv: true
@@ -51,8 +55,10 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v6
-      - uses: "opensafely-core/setup-action@v1"
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+      - uses: opensafely-core/setup-action@93841f27c28c75bf85b1a0a915e2391a06c6c8a6 # v1
         with:
           install-just: true
           install-uv: true
@@ -70,10 +76,11 @@ jobs:
 
     name: Test we can build a Python package
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
-      - uses: "opensafely-core/setup-action@v1"
+          persist-credentials: false
+      - uses: opensafely-core/setup-action@93841f27c28c75bf85b1a0a915e2391a06c6c8a6 # v1
         with:
           install-just: true
           install-uv: true
@@ -94,9 +101,10 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Tag new release
         run: |
           # ignore failures here to avoid merges into main without version
