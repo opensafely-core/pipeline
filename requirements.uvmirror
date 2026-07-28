@@ -9,7 +9,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     # via pytest
 coverage==7.6.1 ; python_full_version < '3.9'
 coverage==7.10.7 ; python_full_version == '3.9.*'
-coverage==7.15.0 ; python_full_version >= '3.10'
+coverage==7.15.1 ; python_full_version >= '3.10'
 devtools==0.12.2
 distro==1.9.0
     # via ruyaml
@@ -21,11 +21,11 @@ iniconfig==2.1.0 ; python_full_version < '3.10'
     # via pytest
 iniconfig==2.3.0 ; python_full_version >= '3.10'
     # via pytest
-librt==0.12.0 ; python_full_version >= '3.9' and platform_python_implementation != 'PyPy'
+librt==0.13.0 ; python_full_version >= '3.9' and platform_python_implementation != 'PyPy'
     # via mypy
 mypy==1.14.1 ; python_full_version < '3.9'
 mypy==1.19.1 ; python_full_version == '3.9.*'
-mypy==2.1.0 ; python_full_version >= '3.10'
+mypy==2.3.0 ; python_full_version >= '3.10'
 mypy-extensions==1.1.0
     # via mypy
 packaging==26.2
@@ -56,7 +56,7 @@ ruamel-yaml-clib==0.2.8
     # via
     #   opensafely-pipeline
     #   ruamel-yaml
-ruff==0.15.20
+ruff==0.15.21
 ruyaml==0.91.0
     # via opensafely-pipeline
 setuptools==75.3.4 ; python_full_version < '3.9'
