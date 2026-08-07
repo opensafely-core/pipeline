@@ -23,7 +23,8 @@ upgrade-package package: && uvmirror devenv
     uv lock --upgrade-package {{ package }}
 
 # Upgrade all packages to the latest versions (with cooldown)
-upgrade-all cooldown="7 days ago": update-fastparser-dependencies && uvmirror devenv _build-fastparser-if-required
+upgrade-all cooldown="7 days ago": && uvmirror devenv _build-fastparser-if-required
+    just update-fastparser-dependencies "{{ cooldown }}"
     uv lock --upgrade --exclude-newer "{{ cooldown }}"
 
 # update the uv mirror requirements file
@@ -43,8 +44,10 @@ _build-fastparser-if-required:
         just build-fastparser-wheel
     fi
 
-update-fastparser-dependencies:
-    uv pip compile --upgrade fastparser/requirements.in -o fastparser/requirements.txt
+update-fastparser-dependencies cooldown="7 days ago":
+    # `uv pip compile` doesn't allow us to passthrough pip-args (for the cooldown),
+    # so we need to run pip-compile here
+    uv pip compile --exclude-newer="{{ cooldown }}" --upgrade fastparser/requirements.in -o fastparser/requirements.txt
 
 build-fastparser-wheel:
     #!/usr/bin/env bash
