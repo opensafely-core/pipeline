@@ -18,7 +18,7 @@ prodenv:
 devenv:
     uv sync --inexact
 
-# Upgrade a single package to the latest version as of the cutoff in pyproject.toml
+# Upgrade a single package
 upgrade-package package: && uvmirror devenv
     uv lock --upgrade-package {{ package }}
 
@@ -45,8 +45,6 @@ _build-fastparser-if-required:
     fi
 
 update-fastparser-dependencies cooldown="7 days ago":
-    # `uv pip compile` doesn't allow us to passthrough pip-args (for the cooldown),
-    # so we need to run pip-compile here
     uv pip compile --exclude-newer="{{ cooldown }}" --upgrade fastparser/requirements.in -o fastparser/requirements.txt
 
 build-fastparser-wheel:
