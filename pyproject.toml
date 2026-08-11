@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
+requires = ["setuptools>=83", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -11,7 +11,7 @@ license = {file = "LICENSE"}
 classifiers = [
   "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
   "ruyaml",
 ]
@@ -112,5 +112,6 @@ dev = [
     "mypy",
     "pytest",
     "pytest-mock",
-    "ruff",
+    # temporarily pin ruff until https://github.com/opensafely-core/pipeline/issues/491
+    "ruff<0.16",
 ]
