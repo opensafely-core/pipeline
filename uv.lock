@@ -6,9 +6,6 @@ resolution-markers = [
     "python_full_version < '3.15'",
 ]
 
-[options]
-exclude-newer = "2026-07-22T00:00:00Z"
-
 [[package]]
 name = "ast-serialize"
 version = "0.6.0"
