@@ -7,7 +7,7 @@ asttokens==2.4.1
     # via devtools
 colorama==0.4.6 ; sys_platform == 'win32'
     # via pytest
-coverage==7.15.2
+coverage==7.15.3
 devtools==0.12.2
 distro==1.9.0
     # via ruyaml
@@ -22,7 +22,7 @@ librt==0.13.0 ; platform_python_implementation != 'PyPy'
 mypy==2.3.0
 mypy-extensions==1.1.0
     # via mypy
-packaging==26.2
+packaging==26.3
     # via pytest
 pathspec==1.1.1
     # via mypy
