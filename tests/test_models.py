@@ -4,6 +4,7 @@ import pytest
 
 from pipeline import load_pipeline
 from pipeline.exceptions import ValidationError
+from pipeline.features import LATEST_VERSION, MINIMUM_VERSION
 from pipeline.models import Outputs, Pipeline
 
 
@@ -37,7 +38,7 @@ def test_success():
 )
 def test_action_handles_invalid_version(action):
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             "generate_cohort": {
                 "run": action,
@@ -68,7 +69,7 @@ def test_action_handles_invalid_version(action):
 )
 def test_action_handles_valid_version(action):
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             "generate_cohort": {
                 "run": action,
@@ -163,7 +164,7 @@ def test_action_extraction_command_with_less_than_highly_sensitive_output(
     image, sensitivity
 ):
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             "generate_cohort": {
                 "run": f"{image}:latest generate-dataset",
@@ -216,7 +217,7 @@ def test_action_ehrql_with_no_output_file(command):
 
 def test_action_extraction_command_with_one_outputs():
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             "generate_cohort": {
                 "run": "cohortextractor:latest generate_cohort",
@@ -344,7 +345,7 @@ def test_cohortextractor_actions_not_used_after_v3():
 
 def test_command_properties():
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             "generate_cohort": {
                 "run": "cohortextractor:latest generate_cohort another_arg",
@@ -465,7 +466,7 @@ def test_pipeline_all_actions(test_file):
 
 def test_pipeline_needs_success():
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             "generate_cohort": {
                 "run": "cohortextractor:latest generate_cohort",
@@ -486,7 +487,7 @@ def test_pipeline_needs_success():
 
 def test_pipeline_needs_with_non_comma_delimited_actions():
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             "generate_cohort": {
                 "run": "cohortextractor:latest generate_cohort",
@@ -511,7 +512,7 @@ def test_pipeline_needs_with_non_comma_delimited_actions():
 
 def test_pipeline_needs_with_unknown_action():
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             "action1": {
                 "run": "test:latest",
@@ -530,7 +531,7 @@ def test_pipeline_needs_with_unknown_action():
 
 def test_pipeline_with_duplicated_action_run_commands():
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             "action1": {
                 "run": "test:latest",
@@ -561,7 +562,7 @@ def test_pipeline_with_duplicated_action_run_commands():
 )
 def test_pipeline_with_empty_action(action_value, match):
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {"action1": action_value},
     }
     with pytest.raises(ValidationError, match=match):
@@ -570,7 +571,7 @@ def test_pipeline_with_empty_action(action_value, match):
 
 def test_pipeline_with_empty_run_command():
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             "action1": {
                 "run": "",
@@ -588,7 +589,7 @@ def test_pipeline_with_empty_run_command():
 
 def test_pipeline_without_specifying_output_for_action():
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             "action1": {"run": "test"},
         },
@@ -630,7 +631,7 @@ def test_pipeline_with_non_numeric_version():
         },
     }
 
-    msg = "`version` must be a number between 1 and"
+    msg = f"`version` must be a number between {MINIMUM_VERSION} and {LATEST_VERSION}"
 
     with pytest.raises(ValidationError, match=msg):
         data["version"] = "test"
@@ -639,7 +640,7 @@ def test_pipeline_with_non_numeric_version():
 
 def test_outputs_files_are_unique():
     data = {
-        "version": 2,
+        "version": 4,
         "actions": {
             "generate_cohort": {
                 "run": "cohortextractor:latest generate_cohort",
@@ -688,7 +689,7 @@ def test_outputs_with_unknown_privacy_level():
     with pytest.raises(ValidationError, match=msg):
         # no outputs
         Pipeline.build(
-            version=1,
+            version=4,
             actions={
                 "action1": {
                     "run": "test",
@@ -699,7 +700,7 @@ def test_outputs_with_unknown_privacy_level():
 
     with pytest.raises(ValidationError, match=msg):
         Pipeline.build(
-            version=1,
+            version=4,
             actions={
                 "action1": {
                     "run": "test",
@@ -711,7 +712,7 @@ def test_outputs_with_unknown_privacy_level():
 
 def test_outputs_with_invalid_pattern():
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             "generate_cohort": {
                 "run": "cohortextractor:latest generate_cohort",
@@ -728,7 +729,7 @@ def test_outputs_with_invalid_pattern():
 @pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v1")])
 def test_pipeline_ehrql_specifies_same_output(image, tag):
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             "generate-dataset": {
                 "run": f"{image}:{tag} generate-dataset --output=output/dataset.csv",
@@ -743,7 +744,7 @@ def test_pipeline_ehrql_specifies_same_output(image, tag):
 @pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v1")])
 def test_pipeline_ehrql_specifies_different_output(image, tag):
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             "generate-dataset": {
                 "run": f"{image}:{tag} generate-dataset --output=output/dataset1.csv",
@@ -761,7 +762,7 @@ def test_pipeline_databuilder_recognizes_old_action_spelling():
     # The action name is used to select the validator, so the only way to know that it's been recognized is
     # to give it an invalid input and check that validation fails.
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             "old-spelling": {
                 "run": "databuilder:latest generate_dataset --output=output/dataset1.csv",
@@ -822,7 +823,7 @@ def test_pipeline_databuilder_recognizes_old_action_spelling():
 )
 def test_action_is_database_action(name, run, is_database_action):
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             name: {
                 "run": run,
@@ -961,6 +962,22 @@ def test_warning_for_old_version():
     with pytest.warns(UserWarning, match="project file is using an old version"):
         Pipeline.build(
             version=4,
+            actions={
+                "my_action": {
+                    "outputs": {"highly_sensitive": {"foo": "bar.txt"}},
+                    "run": "test:v1",
+                }
+            },
+        )
+
+
+@pytest.mark.parametrize("version", list(range(1, MINIMUM_VERSION)))
+def test_deprecated_version(version):
+    with pytest.raises(
+        ValidationError, match="project file is using a deprecated version"
+    ):
+        Pipeline.build(
+            version=version,
             actions={
                 "my_action": {
                     "outputs": {"highly_sensitive": {"foo": "bar.txt"}},
