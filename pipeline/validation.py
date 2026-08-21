@@ -3,6 +3,7 @@ from __future__ import annotations
 import fnmatch
 import posixpath
 import warnings
+from collections import defaultdict
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
@@ -13,7 +14,7 @@ from .outputs import get_output_dirs
 
 
 if TYPE_CHECKING:  # pragma: no cover
-    from .models import Action
+    from .models import Action, Command
 
 
 def validate_type(val: Any, exp_type: type, loc: str, optional: bool = False) -> None:
@@ -92,6 +93,29 @@ def validate_action_config(action_id: str, action_config: Any) -> None:
             )
 
 
+def validate_actions_config(actions: dict[str, Action]) -> None:
+    """
+    Validates that actions are consistent and valid with respect to other actions
+    - run commands are not duplicated
+    - Specified `needs` are valid actions
+    """
+    seen: dict[Command, list[str]] = defaultdict(list)
+    for name, config in actions.items():
+        run = config.run
+        if run in seen:
+            raise ValidationError(
+                f"Action {name} has the same 'run' command as other actions: {' ,'.join(seen[run])}"
+            )
+        seen[run].append(name)
+
+    for a in actions.values():
+        for n in a.needs:
+            if n not in actions:
+                raise ValidationError(
+                    f"Action `{a.action_id}` references an unknown action in its `needs` list: {n}"
+                )
+
+
 def validate_not_cohort_extractor_action(action: Action) -> None:
     if action.run.parts[0].startswith("cohortextractor"):
         raise ValidationError(
@@ -119,6 +143,20 @@ def validate_not_latest_tag(action: Action) -> None:
         raise ValidationError(
             f"Action {action.action_id} uses `{action.run.parts[0]}`, which is not supported. Provide a version e.g. `:v2` instead"
         )
+
+
+def validate_unique_output_paths(actions: dict[str, Action]) -> None:
+    """
+    Validates that paths defined in the outputs section are unique
+    """
+    seen_files = []
+    for config in actions.values():
+        for output in config.outputs.dict().values():
+            for filename in output.values():
+                if filename in seen_files:
+                    raise ValidationError(f"Output path {filename} is not unique")
+
+                seen_files.append(filename)
 
 
 def validate_cohortextractor_outputs(action_id: str, action: Action) -> None:

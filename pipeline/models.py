@@ -4,7 +4,6 @@ import pathlib
 import re
 import shlex
 import warnings
-from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any
 
@@ -13,6 +12,7 @@ from .exceptions import InvalidPatternError, ValidationError
 from .features import LATEST_VERSION, get_feature_flags_for_version
 from .validation import (
     validate_action_config,
+    validate_actions_config,
     validate_cohortextractor_outputs,
     validate_ehrql_outputs,
     validate_glob_pattern,
@@ -21,6 +21,7 @@ from .validation import (
     validate_not_latest_tag,
     validate_not_run_all_action,
     validate_type,
+    validate_unique_output_paths,
 )
 
 
@@ -299,34 +300,10 @@ class Pipeline:
             for config in actions.values():
                 validate_not_latest_tag(config)
 
-        seen: dict[Command, list[str]] = defaultdict(list)
-        for name, config in actions.items():
-            run = config.run
-            if run in seen:
-                raise ValidationError(
-                    f"Action {name} has the same 'run' command as other actions: {' ,'.join(seen[run])}"
-                )
-            seen[run].append(name)
+        validate_actions_config(actions)
 
         if feat.UNIQUE_OUTPUT_PATH:
-            # find duplicate paths defined in the outputs section
-            seen_files = []
-            for config in actions.values():
-                for output in config.outputs.dict().values():
-                    for filename in output.values():
-                        if filename in seen_files:
-                            raise ValidationError(
-                                f"Output path {filename} is not unique"
-                            )
-
-                        seen_files.append(filename)
-
-        for a in actions.values():
-            for n in a.needs:
-                if n not in actions:
-                    raise ValidationError(
-                        f"Action `{a.action_id}` references an unknown action in its `needs` list: {n}"
-                    )
+            validate_unique_output_paths(actions)
 
         if feat.REMOVE_SUPPORT_FOR_COHORT_EXTRACTOR:
             if expectations is not None:
