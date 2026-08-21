@@ -9,7 +9,7 @@ from typing import Any
 
 from .constants import RUN_ALL_COMMAND
 from .exceptions import InvalidPatternError, ValidationError
-from .features import LATEST_VERSION, get_feature_flags_for_version
+from .features import LATEST_VERSION, MINIMUM_VERSION, get_feature_flags_for_version
 from .validation import (
     validate_action_config,
     validate_actions_config,
@@ -272,9 +272,13 @@ class Pipeline:
             version = float(version)
         except (TypeError, ValueError):
             raise ValidationError(
-                f"`version` must be a number between 1 and {LATEST_VERSION}"
+                f"`version` must be a number between {MINIMUM_VERSION} and {LATEST_VERSION}"
             )
         else:
+            if version < MINIMUM_VERSION:
+                raise ValidationError(
+                    f"Your project file is using a deprecated version ({version}); update to at least version {MINIMUM_VERSION}"
+                )
             if version != LATEST_VERSION:
                 warnings.warn(
                     f"ProjectWarning: Your project file is using an old version ({version}); consider updating to version {LATEST_VERSION}",
