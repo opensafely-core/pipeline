@@ -158,8 +158,8 @@ def test_action_extraction_command_with_one_outputs():
 
     config = Pipeline.build(**data)
 
-    outputs = config.actions["generate_output"].outputs.dict()
-    assert len(outputs.values()) == 1
+    outputs = config.actions["generate_output"].outputs
+    assert len(outputs) == 1
 
 
 def test_ehrql_action_dataset_extraction_command_with_one_output():
