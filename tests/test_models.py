@@ -40,10 +40,10 @@ def test_action_handles_invalid_version(action):
     data = {
         "version": 4,
         "actions": {
-            "generate_cohort": {
+            "generate_output": {
                 "run": action,
                 "outputs": {
-                    "highly_sensitive": {"cohort": "output/input.csv"},
+                    "highly_sensitive": {"output": "output/input.csv"},
                 },
             }
         },
@@ -71,91 +71,19 @@ def test_action_handles_valid_version(action):
     data = {
         "version": 4,
         "actions": {
-            "generate_cohort": {
+            "generate_output": {
                 "run": action,
                 "outputs": {
-                    "highly_sensitive": {"cohort": "output/input.csv"},
+                    "highly_sensitive": {"output": "output/input.csv"},
                 },
             }
         },
     }
 
-    run = Pipeline.build(**data).actions["generate_cohort"].run
+    run = Pipeline.build(**data).actions["generate_output"].run
     n, _, v = action.partition(":")
     assert run.name == n
     assert run.version == v
-
-
-def test_action_cohortextractor_multiple_outputs_with_output_flag():
-    data = {
-        "version": 1,
-        "actions": {
-            "generate_cohort": {
-                "run": "cohortextractor:latest generate_cohort --output-dir=output",
-                "outputs": {
-                    "moderately_sensitive": {
-                        "cohort": "output/input.csv",
-                        "other": "other/graph.png",
-                    }
-                },
-            }
-        },
-    }
-
-    run_command = Pipeline.build(**data).actions["generate_cohort"].run.raw
-
-    assert run_command == "cohortextractor:latest generate_cohort --output-dir=output"
-
-
-def test_action_cohortextractor_multiple_ouputs_without_output_flag():
-    data = {
-        "version": 1,
-        "actions": {
-            "generate_cohort": {
-                "run": "cohortextractor:latest generate_cohort",
-                "outputs": {
-                    "moderately_sensitive": {
-                        "cohort": "output/input.csv",
-                        "other": "other/graph.png",
-                    }
-                },
-            }
-        },
-    }
-
-    msg = (
-        "generate_cohort command should produce output in only one directory, found 2:"
-    )
-    with pytest.raises(ValidationError, match=msg):
-        Pipeline.build(**data)
-
-
-# Note that the behaviour this tests confirms is nonsense, but I don't really want to
-# touch any of the cohortextractor stuff and coverage complains if we don't exercise
-# this logic.
-def test_action_cohortextractor_multiple_ouputs_levels():
-    data = {
-        "version": 1,
-        "actions": {
-            "generate_cohort": {
-                "run": "cohortextractor:latest generate_cohort",
-                "outputs": {
-                    "highly_sensitive": {
-                        "cohort": "output/input.csv",
-                    },
-                    "moderately_sensitive": {
-                        "other": "other/graph.png",
-                    },
-                },
-            }
-        },
-    }
-
-    msg = (
-        "A `generate_cohort` action must have exactly one output; generate_cohort had 2"
-    )
-    with pytest.raises(ValidationError, match=msg):
-        Pipeline.build(**data)
 
 
 @pytest.mark.parametrize("image", ["databuilder", "ehrql"])
@@ -166,17 +94,17 @@ def test_action_extraction_command_with_less_than_highly_sensitive_output(
     data = {
         "version": 4,
         "actions": {
-            "generate_cohort": {
+            "generate_dataset": {
                 "run": f"{image}:latest generate-dataset",
                 "outputs": {
-                    sensitivity: {"cohort": "output/input.csv"},
+                    sensitivity: {"dataset": "output/input.csv"},
                 },
             }
         },
     }
 
     msg = (
-        "`generate_cohort` action uses `generate-dataset` and so all outputs must "
+        "`generate_dataset` action uses `generate-dataset` and so all outputs must "
         "be labelled `highly_sensitive`"
     )
     with pytest.raises(ValidationError, match=msg):
@@ -218,10 +146,10 @@ def test_action_extraction_command_with_one_outputs():
     data = {
         "version": 4,
         "actions": {
-            "generate_cohort": {
-                "run": "cohortextractor:latest generate_cohort",
+            "generate_output": {
+                "run": "action:v1 generate_output",
                 "outputs": {
-                    "highly_sensitive": {"cohort": "output/input.csv"},
+                    "highly_sensitive": {"dataset": "output/input.csv"},
                 },
             }
         },
@@ -229,7 +157,7 @@ def test_action_extraction_command_with_one_outputs():
 
     config = Pipeline.build(**data)
 
-    outputs = config.actions["generate_cohort"].outputs.dict()
+    outputs = config.actions["generate_output"].outputs.dict()
     assert len(outputs.values()) == 1
 
 
@@ -276,7 +204,7 @@ def test_cohortextractor_actions_not_used_after_v3():
         "version": "4",
         "actions": {
             "generate_cohort": {
-                "run": "cohortextractor:latest generate_cohort",
+                "run": "cohortextractor:v1 generate_cohort",
                 "outputs": {
                     "highly_sensitive": {"cohort": "output/input.csv"},
                 },
@@ -292,22 +220,22 @@ def test_command_properties():
     data = {
         "version": 4,
         "actions": {
-            "generate_cohort": {
-                "run": "cohortextractor:latest generate_cohort another_arg",
-                "outputs": {"highly_sensitive": {"cohort": "output/input.csv"}},
+            "generate_output": {
+                "run": "action:v1 generate_output another_arg",
+                "outputs": {"highly_sensitive": {"output": "output/input.csv"}},
             }
         },
     }
 
-    action = Pipeline.build(**data).actions["generate_cohort"]
-    assert action.run.args == "generate_cohort another_arg"
-    assert action.run.name == "cohortextractor"
+    action = Pipeline.build(**data).actions["generate_output"]
+    assert action.run.args == "generate_output another_arg"
+    assert action.run.name == "action"
     assert action.run.parts == [
-        "cohortextractor:latest",
-        "generate_cohort",
+        "action:v1",
+        "generate_output",
         "another_arg",
     ]
-    assert action.run.version == "latest"
+    assert action.run.version == "v1"
 
 
 def test_pipeline_all_actions(test_file):
@@ -329,44 +257,44 @@ def test_pipeline_needs_success():
     data = {
         "version": 4,
         "actions": {
-            "generate_cohort": {
-                "run": "cohortextractor:latest generate_cohort",
-                "outputs": {"highly_sensitive": {"cohort": "output/input.csv"}},
+            "generate_output": {
+                "run": "action:v1 generate_output",
+                "outputs": {"highly_sensitive": {"output": "output/input.csv"}},
             },
             "do_analysis": {
                 "run": "python:latest foo.py",
-                "outputs": {"highly_sensitive": {"cohort2": "output/input2.csv"}},
-                "needs": ["generate_cohort"],
+                "outputs": {"highly_sensitive": {"output2": "output/input2.csv"}},
+                "needs": ["generate_output"],
             },
         },
     }
 
     config = Pipeline.build(**data)
 
-    assert config.actions["do_analysis"].needs == ["generate_cohort"]
+    assert config.actions["do_analysis"].needs == ["generate_output"]
 
 
 def test_pipeline_needs_with_non_comma_delimited_actions():
     data = {
         "version": 4,
         "actions": {
-            "generate_cohort": {
-                "run": "cohortextractor:latest generate_cohort",
-                "outputs": {"moderately_sensitive": {"cohort": "output/input.csv"}},
+            "generate_output": {
+                "run": "action:v1 generate_output",
+                "outputs": {"moderately_sensitive": {"output": "output/input.csv"}},
             },
             "do_analysis": {
                 "run": "python:latest foo.py",
-                "outputs": {"moderately_sensitive": {"cohort2": "output/input2.csv"}},
+                "outputs": {"moderately_sensitive": {"output2": "output/input2.csv"}},
             },
             "do_further_analysis": {
                 "run": "python:latest foo2.py",
-                "needs": ["generate_cohort do_analysis"],
-                "outputs": {"moderately_sensitive": {"cohort3": "output/input3.csv"}},
+                "needs": ["generate_output do_analysis"],
+                "outputs": {"moderately_sensitive": {"output3": "output/input3.csv"}},
             },
         },
     }
 
-    msg = "`needs` actions should be separated with commas, but do_further_analysis needs `generate_cohort do_analysis`"
+    msg = "`needs` actions should be separated with commas, but do_further_analysis needs `generate_output do_analysis`"
     with pytest.raises(ValidationError, match=msg):
         Pipeline.build(**data)
 
@@ -379,7 +307,7 @@ def test_pipeline_needs_with_unknown_action():
                 "run": "test:latest",
                 "needs": ["action2"],
                 "outputs": {
-                    "moderately_sensitive": {"cohort": "output.csv"},
+                    "moderately_sensitive": {"dataset": "output.csv"},
                 },
             },
         },
@@ -397,13 +325,13 @@ def test_pipeline_with_duplicated_action_run_commands():
             "action1": {
                 "run": "test:latest",
                 "outputs": {
-                    "moderately_sensitive": {"cohort": "output.csv"},
+                    "moderately_sensitive": {"dataset": "output.csv"},
                 },
             },
             "action2": {
                 "run": "test:latest",
                 "outputs": {
-                    "moderately_sensitive": {"cohort": "output.csv"},
+                    "moderately_sensitive": {"dataset": "output.csv"},
                 },
             },
         },
@@ -437,7 +365,7 @@ def test_pipeline_with_empty_run_command():
             "action1": {
                 "run": "",
                 "outputs": {
-                    "moderately_sensitive": {"cohort": "output.csv"},
+                    "moderately_sensitive": {"dataset": "output.csv"},
                 },
             },
         },
@@ -466,7 +394,7 @@ def test_pipeline_with_missing_or_none_version():
         "actions": {
             "action1": {
                 "run": "test",
-                "outputs": {"highly_sensitive": {"cohort": "output.csv"}},
+                "outputs": {"highly_sensitive": {"dataset": "output.csv"}},
             },
         },
     }
@@ -486,7 +414,7 @@ def test_pipeline_with_non_numeric_version():
         "actions": {
             "action1": {
                 "run": "test",
-                "outputs": {"highly_sensitive": {"cohort": "output.csv"}},
+                "outputs": {"highly_sensitive": {"output": "output.csv"}},
             },
         },
     }
@@ -502,11 +430,11 @@ def test_outputs_files_are_unique():
     data = {
         "version": 4,
         "actions": {
-            "generate_cohort": {
-                "run": "cohortextractor:latest generate_cohort",
+            "generate_output": {
+                "run": "action:v1 generate_output",
                 "outputs": {
                     "highly_sensitive": {
-                        "cohort": "output/input.csv",
+                        "output": "output/input.csv",
                         "test": "output/input.csv",
                     }
                 },
@@ -517,30 +445,6 @@ def test_outputs_files_are_unique():
     msg = "Output path output/input.csv is not unique"
     with pytest.raises(ValidationError, match=msg):
         Pipeline.build(**data)
-
-
-def test_outputs_duplicate_files_in_v1():
-    data = {
-        "version": 1,
-        "actions": {
-            "generate_cohort": {
-                "run": "cohortextractor:latest generate_cohort",
-                "outputs": {
-                    "highly_sensitive": {
-                        "cohort": "output/input.csv",
-                        "test": "output/input.csv",
-                    }
-                },
-            },
-        },
-    }
-
-    generate_cohort = Pipeline.build(**data).actions["generate_cohort"]
-
-    cohort = generate_cohort.outputs.highly_sensitive["cohort"]
-    test = generate_cohort.outputs.highly_sensitive["test"]
-
-    assert cohort == test
 
 
 def test_outputs_with_unknown_privacy_level():
@@ -567,7 +471,7 @@ def test_outputs_with_unknown_privacy_level():
                 "actions": {
                     "action1": {
                         "run": "test",
-                        "outputs": {"test": {"cohort": "output/input.csv"}},
+                        "outputs": {"test": {"dataset": "output/input.csv"}},
                     }
                 },
             }
@@ -578,8 +482,8 @@ def test_outputs_with_invalid_pattern():
     data = {
         "version": 4,
         "actions": {
-            "generate_cohort": {
-                "run": "cohortextractor:latest generate_cohort",
+            "generate_output": {
+                "run": "action:v1 generate_output",
                 "outputs": {"highly_sensitive": {"test": "test/foo"}},
             },
         },
@@ -659,19 +563,9 @@ def test_pipeline_databuilder_recognizes_old_action_spelling():
             True,
         ),
         (
-            "generate_cohort",
-            "cohortextractor:latest generate_cohort args --option",
-            True,
-        ),
-        (
             "generate_databuilder_dataset",
             "databuilder:v0 generate-dataset args --output=output/input.csv",
             True,
-        ),
-        (
-            "generate_cohortextractor_measures",
-            "cohortextractor:latest generate_measures args --option",
-            False,
         ),
         (
             "non_db_generate_measures",
@@ -703,25 +597,25 @@ def test_action_images():
             "ehrql": {
                 "run": "ehrql:v1 ...",
                 "outputs": {
-                    "highly_sensitive": {"cohort": "output/ehrql.csv"},
+                    "highly_sensitive": {"dataset": "output/ehrql.csv"},
                 },
             },
             "r1": {
                 "run": "r:latest 1",
                 "outputs": {
-                    "highly_sensitive": {"cohort": "output/r1.csv"},
+                    "highly_sensitive": {"dataset": "output/r1.csv"},
                 },
             },
             "r2": {
                 "run": "r:latest 2",
                 "outputs": {
-                    "highly_sensitive": {"cohort": "output/r2.csv"},
+                    "highly_sensitive": {"dataset": "output/r2.csv"},
                 },
             },
             "python": {
                 "run": "python:v2 ...",
                 "outputs": {
-                    "highly_sensitive": {"cohort": "output/python.csv"},
+                    "highly_sensitive": {"dataset": "output/python.csv"},
                 },
             },
         },
@@ -738,25 +632,25 @@ def test_action_images_v5():
             "ehrql": {
                 "run": "ehrql:v1 ...",
                 "outputs": {
-                    "highly_sensitive": {"cohort": "output/ehrql.csv"},
+                    "highly_sensitive": {"dataset": "output/ehrql.csv"},
                 },
             },
             "r1": {
                 "run": "r:v1 1",
                 "outputs": {
-                    "highly_sensitive": {"cohort": "output/r1.csv"},
+                    "highly_sensitive": {"dataset": "output/r1.csv"},
                 },
             },
             "r2": {
                 "run": "r:v2 2",
                 "outputs": {
-                    "highly_sensitive": {"cohort": "output/r2.csv"},
+                    "highly_sensitive": {"dataset": "output/r2.csv"},
                 },
             },
             "python": {
                 "run": "python:v2 ...",
                 "outputs": {
-                    "highly_sensitive": {"cohort": "output/python.csv"},
+                    "highly_sensitive": {"dataset": "output/python.csv"},
                 },
             },
         },

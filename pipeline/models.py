@@ -13,7 +13,6 @@ from .features import LATEST_VERSION, MINIMUM_VERSION, get_feature_flags_for_ver
 from .validation import (
     validate_action_config,
     validate_actions_config,
-    validate_cohortextractor_outputs,
     validate_ehrql_outputs,
     validate_glob_pattern,
     validate_no_kwargs,
@@ -29,7 +28,6 @@ from .validation import (
 DB_COMMANDS = {
     "ehrql": ("generate-dataset", "generate-measures"),
     "sqlrunner": "*",  # all commands are valid
-    "cohortextractor": ("generate_cohort", "generate_codelist_report"),
     "databuilder": ("generate-dataset",),
 }
 
@@ -191,8 +189,6 @@ class Action:
                 )
         action = cls(action_id, outputs, run, needs, config, dummy_data_file)
 
-        if re.match(r"cohortextractor:\S+ generate_cohort", run.raw):
-            validate_cohortextractor_outputs(action_id, action)
         if re.match(r"(ehrql|databuilder):\S+ generate[-_]dataset", run.raw):
             validate_ehrql_outputs(action_id, action)
 
@@ -274,9 +270,8 @@ class Pipeline:
             _actions[action_id] = Action.build(action_id, **action_config)
         actions = _actions
 
-        if feat.REMOVE_SUPPORT_FOR_COHORT_EXTRACTOR:
-            for config in actions.values():
-                validate_not_cohort_extractor_action(config)
+        for config in actions.values():
+            validate_not_cohort_extractor_action(config)
 
         if feat.REMOVE_SUPPORT_FOR_LATEST_TAG:
             for config in actions.values():
@@ -284,8 +279,7 @@ class Pipeline:
 
         validate_actions_config(actions)
 
-        if feat.UNIQUE_OUTPUT_PATH:
-            validate_unique_output_paths(actions)
+        validate_unique_output_paths(actions)
 
         return cls(version, actions)
 

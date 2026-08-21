@@ -9,7 +9,7 @@ def test_get_all_output_patterns_from_project_file_success():
         run: python:latest python analyse1.py
         outputs:
           moderately_sensitive:
-            cohort: output/input.csv
+            output: output/input.csv
             other: output/graph_*.png
 
       second:

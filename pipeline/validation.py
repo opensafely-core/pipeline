@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Any
 
 from .constants import LEVEL4_FILE_TYPES
 from .exceptions import InvalidPatternError, ValidationError
-from .outputs import get_output_dirs
 
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -157,41 +156,6 @@ def validate_unique_output_paths(actions: dict[str, Action]) -> None:
                     raise ValidationError(f"Output path {filename} is not unique")
 
                 seen_files.append(filename)
-
-
-def validate_cohortextractor_outputs(action_id: str, action: Action) -> None:
-    """
-    Check cohortextractor's output config is valid for this command
-
-    We can't validate outputs in the Action or Outputs models because we need
-    to look up other fields (eg run).
-    """
-    # ensure we only have output level defined.
-    num_output_levels = len(action.outputs)
-    if num_output_levels != 1:
-        raise ValidationError(
-            "A `generate_cohort` action must have exactly one output; "
-            f"{action_id} had {num_output_levels}"
-        )
-
-    output_dirs = get_output_dirs(action.outputs)
-    if len(output_dirs) == 1:
-        return
-
-    # If we detect multiple output directories but the command explicitly
-    # specifies an output directory then we assume the user knows what
-    # they're doing and don't attempt to modify the output directory or
-    # throw an error
-    flag = "--output-dir"
-    has_output_dir = any(
-        arg == flag or arg.startswith(f"{flag}=") for arg in action.run.parts
-    )
-    if not has_output_dir:
-        raise ValidationError(
-            f"generate_cohort command should produce output in only one "
-            f"directory, found {len(output_dirs)}:\n"
-            + "\n".join([f" - {d}/" for d in output_dirs])
-        )
 
 
 def validate_ehrql_outputs(action_id: str, action: Action) -> None:
