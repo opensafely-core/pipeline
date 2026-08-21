@@ -61,7 +61,7 @@ install-fastparser: devenv
 
 # Run the tests
 test python-version="$(cat .python-version)" extra="" *args="":
-    uv run --python {{ python-version }} {{ extra }} coverage run --module pytest
+    uv run --python {{ python-version }} {{ extra }} coverage run --module pytest {{ args }}
     uv run --python {{ python-version }} {{ extra }} coverage report || $BIN/coverage html
 
 test-with-fastparser python-version="$(cat .python-version)":
