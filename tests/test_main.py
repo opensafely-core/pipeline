@@ -16,7 +16,7 @@ def test_load_pipeline_with_path(mocker, tmp_path):
         "actions": {
             "first": {
                 "run": "python:latest python foo.py",
-                "outputs": {"highly_sensitive": {"cohort": "output/cohort.csv"}},
+                "outputs": {"highly_sensitive": {"result": "output/result.csv"}},
             }
         },
     }
