@@ -12,11 +12,11 @@ def test_load_pipeline_with_file(test_file):
 
 def test_load_pipeline_with_path(mocker, tmp_path):
     data = {
-        "version": 1,
+        "version": 4,
         "actions": {
             "first": {
                 "run": "python:latest python foo.py",
-                "outputs": {"highly_sensitive": {"cohort": "output/cohort.csv"}},
+                "outputs": {"highly_sensitive": {"result": "output/result.csv"}},
             }
         },
     }
