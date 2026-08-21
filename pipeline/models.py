@@ -56,26 +56,6 @@ def is_database_action(args: list[str]) -> bool:
 
 
 @dataclass(frozen=True)
-class Expectations:
-    population_size: int
-
-    @classmethod
-    def build(
-        cls,
-        population_size: Any = None,
-        **kwargs: Any,
-    ) -> Expectations:
-        validate_no_kwargs(kwargs, "project `expectations` section")
-        try:
-            population_size = int(population_size)
-        except (TypeError, ValueError):
-            raise ValidationError(
-                "Project expectations population size must be a number",
-            )
-        return cls(population_size)
-
-
-@dataclass(frozen=True)
 class Outputs:
     highly_sensitive: dict[str, str] | None
     moderately_sensitive: dict[str, str] | None
@@ -250,14 +230,12 @@ class Action:
 class Pipeline:
     version: float
     actions: dict[str, Action]
-    expectations: Expectations | None
 
     @classmethod
     def build(
         cls,
         version: Any = None,
         actions: Any = None,
-        expectations: Any = None,
         **kwargs: Any,
     ) -> Pipeline:
         validate_no_kwargs(kwargs, "project")
@@ -309,27 +287,7 @@ class Pipeline:
         if feat.UNIQUE_OUTPUT_PATH:
             validate_unique_output_paths(actions)
 
-        if feat.REMOVE_SUPPORT_FOR_COHORT_EXTRACTOR:
-            if expectations is not None:
-                raise ValidationError(
-                    "Project includes `expectations` section, which is not supported in this version. "
-                    "This section is only applicable to deprecated cohortextractor actions; you can safely remove it."
-                )
-        elif feat.EXPECTATIONS_POPULATION:
-            if expectations is None:
-                raise ValidationError("Project must include `expectations` section")
-        else:
-            expectations = {"population_size": 1000}
-
-        if expectations is not None:
-            validate_type(expectations, dict, "Project `expectations` section")
-            if "population_size" not in expectations:
-                raise ValidationError(
-                    "Project `expectations` section must include `population_size` section",
-                )
-            expectations = Expectations.build(**expectations)
-
-        return cls(version, actions, expectations)
+        return cls(version, actions)
 
     @property
     def all_actions(self) -> list[str]:
