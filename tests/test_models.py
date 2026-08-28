@@ -192,12 +192,13 @@ def test_expected_privacy_levels():
     }
 
 
-def test_action_ehrql_with_no_output_file():
+@pytest.mark.parametrize("command", ["generate-dataset", "generate-measures"])
+def test_action_ehrql_with_no_output_file(command):
     data = {
         "version": 4,
         "actions": {
-            "generate_dataset": {
-                "run": "ehrql:v1 generate-dataset",
+            "ehrql_action": {
+                "run": f"ehrql:v1 {command}",
                 "outputs": {
                     "highly_sensitive": {"dataset": "output/input.csv"},
                 },
@@ -206,8 +207,8 @@ def test_action_ehrql_with_no_output_file():
     }
 
     msg = (
-        "`generate_dataset` action does not provide an `--output` argument specifying "
-        "where the results of `generate-dataset` should be stored"
+        "`ehrql_action` action does not provide an `--output` argument specifying "
+        f"where the results of `{command}` should be stored"
     )
     with pytest.raises(ValidationError, match=msg):
         Pipeline.build(**data)
@@ -240,6 +241,22 @@ def test_action_ehrql_with_multiple_output_files():
                 "run": "ehrql:v1 generate-dataset --output outputs:arrow",
                 "outputs": {
                     "highly_sensitive": {"results": "outputs/*.arrow"},
+                },
+            }
+        },
+    }
+
+    assert Pipeline.build(**data)
+
+
+def test_action_ehrql_measures_with_multiple_output_files():
+    data = {
+        "version": 4,
+        "actions": {
+            "generate_measures": {
+                "run": "ehrql:v1 generate-measures --output outputs/measures:csv",
+                "outputs": {
+                    "moderately_sensitive": {"results": "outputs/measures/*.csv"},
                 },
             }
         },
@@ -736,7 +753,11 @@ def test_pipeline_databuilder_recognizes_old_action_spelling():
             "ehrql:v1 generate-dataset args --output=output/input.csv",
             True,
         ),
-        ("generate_ehrql_measures", "ehrql:v1 generate-measures args --option", True),
+        (
+            "generate_ehrql_measures",
+            "ehrql:v1 generate-measures args --output output/input.csv",
+            True,
+        ),
         (
             "sqlrunner",
             "sqlrunner:v1 foo -output=output/input.csv",
