@@ -108,7 +108,7 @@ def test_project_extra_parameters():
     with pytest.raises(
         ValidationError, match=re.escape("Unexpected parameters (extra) in project")
     ):
-        Pipeline.build(extra=123)
+        Pipeline.build(version=5, extra=123)
 
 
 def test_action_extra_parameters():

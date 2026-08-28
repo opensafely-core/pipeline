@@ -237,7 +237,6 @@ class Pipeline:
         actions: Any = None,
         **kwargs: Any,
     ) -> Pipeline:
-        validate_no_kwargs(kwargs, "project")
         if version is None:
             raise ValidationError(
                 f"Project file must have a `version` attribute specifying which "
@@ -261,6 +260,8 @@ class Pipeline:
                     f"ProjectWarning: Your project file is using an old version ({version}); consider updating to version {LATEST_VERSION}",
                     stacklevel=2,
                 )
+
+        validate_no_kwargs(kwargs, "project")
 
         feat = get_feature_flags_for_version(version)
 

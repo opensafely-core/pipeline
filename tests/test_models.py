@@ -780,8 +780,16 @@ def test_warning_for_old_version():
         )
 
 
-@pytest.mark.parametrize("version", list(range(1, MINIMUM_VERSION)))
-def test_deprecated_version(version):
+@pytest.mark.parametrize(
+    "version,extra_params",
+    [
+        *[(version, {}) for version in range(1, MINIMUM_VERSION) if version != 3],
+        # verify that a v3 project.yaml raises a deprecated version error
+        # in advance of the unexpected kwargs check
+        (3, {"expectations": {"population_size": 1000}}),
+    ],
+)
+def test_deprecated_version(version, extra_params):
     with pytest.raises(
         ValidationError, match="project file is using a deprecated version"
     ):
@@ -793,4 +801,5 @@ def test_deprecated_version(version):
                     "run": "test:v1",
                 }
             },
+            **extra_params,
         )
