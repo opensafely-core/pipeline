@@ -178,8 +178,15 @@ def validate_ehrql_outputs(action_id: str, action: Action, ehrql_type: str) -> N
             f"where the results of `generate-{ehrql_type}` should be stored"
         )
 
-    output_patterns = (action.outputs.highly_sensitive or {}).values()
-    if not output_patterns_match_spec(output_spec, list(output_patterns)):
+    if ehrql_type == "dataset":
+        output_patterns = list((action.outputs.highly_sensitive or {}).values())
+    else:
+        assert ehrql_type == "measures"
+        output_patterns = list((action.outputs.highly_sensitive or {}).values()) + list(
+            (action.outputs.moderately_sensitive or {}).values()
+        )
+
+    if not output_patterns_match_spec(output_spec, output_patterns):
         expected = expected_pattern_for_spec(output_spec)
         formatted_patterns = "                   \n".join(output_patterns)
         raise ValidationError(
