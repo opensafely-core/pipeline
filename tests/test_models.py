@@ -233,6 +233,44 @@ def test_action_extraction_command_with_one_outputs():
     assert len(outputs.values()) == 1
 
 
+def test_ehrql_action_dataset_extraction_command_with_one_output():
+    data = {
+        "version": 5,
+        "actions": {
+            "generate_dataset": {
+                "run": "ehrql:v1 generate-dataset --output output/input.csv",
+                "outputs": {
+                    "highly_sensitive": {"cohort": "output/input.csv"},
+                },
+            }
+        },
+    }
+
+    config = Pipeline.build(**data)
+
+    outputs = config.actions["generate_dataset"].outputs.dict()
+    assert len(outputs.values()) == 1
+
+
+def test_ehrql_action_measures_extraction_command_with_one_output():
+    data = {
+        "version": 5,
+        "actions": {
+            "generate_measures": {
+                "run": "ehrql:v1 generate-measures --output output/input.csv",
+                "outputs": {
+                    "moderately_sensitive": {"cohort": "output/input.csv"},
+                },
+            }
+        },
+    }
+
+    config = Pipeline.build(**data)
+
+    outputs = config.actions["generate_measures"].outputs.dict()
+    assert len(outputs.values()) == 1
+
+
 def test_action_ehrql_with_multiple_output_files():
     data = {
         "version": 4,
