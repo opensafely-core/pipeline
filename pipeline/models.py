@@ -7,7 +7,6 @@ import warnings
 from dataclasses import dataclass
 from typing import Any
 
-from .constants import RUN_ALL_COMMAND
 from .exceptions import InvalidPatternError, ValidationError
 from .features import LATEST_VERSION, MINIMUM_VERSION, get_feature_flags_for_version
 from .validation import (
@@ -268,8 +267,8 @@ class Pipeline:
         validate_type(actions, dict, "Project `actions` section")
 
         _actions = {}
+        validate_not_run_all_action(list(actions))
         for action_id, action_config in actions.items():
-            validate_not_run_all_action(action_id, feat)
             validate_action_config(action_id, action_config)
             _actions[action_id] = Action.build(action_id, **action_config)
         actions = _actions
@@ -291,13 +290,8 @@ class Pipeline:
     def all_actions(self) -> list[str]:
         """
         Get all actions for this Pipeline instance
-
-        Versions < 5 ignore any manually defined run_all action and raise a
-        warning (later project versions the raise an error).
-        We use a list comprehension rather than set operators as previously so we preserve
-        the original order.
         """
-        return [action for action in self.actions if action != RUN_ALL_COMMAND]
+        return list(self.actions)
 
     @property
     def action_images(self) -> set[str]:

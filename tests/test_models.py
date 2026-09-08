@@ -727,19 +727,6 @@ def test_run_all_action_error_in_latest_version():
         )
 
 
-def test_run_all_action_warning_before_v5():
-    with pytest.warns(UserWarning, match="`run_all` is a reserved action name"):
-        Pipeline.build(
-            version=4,
-            actions={
-                "run_all": {
-                    "outputs": {"highly_sensitive": {"foo": "bar.txt"}},
-                    "run": "test:v1",
-                }
-            },
-        )
-
-
 @pytest.mark.parametrize(
     "run_command",
     [
