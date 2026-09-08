@@ -1,19 +1,19 @@
 from pipeline.legacy import get_all_output_patterns_from_project_file
 
 
-def test_get_all_output_patterns_from_project_file_success():
-    config = """
-    version: 4
+def test_get_all_output_patterns_from_project_file_success(version):
+    config = f"""
+    version: {version}
     actions:
       first:
-        run: python:latest python analyse1.py
+        run: python:v2 python analyse1.py
         outputs:
           moderately_sensitive:
             output: output/input.csv
             other: output/graph_*.png
 
       second:
-        run: python:latest python analyse2.py
+        run: python:v2 python analyse2.py
         outputs:
           moderately_sensitive:
             second: output/*.csv

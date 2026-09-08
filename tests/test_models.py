@@ -2,18 +2,18 @@ import dataclasses
 
 import pytest
 
-from pipeline import load_pipeline
+from pipeline import load_pipeline, models
 from pipeline.exceptions import ValidationError
 from pipeline.features import LATEST_VERSION, MINIMUM_VERSION
 from pipeline.models import Outputs, Pipeline
 
 
-def test_success():
+def test_success(version):
     data = {
-        "version": "4",
+        "version": version,
         "actions": {
             "action1": {
-                "run": "test:latest",
+                "run": "test:v1",
                 "outputs": {
                     "moderately_sensitive": {"dataset": "output.csv"},
                 },
@@ -36,9 +36,9 @@ def test_success():
         "test:pre",
     ],
 )
-def test_action_handles_invalid_version(action):
+def test_action_handles_invalid_version(action, version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "generate_output": {
                 "run": action,
@@ -62,14 +62,13 @@ def test_action_handles_invalid_version(action):
         "test:v1.2",
         "test:v1.2.3",
         "test:dev",
-        "test:latest",
         "test:v1-pre",
         "test:v1.2-pre",
     ],
 )
-def test_action_handles_valid_version(action):
+def test_action_handles_valid_version(action, version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "generate_output": {
                 "run": action,
@@ -89,13 +88,13 @@ def test_action_handles_valid_version(action):
 @pytest.mark.parametrize("image", ["databuilder", "ehrql"])
 @pytest.mark.parametrize("sensitivity", ["moderately_sensitive", "minimally_sensitive"])
 def test_action_extraction_command_with_less_than_highly_sensitive_output(
-    image, sensitivity
+    image, sensitivity, version
 ):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "generate_dataset": {
-                "run": f"{image}:latest generate-dataset",
+                "run": f"{image}:v1 generate-dataset",
                 "outputs": {
                     sensitivity: {"dataset": "output/input.csv"},
                 },
@@ -122,9 +121,9 @@ def test_expected_privacy_levels():
 
 
 @pytest.mark.parametrize("command", ["generate-dataset", "generate-measures"])
-def test_action_ehrql_with_no_output_file(command):
+def test_action_ehrql_with_no_output_file(command, version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "ehrql_action": {
                 "run": f"ehrql:v1 {command}",
@@ -143,9 +142,9 @@ def test_action_ehrql_with_no_output_file(command):
         Pipeline.build(**data)
 
 
-def test_action_extraction_command_with_one_outputs():
+def test_action_extraction_command_with_one_outputs(version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "generate_output": {
                 "run": "action:v1 generate_output",
@@ -162,9 +161,9 @@ def test_action_extraction_command_with_one_outputs():
     assert len(outputs) == 1
 
 
-def test_ehrql_action_dataset_extraction_command_with_one_output():
+def test_ehrql_action_dataset_extraction_command_with_one_output(version):
     data = {
-        "version": 5,
+        "version": version,
         "actions": {
             "generate_dataset": {
                 "run": "ehrql:v1 generate-dataset --output output/input.csv",
@@ -181,9 +180,9 @@ def test_ehrql_action_dataset_extraction_command_with_one_output():
     assert len(outputs.values()) == 1
 
 
-def test_ehrql_action_measures_extraction_command_with_one_output():
+def test_ehrql_action_measures_extraction_command_with_one_output(version):
     data = {
-        "version": 5,
+        "version": version,
         "actions": {
             "generate_measures": {
                 "run": "ehrql:v1 generate-measures --output output/input.csv",
@@ -200,9 +199,9 @@ def test_ehrql_action_measures_extraction_command_with_one_output():
     assert len(outputs.values()) == 1
 
 
-def test_action_ehrql_with_multiple_output_files():
+def test_action_ehrql_with_multiple_output_files(version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "generate_dataset": {
                 "run": "ehrql:v1 generate-dataset --output outputs:arrow",
@@ -216,9 +215,9 @@ def test_action_ehrql_with_multiple_output_files():
     assert Pipeline.build(**data)
 
 
-def test_action_ehrql_measures_with_multiple_output_files():
+def test_action_ehrql_measures_with_multiple_output_files(version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "generate_measures": {
                 "run": "ehrql:v1 generate-measures --output outputs/measures:csv",
@@ -232,9 +231,9 @@ def test_action_ehrql_measures_with_multiple_output_files():
     assert Pipeline.build(**data)
 
 
-def test_action_ehrql_with_multiple_output_files_and_mismatch():
+def test_action_ehrql_with_multiple_output_files_and_mismatch(version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "generate_dataset": {
                 "run": "ehrql:v1 generate-dataset --output outputs:arrow",
@@ -254,9 +253,9 @@ def test_action_ehrql_with_multiple_output_files_and_mismatch():
         assert Pipeline.build(**data)
 
 
-def test_cohortextractor_actions_not_used_after_v3():
+def test_cohortextractor_actions_not_used(version):
     data = {
-        "version": "4",
+        "version": version,
         "actions": {
             "generate_cohort": {
                 "run": "cohortextractor:v1 generate_cohort",
@@ -271,9 +270,9 @@ def test_cohortextractor_actions_not_used_after_v3():
         Pipeline.build(**data)
 
 
-def test_command_properties():
+def test_command_properties(version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "generate_output": {
                 "run": "action:v1 generate_output another_arg",
@@ -308,16 +307,16 @@ def test_pipeline_all_actions(test_file):
     ]
 
 
-def test_pipeline_needs_success():
+def test_pipeline_needs_success(version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "generate_output": {
                 "run": "action:v1 generate_output",
                 "outputs": {"highly_sensitive": {"output": "output/input.csv"}},
             },
             "do_analysis": {
-                "run": "python:latest foo.py",
+                "run": "python:v2 foo.py",
                 "outputs": {"highly_sensitive": {"output2": "output/input2.csv"}},
                 "needs": ["generate_output"],
             },
@@ -329,20 +328,20 @@ def test_pipeline_needs_success():
     assert config.actions["do_analysis"].needs == ["generate_output"]
 
 
-def test_pipeline_needs_with_non_comma_delimited_actions():
+def test_pipeline_needs_with_non_comma_delimited_actions(version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "generate_output": {
                 "run": "action:v1 generate_output",
                 "outputs": {"moderately_sensitive": {"output": "output/input.csv"}},
             },
             "do_analysis": {
-                "run": "python:latest foo.py",
+                "run": "python:v2 foo.py",
                 "outputs": {"moderately_sensitive": {"output2": "output/input2.csv"}},
             },
             "do_further_analysis": {
-                "run": "python:latest foo2.py",
+                "run": "python:v2 foo2.py",
                 "needs": ["generate_output do_analysis"],
                 "outputs": {"moderately_sensitive": {"output3": "output/input3.csv"}},
             },
@@ -354,12 +353,12 @@ def test_pipeline_needs_with_non_comma_delimited_actions():
         Pipeline.build(**data)
 
 
-def test_pipeline_needs_with_unknown_action():
+def test_pipeline_needs_with_unknown_action(version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "action1": {
-                "run": "test:latest",
+                "run": "test:v1",
                 "needs": ["action2"],
                 "outputs": {
                     "moderately_sensitive": {"dataset": "output.csv"},
@@ -373,18 +372,18 @@ def test_pipeline_needs_with_unknown_action():
         Pipeline.build(**data)
 
 
-def test_pipeline_with_duplicated_action_run_commands():
+def test_pipeline_with_duplicated_action_run_commands(version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "action1": {
-                "run": "test:latest",
+                "run": "test:v1",
                 "outputs": {
                     "moderately_sensitive": {"dataset": "output.csv"},
                 },
             },
             "action2": {
-                "run": "test:latest",
+                "run": "test:v1",
                 "outputs": {
                     "moderately_sensitive": {"dataset": "output.csv"},
                 },
@@ -404,18 +403,18 @@ def test_pipeline_with_duplicated_action_run_commands():
         ({}, "Action action1 must contain a configuration for 'run'"),
     ],
 )
-def test_pipeline_with_empty_action(action_value, match):
+def test_pipeline_with_empty_action(action_value, match, version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {"action1": action_value},
     }
     with pytest.raises(ValidationError, match=match):
         Pipeline.build(**data)
 
 
-def test_pipeline_with_empty_run_command():
+def test_pipeline_with_empty_run_command(version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "action1": {
                 "run": "",
@@ -431,9 +430,9 @@ def test_pipeline_with_empty_run_command():
         Pipeline.build(**data)
 
 
-def test_pipeline_without_specifying_output_for_action():
+def test_pipeline_without_specifying_output_for_action(version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "action1": {"run": "test"},
         },
@@ -464,7 +463,8 @@ def test_pipeline_with_missing_or_none_version():
         Pipeline.build(**data)
 
 
-def test_pipeline_with_non_numeric_version():
+def test_pipeline_with_non_numeric_version(monkeypatch):
+    monkeypatch.setattr(models, "MINIMUM_VERSION", 2)
     data = {
         "actions": {
             "action1": {
@@ -474,16 +474,16 @@ def test_pipeline_with_non_numeric_version():
         },
     }
 
-    msg = f"`version` must be a number between {MINIMUM_VERSION} and {LATEST_VERSION}"
+    msg = f"`version` must be a number between 2 and {LATEST_VERSION}"
 
     with pytest.raises(ValidationError, match=msg):
         data["version"] = "test"
         Pipeline.build(**data)
 
 
-def test_outputs_files_are_unique():
+def test_outputs_files_are_unique(version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "generate_output": {
                 "run": "action:v1 generate_output",
@@ -502,13 +502,13 @@ def test_outputs_files_are_unique():
         Pipeline.build(**data)
 
 
-def test_outputs_with_unknown_privacy_level():
+def test_outputs_with_unknown_privacy_level(version):
     msg = "must specify at least one output of: highly_sensitive, moderately_sensitive, minimally_sensitive"
 
     with pytest.raises(ValidationError, match=msg):
         # no outputs
         Pipeline.build(
-            version=4,
+            version=version,
             actions={
                 "action1": {
                     "run": "test",
@@ -519,7 +519,7 @@ def test_outputs_with_unknown_privacy_level():
 
     with pytest.raises(ValidationError, match=msg):
         Pipeline.build(
-            version=4,
+            version=version,
             actions={
                 "action1": {
                     "run": "test",
@@ -529,9 +529,9 @@ def test_outputs_with_unknown_privacy_level():
         )
 
 
-def test_outputs_with_invalid_pattern():
+def test_outputs_with_invalid_pattern(version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "generate_output": {
                 "run": "action:v1 generate_output",
@@ -545,10 +545,10 @@ def test_outputs_with_invalid_pattern():
         Pipeline.build(**data)
 
 
-@pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v1")])
-def test_pipeline_ehrql_specifies_same_output(image, tag):
+@pytest.mark.parametrize("image,tag", [("databuilder", "v0"), ("ehrql", "v1")])
+def test_pipeline_ehrql_specifies_same_output(image, tag, version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "generate-dataset": {
                 "run": f"{image}:{tag} generate-dataset --output=output/dataset.csv",
@@ -560,10 +560,10 @@ def test_pipeline_ehrql_specifies_same_output(image, tag):
     Pipeline.build(**data)
 
 
-@pytest.mark.parametrize("image,tag", [("databuilder", "latest"), ("ehrql", "v1")])
-def test_pipeline_ehrql_specifies_different_output(image, tag):
+@pytest.mark.parametrize("image,tag", [("databuilder", "v0"), ("ehrql", "v1")])
+def test_pipeline_ehrql_specifies_different_output(image, tag, version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "generate-dataset": {
                 "run": f"{image}:{tag} generate-dataset --output=output/dataset1.csv",
@@ -577,14 +577,14 @@ def test_pipeline_ehrql_specifies_different_output(image, tag):
         Pipeline.build(**data)
 
 
-def test_pipeline_databuilder_recognizes_old_action_spelling():
+def test_pipeline_databuilder_recognizes_old_action_spelling(version):
     # The action name is used to select the validator, so the only way to know that it's been recognized is
     # to give it an invalid input and check that validation fails.
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             "old-spelling": {
-                "run": "databuilder:latest generate_dataset --output=output/dataset1.csv",
+                "run": "databuilder:v0 generate_dataset --output=output/dataset1.csv",
                 "outputs": {"highly_sensitive": {"dataset": "output/dataset.csv"}},
             }
         },
@@ -624,15 +624,15 @@ def test_pipeline_databuilder_recognizes_old_action_spelling():
         ),
         (
             "non_db_generate_measures",
-            "python:latest generate-measures.py args --option",
+            "python:v2 generate-measures.py args --option",
             False,
         ),
         ("no_command", "ehrql:v1", False),
     ],
 )
-def test_action_is_database_action(name, run, is_database_action):
+def test_action_is_database_action(name, run, is_database_action, version):
     data = {
-        "version": 4,
+        "version": version,
         "actions": {
             name: {
                 "run": run,
@@ -645,7 +645,8 @@ def test_action_is_database_action(name, run, is_database_action):
     assert action.is_database_action == is_database_action
 
 
-def test_action_images():
+def test_action_images_v4(monkeypatch):
+    monkeypatch.setattr(models, "MINIMUM_VERSION", 4)
     data = {
         "version": 4,
         "actions": {
@@ -680,9 +681,9 @@ def test_action_images():
     assert pipeline.action_images == {"ehrql:v1", "r:v1", "python:v2"}
 
 
-def test_action_images_v5():
+def test_action_images(version):
     data = {
-        "version": 5,
+        "version": version,
         "actions": {
             "ehrql": {
                 "run": "ehrql:v1 ...",
@@ -715,13 +716,13 @@ def test_action_images_v5():
     assert pipeline.action_images == {"ehrql:v1", "r:v1", "r:v2", "python:v2"}
 
 
-def test_run_all_action_error_in_v5():
+def test_run_all_action_error_in_latest_version():
     with pytest.raises(
         ValidationError,
         match="`run_all` is a reserved action name",
     ):
         Pipeline.build(
-            version=5,
+            version=LATEST_VERSION,
             actions={"run_all": {"outputs": {}, "run": "test:v1"}},
         )
 
@@ -748,9 +749,9 @@ def test_run_all_action_warning_before_v5():
         " reusable:latest ...",
     ],
 )
-def test_action_images_latest_not_allowed_in_v5(run_command):
+def test_action_images_latest_not_allowed_in_latest_version(run_command):
     data = {
-        "version": 5,
+        "version": LATEST_VERSION,
         "actions": {
             "my_action": {
                 "run": run_command,
@@ -767,10 +768,11 @@ def test_action_images_latest_not_allowed_in_v5(run_command):
         Pipeline.build(**data)
 
 
-def test_warning_for_old_version():
+def test_warning_for_old_version(monkeypatch):
+    monkeypatch.setattr(models, "MINIMUM_VERSION", 3)
     with pytest.warns(UserWarning, match="project file is using an old version"):
         Pipeline.build(
-            version=4,
+            version=3,
             actions={
                 "my_action": {
                     "outputs": {"highly_sensitive": {"foo": "bar.txt"}},
