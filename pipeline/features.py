@@ -15,7 +15,7 @@ FEATURE_FLAGS_BY_VERSION = {
 
 LATEST_VERSION = max([v[0] for v in FEATURE_FLAGS_BY_VERSION.values()])
 
-MINIMUM_VERSION = 4
+MINIMUM_VERSION = 5
 
 
 def get_feature_flags_for_version(version: float) -> SimpleNamespace:
