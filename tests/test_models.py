@@ -645,42 +645,6 @@ def test_action_is_database_action(name, run, is_database_action, version):
     assert action.is_database_action == is_database_action
 
 
-def test_action_images_v4(monkeypatch):
-    monkeypatch.setattr(models, "MINIMUM_VERSION", 4)
-    data = {
-        "version": 4,
-        "actions": {
-            "ehrql": {
-                "run": "ehrql:v1 ...",
-                "outputs": {
-                    "highly_sensitive": {"dataset": "output/ehrql.csv"},
-                },
-            },
-            "r1": {
-                "run": "r:latest 1",
-                "outputs": {
-                    "highly_sensitive": {"dataset": "output/r1.csv"},
-                },
-            },
-            "r2": {
-                "run": "r:latest 2",
-                "outputs": {
-                    "highly_sensitive": {"dataset": "output/r2.csv"},
-                },
-            },
-            "python": {
-                "run": "python:v2 ...",
-                "outputs": {
-                    "highly_sensitive": {"dataset": "output/python.csv"},
-                },
-            },
-        },
-    }
-
-    pipeline = Pipeline.build(**data)
-    assert pipeline.action_images == {"ehrql:v1", "r:v1", "python:v2"}
-
-
 def test_action_images(version):
     data = {
         "version": version,

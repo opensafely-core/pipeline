@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .exceptions import InvalidPatternError, ValidationError
-from .features import LATEST_VERSION, MINIMUM_VERSION, get_feature_flags_for_version
+from .features import LATEST_VERSION, MINIMUM_VERSION
 from .validation import (
     validate_action_config,
     validate_actions_config,
@@ -196,8 +196,11 @@ class Action:
 
         return action
 
-    # Valid image versions. `dev` is for local testing
-    # Note: at some point, we probably want to disallow latest.
+    # Valid image versions. `dev` is for local testing, `-pre` is for
+    # pre-release testing.
+    # latest is deprecated, but still included here as it was previously
+    # allowed; it will be disallowed during validation, but this allows for
+    # more informative error messages to the user.
     VERSION_REGEX = re.compile(r"^((v[\d.]+(-pre)?)|dev|latest)$")
 
     @classmethod
@@ -262,8 +265,6 @@ class Pipeline:
 
         validate_no_kwargs(kwargs, "project")
 
-        feat = get_feature_flags_for_version(version)
-
         validate_type(actions, dict, "Project `actions` section")
 
         _actions = {}
@@ -276,9 +277,8 @@ class Pipeline:
         for config in actions.values():
             validate_not_cohort_extractor_action(config)
 
-        if feat.REMOVE_SUPPORT_FOR_LATEST_TAG:
-            for config in actions.values():
-                validate_not_latest_tag(config)
+        for config in actions.values():
+            validate_not_latest_tag(config)
 
         validate_actions_config(actions)
 
@@ -302,9 +302,6 @@ class Pipeline:
         """
         images = set()
         for action in self.actions.values():
-            # for hysterical raisins, :latest is actually mapped to v1, not v2 or later.
-            # version 5 removes use of :latest
-            version = "v1" if action.run.version == "latest" else action.run.version
-            images.add(f"{action.run.name}:{version}")
+            images.add(f"{action.run.name}:{action.run.version}")
 
         return images
