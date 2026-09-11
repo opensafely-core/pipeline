@@ -59,11 +59,10 @@ def validate_glob_pattern(pattern: str, privacy_level: str) -> None:
             "output paths must have a file type extension at the end"
         )
 
-    if privacy_level == "moderately_sensitive":
-        if path.suffix not in LEVEL4_FILE_TYPES:
-            raise InvalidPatternError(
-                f"{path} is not an allowed file type for moderately_sensitive outputs"
-            )
+    if privacy_level == "moderately_sensitive" and path.suffix not in LEVEL4_FILE_TYPES:
+        raise InvalidPatternError(
+            f"{path} is not an allowed file type for moderately_sensitive outputs"
+        )
 
     # Check that the path is in normal form
     if posixpath.normpath(pattern) != pattern:
