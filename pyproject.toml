@@ -108,6 +108,5 @@ dev = [
     "mypy",
     "pytest",
     "pytest-mock",
-    # temporarily pin ruff until https://github.com/opensafely-core/pipeline/issues/491
-    "ruff<0.16",
+    "ruff",
 ]
