@@ -7,9 +7,9 @@ import zipfile
 def test_fastparser_requirements_match_wheel():
     wheel_deps = set()
     with zipfile.ZipFile("opensafely_fastparser-1.0-py3-none-any.whl") as wheel:
-        metadata_name = [
+        metadata_name = next(
             name for name in wheel.namelist() if name.endswith("/METADATA")
-        ][0]
+        )
         for line in wheel.open(metadata_name):
             if match := re.match(r"^Requires-Dist: (.*)$", line.decode("utf8")):
                 wheel_deps.add(match.group(1).strip())
