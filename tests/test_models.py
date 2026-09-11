@@ -688,28 +688,24 @@ def test_outputs_with_unknown_privacy_level():
     with pytest.raises(ValidationError, match=msg):
         # no outputs
         Pipeline.build(
-            **{
-                "version": 1,
-                "actions": {
-                    "action1": {
-                        "run": "test",
-                        "outputs": {},
-                    },
+            version=1,
+            actions={
+                "action1": {
+                    "run": "test",
+                    "outputs": {},
                 },
-            }
+            },
         )
 
     with pytest.raises(ValidationError, match=msg):
         Pipeline.build(
-            **{
-                "version": 1,
-                "actions": {
-                    "action1": {
-                        "run": "test",
-                        "outputs": {"test": {"cohort": "output/input.csv"}},
-                    }
-                },
-            }
+            version=1,
+            actions={
+                "action1": {
+                    "run": "test",
+                    "outputs": {"test": {"cohort": "output/input.csv"}},
+                }
+            },
         )
 
 
