@@ -871,7 +871,7 @@ def test_action_images():
     }
 
     pipeline = Pipeline.build(**data)
-    assert pipeline.action_images == set(["ehrql:v1", "r:v1", "python:v2"])
+    assert pipeline.action_images == {"ehrql:v1", "r:v1", "python:v2"}
 
 
 def test_action_images_v5():
@@ -906,7 +906,7 @@ def test_action_images_v5():
     }
 
     pipeline = Pipeline.build(**data)
-    assert pipeline.action_images == set(["ehrql:v1", "r:v1", "r:v2", "python:v2"])
+    assert pipeline.action_images == {"ehrql:v1", "r:v1", "r:v2", "python:v2"}
 
 
 def test_run_all_action_error_in_v5():
