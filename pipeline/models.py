@@ -95,7 +95,7 @@ class Outputs:
             and minimally_sensitive is None
         ):
             raise ValidationError(
-                f"must specify at least one output of: {', '.join(['highly_sensitive', 'moderately_sensitive', 'minimally_sensitive'])}"
+                "must specify at least one output of: highly_sensitive, moderately_sensitive, minimally_sensitive"
             )
 
         validate_no_kwargs(kwargs, f"`outputs` section for action {action_id}")
@@ -287,7 +287,7 @@ class Pipeline:
 
         validate_type(actions, dict, "Project `actions` section")
 
-        _actions = dict()
+        _actions = {}
         for action_id, action_config in actions.items():
             validate_not_run_all_action(action_id, feat)
             validate_action_config(action_id, action_config)
@@ -363,7 +363,7 @@ class Pipeline:
         We use a list comprehension rather than set operators as previously so we preserve
         the original order.
         """
-        return [action for action in self.actions.keys() if action != RUN_ALL_COMMAND]
+        return [action for action in self.actions if action != RUN_ALL_COMMAND]
 
     @property
     def action_images(self) -> set[str]:

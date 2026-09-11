@@ -39,7 +39,7 @@ ruamel-yaml==0.19.1
     # via opensafely-pipeline
 ruamel-yaml-clib==0.2.15
     # via opensafely-pipeline
-ruff==0.15.22
+ruff==0.16.6
 ruyaml==0.91.0
     # via opensafely-pipeline
 setuptools==84.0.0
