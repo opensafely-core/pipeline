@@ -2,6 +2,7 @@ import pytest
 
 from pipeline import ProjectValidationError, load_pipeline
 from pipeline.exceptions import ValidationError
+from pipeline.features import LATEST_VERSION
 from pipeline.models import Pipeline
 
 
@@ -12,11 +13,11 @@ def test_load_pipeline_with_file(test_file):
 
 def test_load_pipeline_with_path(mocker, tmp_path):
     data = {
-        "version": 1,
+        "version": LATEST_VERSION,
         "actions": {
             "first": {
-                "run": "python:latest python foo.py",
-                "outputs": {"highly_sensitive": {"cohort": "output/cohort.csv"}},
+                "run": "python:v2 python foo.py",
+                "outputs": {"highly_sensitive": {"result": "output/result.csv"}},
             }
         },
     }

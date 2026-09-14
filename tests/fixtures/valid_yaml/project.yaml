@@ -1,4 +1,4 @@
-version: '4.0'
+version: '<VERSION>'
 
 actions:
   generate_dataset:
@@ -8,28 +8,28 @@ actions:
         dataset: output/dataset.csv.gz
 
   prepare_data_m:
-    run: python:latest python analysis/filter_by_sex.py M output/input.csv male.csv
+    run: python:v2 python analysis/filter_by_sex.py M output/input.csv male.csv
     needs: [generate_dataset]
     outputs:
       highly_sensitive:
         male_cohort: male*.csv
 
   prepare_data_f:
-    run: python:latest python analysis/filter_by_sex.py F output/input.csv female.csv
+    run: python:v2 python analysis/filter_by_sex.py F output/input.csv female.csv
     needs: [generate_dataset]
     outputs:
       highly_sensitive:
         female_cohort: female*.csv
 
   prepare_data_with_quote_in_filename:
-    run: python:latest python analysis/filter_by_sex.py F output/input.csv "qu'ote.csv"
+    run: python:v2 python analysis/filter_by_sex.py F output/input.csv "qu'ote.csv"
     needs: [generate_dataset]
     outputs:
       highly_sensitive:
         quote_cohort: "qu'ote*.csv"
 
   analyse_data:
-    run: python:latest python analysis/count_lines.py counts.txt
+    run: python:v2 python analysis/count_lines.py counts.txt
     config:
       files: ["male.csv", "female.csv", "qu'ote.csv"]
     needs: [prepare_data_m, prepare_data_f, prepare_data_with_quote_in_filename]
@@ -47,7 +47,7 @@ actions:
         cohort: output/input.backup.csv
 
   test_cancellation:
-    run: python:latest python analysis/filter_by_sex.py F output/input.csv somefile.csv
+    run: python:v2 python analysis/filter_by_sex.py F output/input.csv somefile.csv
     needs: [generate_dataset]
     outputs:
       highly_sensitive:
