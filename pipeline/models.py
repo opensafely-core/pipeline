@@ -250,32 +250,58 @@ class Pipeline:
         try:
             version = float(version)
         except (TypeError, ValueError):
+            # If we don't have a valid version number, we can't validate any further
             raise ValidationError(
                 f"`version` must be a number between {MINIMUM_VERSION} and {LATEST_VERSION}"
             )
 
-        validate_version_in_range(version, MINIMUM_VERSION, LATEST_VERSION)
+        # Collect validation errors so we can report on multiple problems
+        validation_errors: list[str] = []
 
-        validate_no_kwargs(kwargs, "project")
+        add_validation_error(
+            validation_errors,
+            validate_version_in_range,
+            version,
+            MINIMUM_VERSION,
+            LATEST_VERSION,
+        )
 
-        validate_type(actions, dict, "Project `actions` section")
+        add_validation_error(validation_errors, validate_no_kwargs, kwargs, "project")
 
-        _actions = {}
-        validate_not_run_all_action(list(actions))
+        if add_validation_error(
+            validation_errors, validate_type, actions, dict, "Project `actions` section"
+        ):
+            # If the actions section itself is an invalid type, we can't validate any further
+            raise ValidationError(format_validation_errors(validation_errors))
+
+        _valid_actions = {}
+
+        add_validation_error(
+            validation_errors, validate_not_run_all_action, list(actions)
+        )
+
         for action_id, action_config in actions.items():
-            validate_action_config(action_id, action_config)
-            _actions[action_id] = Action.build(action_id, **action_config)
-        actions = _actions
+            if not add_validation_error(
+                validation_errors, validate_action_config, action_id, action_config
+            ):
+                _valid_actions[action_id] = Action.build(action_id, **action_config)
+
+        actions = _valid_actions
 
         for config in actions.values():
-            validate_not_cohort_extractor_action(config)
+            add_validation_error(
+                validation_errors, validate_not_cohort_extractor_action, config
+            )
 
         for config in actions.values():
-            validate_not_latest_tag(config)
+            add_validation_error(validation_errors, validate_not_latest_tag, config)
 
-        validate_actions_config(actions)
+        add_validation_error(validation_errors, validate_actions_config, actions)
 
-        validate_unique_output_paths(actions)
+        add_validation_error(validation_errors, validate_unique_output_paths, actions)
+
+        if validation_errors:
+            raise ValidationError(format_validation_errors(validation_errors))
 
         return cls(version, actions)
 
@@ -302,12 +328,24 @@ class Pipeline:
 
 def add_validation_error(
     validation_errors: list[str], validation_fn: Callable[..., Any], *fn_args: Any
-) -> None:
+) -> bool:
     """
     Call a validation function, catch any validation error and add it to the
     validation_errors list
     """
+    has_error = False
     try:
         validation_fn(*fn_args)
     except ValidationError as e:
         validation_errors.append(str(e))
+        has_error = True
+    return has_error
+
+
+def format_validation_errors(validation_errors: list[str]) -> str:
+    return "\n".join(
+        [
+            "Errors in project file",
+            *[f"  - {err}" for err in validation_errors],
+        ]
+    )

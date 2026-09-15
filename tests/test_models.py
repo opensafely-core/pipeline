@@ -687,7 +687,12 @@ def test_run_all_action_error_in_latest_version():
     ):
         Pipeline.build(
             version=LATEST_VERSION,
-            actions={"run_all": {"outputs": {}, "run": "test:v1"}},
+            actions={
+                "run_all": {
+                    "outputs": {"highly_sensitive": {"foo": "bar.txt"}},
+                    "run": "test:v1",
+                }
+            },
         )
 
 
@@ -756,3 +761,68 @@ def test_deprecated_version(version, extra_params):
             },
             **extra_params,
         )
+
+
+def test_collated_errors():
+    data = {
+        "version": MINIMUM_VERSION - 1,
+        "actions": {
+            "action1": {
+                "run": "action:latest",
+                "outputs": {
+                    "highly_sensitive": {"output": "output/result1.csv"},
+                },
+            },
+            "do_python": {
+                "run": "python:latest",
+                "outputs": {
+                    "highly_sensitive": {"output": "output/python.csv"},
+                },
+            },
+            "do_r": {
+                "run": "r:latest",
+                "outputs": {
+                    "highly_sensitive": {"output": "output/r.csv"},
+                },
+            },
+            "run_all": {
+                "run": "action:v1",
+                "outputs": {
+                    "highly_sensitive": {"output": "output/result3.csv"},
+                },
+            },
+            "action2": {
+                "run": "action2:v1",
+                "outputs": {
+                    "highly_sensitive": {"output": "output/result4.csv"},
+                },
+            },
+            "duplicate_action": {
+                "run": "action2:v1",
+                "outputs": {
+                    "highly_sensitive": {"output": "output/result5.csv"},
+                },
+            },
+            "duplicate_output_action": {
+                "run": "action3:v1",
+                "outputs": {
+                    "highly_sensitive": {"output": "output/result1.csv"},
+                },
+            },
+        },
+    }
+    expected_errors = [
+        "Errors in project file",
+        "Project file is using a deprecated version",
+        "`run_all` is a reserved action name",
+        "action1 uses `action:latest`, which is not supported",
+        "For equivalence, replace `python:latest` with `python:v1`",
+        "For equivalence, replace `r:latest` with `r:v1`",
+        "duplicate_action has the same 'run' command as other actions: action2",
+        "output/result1.csv is not unique",
+    ]
+    with pytest.raises(ValidationError) as error:
+        Pipeline.build(**data)
+
+    for expected_error in expected_errors:
+        assert expected_error in str(error.value)
