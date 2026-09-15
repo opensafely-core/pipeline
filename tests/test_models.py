@@ -744,7 +744,7 @@ def test_warning_for_old_version(monkeypatch):
 )
 def test_deprecated_version(version, extra_params):
     with pytest.raises(
-        ValidationError, match="project file is using a deprecated version"
+        ValidationError, match="Project file is using a deprecated version"
     ):
         Pipeline.build(
             version=version,

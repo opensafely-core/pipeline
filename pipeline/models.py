@@ -3,6 +3,7 @@ from __future__ import annotations
 import pathlib
 import re
 import shlex
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -297,3 +298,16 @@ class Pipeline:
             images.add(f"{action.run.name}:{action.run.version}")
 
         return images
+
+
+def add_validation_error(
+    validation_errors: list[str], validation_fn: Callable[..., Any], *fn_args: Any
+) -> None:
+    """
+    Call a validation function, catch any validation error and add it to the
+    validation_errors list
+    """
+    try:
+        validation_fn(*fn_args)
+    except ValidationError as e:
+        validation_errors.append(str(e))
