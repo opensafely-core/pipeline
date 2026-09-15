@@ -3,7 +3,6 @@ from __future__ import annotations
 import pathlib
 import re
 import shlex
-import warnings
 from dataclasses import dataclass
 from typing import Any
 
@@ -20,6 +19,7 @@ from .validation import (
     validate_not_run_all_action,
     validate_type,
     validate_unique_output_paths,
+    validate_version_in_range,
 )
 
 
@@ -252,16 +252,8 @@ class Pipeline:
             raise ValidationError(
                 f"`version` must be a number between {MINIMUM_VERSION} and {LATEST_VERSION}"
             )
-        else:
-            if version < MINIMUM_VERSION:
-                raise ValidationError(
-                    f"Your project file is using a deprecated version ({version}); update to at least version {MINIMUM_VERSION}"
-                )
-            if version != LATEST_VERSION:
-                warnings.warn(
-                    f"ProjectWarning: Your project file is using an old version ({version}); consider updating to version {LATEST_VERSION}",
-                    stacklevel=2,
-                )
+
+        validate_version_in_range(version, MINIMUM_VERSION, LATEST_VERSION)
 
         validate_no_kwargs(kwargs, "project")
 

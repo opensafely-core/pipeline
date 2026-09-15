@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import fnmatch
 import posixpath
+import warnings
 from collections import defaultdict
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from typing import TYPE_CHECKING, Any
@@ -12,6 +13,19 @@ from .exceptions import InvalidPatternError, ValidationError
 
 if TYPE_CHECKING:  # pragma: no cover
     from .models import Action, Command
+
+
+def validate_version_in_range(version: int, min_version: int, max_version: int) -> None:
+    if version < min_version:
+        raise ValidationError(
+            f"Project file is using a deprecated version ({version}); update to at least version {min_version}"
+        )
+
+    elif version != max_version:
+        warnings.warn(
+            f"ProjectWarning: Your project file is using an old version ({version}); consider updating to version {max_version}",
+            stacklevel=2,
+        )
 
 
 def validate_type(val: Any, exp_type: type, loc: str, optional: bool = False) -> None:
@@ -127,10 +141,12 @@ def validate_not_run_all_action(action_ids: list[str]) -> None:
 
 
 def validate_not_latest_tag(action: Action) -> None:
-    if action.run.parts[0].endswith(":latest"):
-        raise ValidationError(
-            f"Action {action.action_id} uses `{action.run.parts[0]}`, which is not supported. Provide a version e.g. `:v2` instead"
-        )
+    image, tag = action.run.parts[0].split(":")
+    if tag == "latest":
+        message = f"Action {action.action_id} uses `{action.run.parts[0]}`, which is not supported. Provide a version e.g. `:v2` instead."
+        if image in ["python", "r"]:
+            message += f" For equivalence, replace `{image}:latest` with `{image}:v1` (but note that `v1` is scheduled for deprecation)."
+        raise ValidationError(message)
 
 
 def validate_unique_output_paths(actions: dict[str, Action]) -> None:
