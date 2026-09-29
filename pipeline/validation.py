@@ -7,8 +7,10 @@ from collections import defaultdict
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from typing import TYPE_CHECKING, Any
 
+from . import features
 from .constants import LEVEL4_FILE_TYPES, RUN_ALL_COMMAND
 from .exceptions import InvalidPatternError, ValidationError
+from .features import DeprecatedStatus
 
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -140,13 +142,29 @@ def validate_not_run_all_action(action_ids: list[str]) -> None:
         )
 
 
-def validate_not_latest_tag(action: Action) -> None:
+def validate_image_tag(action: Action) -> None:
     image, tag = action.run.parts[0].split(":")
+    # Validate not latest
     if tag == "latest":
         message = f"Action {action.action_id} uses `{action.run.parts[0]}`, which is not supported. Provide a version e.g. `:v2` instead."
         if image in ["python", "r"]:
             message += f" For equivalence, replace `{image}:latest` with `{image}:v1` (but note that `v1` is scheduled for deprecation)."
         raise ValidationError(message)
+
+    # Validate not deprecated
+    deprecated_status = features.DEPRECATED_IMAGES.get(image, {}).get(tag)
+    match deprecated_status:
+        case DeprecatedStatus.PENDING:
+            warnings.warn(
+                f"Action {action.action_id} uses `{action.run.parts[0]}`, which is scheduled for deprecation. Consider upgrading to a more recent version.",
+                stacklevel=2,
+            )
+        case DeprecatedStatus.DEPRECATED:
+            raise ValidationError(
+                f"Action {action.action_id} uses `{action.run.parts[0]}`, which is deprecated. Upgrading to a more recent version."
+            )
+        case _:
+            return
 
 
 def validate_unique_output_paths(actions: dict[str, Action]) -> None:

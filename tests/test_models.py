@@ -2,9 +2,9 @@ import dataclasses
 
 import pytest
 
-from pipeline import load_pipeline, models
+from pipeline import features, load_pipeline, models
 from pipeline.exceptions import ValidationError
-from pipeline.features import LATEST_VERSION, MINIMUM_VERSION
+from pipeline.features import LATEST_VERSION, MINIMUM_VERSION, DeprecatedStatus
 from pipeline.models import Outputs, Pipeline
 
 
@@ -656,13 +656,13 @@ def test_action_images(version):
                 },
             },
             "r1": {
-                "run": "r:v1 1",
+                "run": "r:v2 1",
                 "outputs": {
                     "highly_sensitive": {"dataset": "output/r1.csv"},
                 },
             },
             "r2": {
-                "run": "r:v2 2",
+                "run": "r:v3 2",
                 "outputs": {
                     "highly_sensitive": {"dataset": "output/r2.csv"},
                 },
@@ -677,7 +677,7 @@ def test_action_images(version):
     }
 
     pipeline = Pipeline.build(**data)
-    assert pipeline.action_images == {"ehrql:v1", "r:v1", "r:v2", "python:v2"}
+    assert pipeline.action_images == {"ehrql:v1", "r:v2", "r:v3", "python:v2"}
 
 
 def test_run_all_action_error_in_latest_version():
@@ -722,6 +722,40 @@ def test_action_images_latest_not_allowed_in_latest_version(run_command):
         match=r"Action my_action uses `\w+:latest`, which is not supported. Provide a version e.g. `:v2` instead",
     ):
         Pipeline.build(**data)
+
+
+def test_warning_for_images_pending_deprecation(monkeypatch):
+    monkeypatch.setattr(
+        features, "DEPRECATED_IMAGES", {"test": {"v2": DeprecatedStatus.PENDING}}
+    )
+    with pytest.warns(UserWarning, match="is scheduled for deprecation"):
+        Pipeline.build(
+            version=LATEST_VERSION,
+            actions={
+                "my_action": {
+                    "outputs": {"highly_sensitive": {"foo": "bar.txt"}},
+                    "run": "test:v2",
+                }
+            },
+        )
+
+
+def test_deprecated_images_not_allowed(monkeypatch):
+    monkeypatch.setattr(
+        features,
+        "DEPRECATED_IMAGES",
+        {"test": {"v1": DeprecatedStatus.DEPRECATED, "v2": DeprecatedStatus.PENDING}},
+    )
+    with pytest.raises(ValidationError, match="is deprecated"):
+        Pipeline.build(
+            version=LATEST_VERSION,
+            actions={
+                "my_action": {
+                    "outputs": {"highly_sensitive": {"foo": "bar.txt"}},
+                    "run": "test:v1",
+                }
+            },
+        )
 
 
 def test_warning_for_old_version(monkeypatch):
@@ -785,6 +819,12 @@ def test_collated_errors():
                     "highly_sensitive": {"output": "output/r.csv"},
                 },
             },
+            "do_deprecated_python": {
+                "run": "python:v1",
+                "outputs": {
+                    "highly_sensitive": {"output": "output/deprecated_python.csv"},
+                },
+            },
             "run_all": {
                 "run": "action:v1",
                 "outputs": {
@@ -821,7 +861,12 @@ def test_collated_errors():
         "duplicate_action has the same 'run' command as other actions: action2",
         "output/result1.csv is not unique",
     ]
-    with pytest.raises(ValidationError) as error:
+    with (
+        pytest.warns(
+            UserWarning, match="uses `python:v1`, which is scheduled for deprecation"
+        ),
+        pytest.raises(ValidationError) as error,
+    ):
         Pipeline.build(**data)
 
     for expected_error in expected_errors:

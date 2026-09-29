@@ -14,9 +14,9 @@ from .validation import (
     validate_actions_config,
     validate_ehrql_outputs,
     validate_glob_pattern,
+    validate_image_tag,
     validate_no_kwargs,
     validate_not_cohort_extractor_action,
-    validate_not_latest_tag,
     validate_not_run_all_action,
     validate_type,
     validate_unique_output_paths,
@@ -294,7 +294,7 @@ class Pipeline:
             )
 
         for config in actions.values():
-            add_validation_error(validation_errors, validate_not_latest_tag, config)
+            add_validation_error(validation_errors, validate_image_tag, config)
 
         add_validation_error(validation_errors, validate_actions_config, actions)
 
