@@ -2,9 +2,9 @@ import dataclasses
 
 import pytest
 
-from pipeline import load_pipeline, models
+from pipeline import features, load_pipeline, models
 from pipeline.exceptions import ValidationError
-from pipeline.features import LATEST_VERSION, MINIMUM_VERSION
+from pipeline.features import LATEST_VERSION, MINIMUM_VERSION, DeprecatedStatus
 from pipeline.models import Outputs, Pipeline
 
 
@@ -645,42 +645,6 @@ def test_action_is_database_action(name, run, is_database_action, version):
     assert action.is_database_action == is_database_action
 
 
-def test_action_images_v4(monkeypatch):
-    monkeypatch.setattr(models, "MINIMUM_VERSION", 4)
-    data = {
-        "version": 4,
-        "actions": {
-            "ehrql": {
-                "run": "ehrql:v1 ...",
-                "outputs": {
-                    "highly_sensitive": {"dataset": "output/ehrql.csv"},
-                },
-            },
-            "r1": {
-                "run": "r:latest 1",
-                "outputs": {
-                    "highly_sensitive": {"dataset": "output/r1.csv"},
-                },
-            },
-            "r2": {
-                "run": "r:latest 2",
-                "outputs": {
-                    "highly_sensitive": {"dataset": "output/r2.csv"},
-                },
-            },
-            "python": {
-                "run": "python:v2 ...",
-                "outputs": {
-                    "highly_sensitive": {"dataset": "output/python.csv"},
-                },
-            },
-        },
-    }
-
-    pipeline = Pipeline.build(**data)
-    assert pipeline.action_images == {"ehrql:v1", "r:v1", "python:v2"}
-
-
 def test_action_images(version):
     data = {
         "version": version,
@@ -692,13 +656,13 @@ def test_action_images(version):
                 },
             },
             "r1": {
-                "run": "r:v1 1",
+                "run": "r:v2 1",
                 "outputs": {
                     "highly_sensitive": {"dataset": "output/r1.csv"},
                 },
             },
             "r2": {
-                "run": "r:v2 2",
+                "run": "r:v3 2",
                 "outputs": {
                     "highly_sensitive": {"dataset": "output/r2.csv"},
                 },
@@ -713,7 +677,7 @@ def test_action_images(version):
     }
 
     pipeline = Pipeline.build(**data)
-    assert pipeline.action_images == {"ehrql:v1", "r:v1", "r:v2", "python:v2"}
+    assert pipeline.action_images == {"ehrql:v1", "r:v2", "r:v3", "python:v2"}
 
 
 def test_run_all_action_error_in_latest_version():
@@ -723,14 +687,6 @@ def test_run_all_action_error_in_latest_version():
     ):
         Pipeline.build(
             version=LATEST_VERSION,
-            actions={"run_all": {"outputs": {}, "run": "test:v1"}},
-        )
-
-
-def test_run_all_action_warning_before_v5():
-    with pytest.warns(UserWarning, match="`run_all` is a reserved action name"):
-        Pipeline.build(
-            version=4,
             actions={
                 "run_all": {
                     "outputs": {"highly_sensitive": {"foo": "bar.txt"}},
@@ -768,6 +724,40 @@ def test_action_images_latest_not_allowed_in_latest_version(run_command):
         Pipeline.build(**data)
 
 
+def test_warning_for_images_pending_deprecation(monkeypatch):
+    monkeypatch.setattr(
+        features, "DEPRECATED_IMAGES", {"test": {"v2": DeprecatedStatus.PENDING}}
+    )
+    with pytest.warns(UserWarning, match="is scheduled for deprecation"):
+        Pipeline.build(
+            version=LATEST_VERSION,
+            actions={
+                "my_action": {
+                    "outputs": {"highly_sensitive": {"foo": "bar.txt"}},
+                    "run": "test:v2",
+                }
+            },
+        )
+
+
+def test_deprecated_images_not_allowed(monkeypatch):
+    monkeypatch.setattr(
+        features,
+        "DEPRECATED_IMAGES",
+        {"test": {"v1": DeprecatedStatus.DEPRECATED, "v2": DeprecatedStatus.PENDING}},
+    )
+    with pytest.raises(ValidationError, match="is deprecated"):
+        Pipeline.build(
+            version=LATEST_VERSION,
+            actions={
+                "my_action": {
+                    "outputs": {"highly_sensitive": {"foo": "bar.txt"}},
+                    "run": "test:v1",
+                }
+            },
+        )
+
+
 def test_warning_for_old_version(monkeypatch):
     monkeypatch.setattr(models, "MINIMUM_VERSION", 3)
     with pytest.warns(UserWarning, match="project file is using an old version"):
@@ -793,7 +783,7 @@ def test_warning_for_old_version(monkeypatch):
 )
 def test_deprecated_version(version, extra_params):
     with pytest.raises(
-        ValidationError, match="project file is using a deprecated version"
+        ValidationError, match="Project file is using a deprecated version"
     ):
         Pipeline.build(
             version=version,
@@ -805,3 +795,79 @@ def test_deprecated_version(version, extra_params):
             },
             **extra_params,
         )
+
+
+def test_collated_errors():
+    data = {
+        "version": MINIMUM_VERSION - 1,
+        "actions": {
+            "action1": {
+                "run": "action:latest",
+                "outputs": {
+                    "highly_sensitive": {"output": "output/result1.csv"},
+                },
+            },
+            "do_python": {
+                "run": "python:latest",
+                "outputs": {
+                    "highly_sensitive": {"output": "output/python.csv"},
+                },
+            },
+            "do_r": {
+                "run": "r:latest",
+                "outputs": {
+                    "highly_sensitive": {"output": "output/r.csv"},
+                },
+            },
+            "do_deprecated_python": {
+                "run": "python:v1",
+                "outputs": {
+                    "highly_sensitive": {"output": "output/deprecated_python.csv"},
+                },
+            },
+            "run_all": {
+                "run": "action:v1",
+                "outputs": {
+                    "highly_sensitive": {"output": "output/result3.csv"},
+                },
+            },
+            "action2": {
+                "run": "action2:v1",
+                "outputs": {
+                    "highly_sensitive": {"output": "output/result4.csv"},
+                },
+            },
+            "duplicate_action": {
+                "run": "action2:v1",
+                "outputs": {
+                    "highly_sensitive": {"output": "output/result5.csv"},
+                },
+            },
+            "duplicate_output_action": {
+                "run": "action3:v1",
+                "outputs": {
+                    "highly_sensitive": {"output": "output/result1.csv"},
+                },
+            },
+        },
+    }
+    expected_errors = [
+        "Errors in project file",
+        "Project file is using a deprecated version",
+        "`run_all` is a reserved action name",
+        "action1 uses `action:latest`, which is not supported",
+        "For equivalence, replace `python:latest` with `python:v1`",
+        "For equivalence, replace `r:latest` with `r:v1`",
+        "duplicate_action has the same 'run' command as other actions: action2",
+        "output/result1.csv is not unique",
+    ]
+    with (
+        pytest.warns(
+            UserWarning, match="uses `python:v1`, which is scheduled for deprecation"
+        ),
+        pytest.raises(ValidationError) as error,
+    ):
+        Pipeline.build(**data)
+
+    for expected_error in expected_errors:
+        assert expected_error in str(error.value)
