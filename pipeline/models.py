@@ -212,9 +212,8 @@ class Action:
                 f"run must have a value, {action_id} has an empty run key"
             )
 
-        parts = shlex.split(run)
-
-        name, _, version = parts[0].partition(":")
+        command = Command(raw=run)
+        name, _, version = command.parts[0].partition(":")
 
         vmatch = cls.VERSION_REGEX.match(version)
         if not vmatch:
@@ -222,7 +221,7 @@ class Action:
                 f"Action command {name} must have a version specified in the form :vN (e.g. {name}:v2)",
             )
 
-        return Command(raw=run)
+        return command
 
     @property
     def is_database_action(self) -> bool:
