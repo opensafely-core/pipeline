@@ -5,6 +5,7 @@ import re
 import shlex
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from functools import cached_property
 from typing import Any
 
 from .exceptions import InvalidPatternError, ValidationError
@@ -133,7 +134,7 @@ class Command:
         # parts[0] with version split off
         return self.parts[0].split(":")[0]
 
-    @property
+    @cached_property
     def parts(self) -> tuple[str, ...]:
         return tuple(shlex.split(self.raw))
 
