@@ -4,6 +4,7 @@ import fnmatch
 import posixpath
 import warnings
 from collections import defaultdict
+from collections.abc import Sequence
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from typing import TYPE_CHECKING, Any
 
@@ -221,8 +222,8 @@ def validate_ehrql_outputs(action_id: str, action: Action, ehrql_type: str) -> N
         )
 
 
-def get_output_spec_from_args(args: list[str]) -> str | None:
-    for switch, value in zip(args, args[1:] + [""]):
+def get_output_spec_from_args(args: Sequence[str]) -> str | None:
+    for switch, value in zip(args, (*args[1:], "")):
         if switch == "--output":
             return value
         if switch.startswith("--output="):

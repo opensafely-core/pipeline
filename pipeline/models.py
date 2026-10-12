@@ -3,7 +3,7 @@ from __future__ import annotations
 import pathlib
 import re
 import shlex
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -32,7 +32,7 @@ DB_COMMANDS = {
 }
 
 
-def is_database_action(args: list[str]) -> bool:
+def is_database_action(args: Sequence[str]) -> bool:
     """
     By default actions do not have database access, but certain trusted actions require it
     """
@@ -134,8 +134,8 @@ class Command:
         return self.parts[0].split(":")[0]
 
     @property
-    def parts(self) -> list[str]:
-        return shlex.split(self.raw)
+    def parts(self) -> tuple[str, ...]:
+        return tuple(shlex.split(self.raw))
 
     @property
     def version(self) -> str:
