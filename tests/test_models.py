@@ -284,11 +284,11 @@ def test_command_properties(version):
     action = Pipeline.build(**data).actions["generate_output"]
     assert action.run.args == "generate_output another_arg"
     assert action.run.name == "action"
-    assert action.run.parts == [
+    assert action.run.parts == (
         "action:v1",
         "generate_output",
         "another_arg",
-    ]
+    )
     assert action.run.version == "v1"
 
 

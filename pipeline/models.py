@@ -3,8 +3,9 @@ from __future__ import annotations
 import pathlib
 import re
 import shlex
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from functools import cached_property
 from typing import Any
 
 from .exceptions import InvalidPatternError, ValidationError
@@ -32,7 +33,7 @@ DB_COMMANDS = {
 }
 
 
-def is_database_action(args: list[str]) -> bool:
+def is_database_action(args: Sequence[str]) -> bool:
     """
     By default actions do not have database access, but certain trusted actions require it
     """
@@ -133,9 +134,9 @@ class Command:
         # parts[0] with version split off
         return self.parts[0].split(":")[0]
 
-    @property
-    def parts(self) -> list[str]:
-        return shlex.split(self.raw)
+    @cached_property
+    def parts(self) -> tuple[str, ...]:
+        return tuple(shlex.split(self.raw))
 
     @property
     def version(self) -> str:
@@ -211,9 +212,8 @@ class Action:
                 f"run must have a value, {action_id} has an empty run key"
             )
 
-        parts = shlex.split(run)
-
-        name, _, version = parts[0].partition(":")
+        command = Command(raw=run)
+        name, _, version = command.parts[0].partition(":")
 
         vmatch = cls.VERSION_REGEX.match(version)
         if not vmatch:
@@ -221,7 +221,7 @@ class Action:
                 f"Action command {name} must have a version specified in the form :vN (e.g. {name}:v2)",
             )
 
-        return Command(raw=run)
+        return command
 
     @property
     def is_database_action(self) -> bool:

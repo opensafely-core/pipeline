@@ -4,6 +4,7 @@ import fnmatch
 import posixpath
 import warnings
 from collections import defaultdict
+from collections.abc import Sequence
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from typing import TYPE_CHECKING, Any
 
@@ -171,14 +172,14 @@ def validate_unique_output_paths(actions: dict[str, Action]) -> None:
     """
     Validates that paths defined in the outputs section are unique
     """
-    seen_files = []
+    seen_files = set()
     for config in actions.values():
         for output in config.outputs.dict().values():
             for filename in output.values():
                 if filename in seen_files:
                     raise ValidationError(f"Output path {filename} is not unique")
 
-                seen_files.append(filename)
+                seen_files.add(filename)
 
 
 def validate_ehrql_outputs(action_id: str, action: Action, ehrql_type: str) -> None:
@@ -221,8 +222,8 @@ def validate_ehrql_outputs(action_id: str, action: Action, ehrql_type: str) -> N
         )
 
 
-def get_output_spec_from_args(args: list[str]) -> str | None:
-    for switch, value in zip(args, args[1:] + [""]):
+def get_output_spec_from_args(args: Sequence[str]) -> str | None:
+    for switch, value in zip(args, (*args[1:], "")):
         if switch == "--output":
             return value
         if switch.startswith("--output="):
