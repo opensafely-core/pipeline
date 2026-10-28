@@ -168,6 +168,12 @@
       "matchUpdateTypes": ["pinDigest"],
       "minimumReleaseAge": null,
     },
+    // Bypass the cooldown for setup-action, which we own
+    {
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["opensafely-core/setup-action"],
+      "minimumReleaseAge": null,
+    },
   ],
   // Include vulnerability alerts; this uses dependabot and requires that depenency graph and
   // dependabot alerts are enabled in the repo
