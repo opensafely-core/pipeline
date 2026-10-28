@@ -505,18 +505,18 @@ dev = [
 requires-dist = [
     { name = "ruamel-yaml", marker = "extra == 'fastparser'", specifier = "==0.19.1" },
     { name = "ruamel-yaml-clib", marker = "extra == 'fastparser'", specifier = "==0.2.15" },
-    { name = "ruyaml" },
+    { name = "ruyaml", specifier = "<=0.91.0" },
 ]
 provides-extras = ["fastparser"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "coverage" },
-    { name = "devtools" },
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "pytest-mock" },
-    { name = "ruff" },
+    { name = "coverage", specifier = "<=7.16.2" },
+    { name = "devtools", specifier = "<=0.13.0" },
+    { name = "mypy", specifier = "<=2.4.0" },
+    { name = "pytest", specifier = "<=9.1.1" },
+    { name = "pytest-mock", specifier = "<=3.17.0" },
+    { name = "ruff", specifier = "<=0.17.1" },
 ]
 
 [[package]]
