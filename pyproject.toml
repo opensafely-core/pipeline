@@ -99,7 +99,7 @@ include = ["pipeline*"]
 version = {file = "version"}
 
 [tool.uv]
-required-version = ">=0.9"
+required-version = ">=0.13.5"
 
 [dependency-groups]
 dev = [
