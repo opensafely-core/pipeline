@@ -1,3 +1,5 @@
+import 'justfile.base'
+
 # list available commands
 default:
     @"{{ just_executable() }}" --list
@@ -77,7 +79,7 @@ mypy python-version="$(cat .python-version)":
     uv run --python {{ python-version }} mypy
 
 lint-actions:
-    docker run --rm -v $(pwd):/repo:ro --workdir /repo rhysd/actionlint:1.7.8 -color
+    {{ docker_run_safe }} -v $(pwd):/repo:ro --workdir /repo kjanat/actionlint:{{ actionlint_version }} -color
 
 # Run the various dev checks but does not change any files
 check python-version="$(cat .python-version)":
