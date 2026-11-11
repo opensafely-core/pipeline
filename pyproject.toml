@@ -103,10 +103,10 @@ required-version = ">=0.13.5"
 
 [dependency-groups]
 dev = [
-    "coverage<=7.16.2",
+    "coverage<=7.17.1",
     "devtools<=0.13.0",
-    "mypy<=2.4.0",
-    "pytest<=9.1.1",
+    "mypy<=2.4.1",
+    "pytest<=9.2.0",
     "pytest-mock<=3.17.0",
     "ruff<=0.17.1",
 ]
