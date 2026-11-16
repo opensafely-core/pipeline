@@ -7,7 +7,7 @@
 actionlint_version := "1.17.0@sha256:d484cccadf56b6a356466ade9af4c8e05c5dce1badaf0a9ecd0d7639d68d9c92"
 
 # renovate: datasource=docker depName=renovate/renovate versioning=docker
-renovate_version := "44.141.0@sha256:6165430f0c4d62efd109d2c25d239798232c78b3eb199ad9f68e18cefc8102bc"
+renovate_version := "44.222.5@sha256:8a4c49ef19bb71bedf4eaa4d1087a31a1793bd53de41478753d2d648e53eed19"
 
 
 ######## Reusable variables ########
