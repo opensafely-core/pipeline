@@ -7,7 +7,8 @@ asttokens==2.4.1
     # via devtools
 colorama==0.4.6 ; sys_platform == 'win32'
     # via pytest
-coverage==7.16.2
+coverage==7.16.2 ; python_full_version < '3.11'
+coverage==7.17.1 ; python_full_version >= '3.11'
 devtools==0.13.0
 distro==1.9.0
     # via ruyaml
@@ -19,7 +20,7 @@ iniconfig==2.3.1
     # via pytest
 librt==0.16.0 ; platform_python_implementation != 'PyPy'
     # via mypy
-mypy==2.4.0
+mypy==2.4.1
 mypy-extensions==1.1.0
     # via mypy
 packaging==26.3
@@ -32,7 +33,7 @@ pygments==2.21.0
     # via
     #   devtools
     #   pytest
-pytest==9.1.1
+pytest==9.2.0
     # via pytest-mock
 pytest-mock==3.17.0
 ruamel-yaml==0.19.1
